@@ -1,0 +1,128 @@
+---
+title: 'FocusDB: mining underutilized SRAs to make a high-resolution 16S rRNA database'
+author: "Ben Nolan and  Nicholas Waters"
+date: "9/18/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Introduction
+16S rDNA is the standard in amplicon sequencing of community analysis, and such is a testament to the success of this gene as a universal indicator of microbial diversity [10]. 16S rDNA has proven effectiveness in community analysis in environments such as the gut microbiota of cattle and pigs [11], soil [12] and marine environments [13]. The rDNA regions are highly conserved between species however maintain enough diversity that organisms can be differentiated at the genus level with great accuracy [14], whilst also maintaining enough conservation to distinguish at the Domain level [15]. Prokaryotes contain up to 21 rDNA operons, with approximately 40% of prokaryotes containing 1 or 2 copies of the rDNA region [16]. Although there are usually multiple copies of the rDNA operon, there still lies variability between each rDNA region within a single genome.
+ 
+Intragenomic heterogeneity for 16S rDNA region has been reported to occur between copies, with nucleotide identity varying between species, and extremophiles being reported to possess high 16S rDNA copy heterogeneity [17, 18]. While tools such as CopyRighter can correct copy number for those organisms with available data, the limitations of the databases prevent widespread usage.  Additionally, current 16s amplicon analysis pipelines do not correct for copy heterogeneity. This draws emphasis on the inclusion of each rDNA copy during assembly and when analysing community abundance.
+ 
+There are three main 16S rDNA databases for bacteria and archaea:  Greengenes [31], SILVA [32] and the Ribosomal Database Project (RDP) [33]. RDP and SILVA focus on maintaining as much diversity as possible, whilst SILVA also contains a nonredundant database, where duplicate sequences are removed. Greengenes focuses on removing chimeric sequences. The source of the 16S rDNA sequences for Greengenes is GenBank [31], a nucleotide sequence database. RDP sources 16S rDNA data from multiple major international nucleotide sequence 12 databases (EMBL/ GenBank/ DDBJ) [REF] and SILVA obtains rDNA sequences from a collection of sources, including GenBank and EMBL [32]. The National Centre for Biotechnology Information (NCBI) is a public database that contains full genome and nucleotide sequences, taken from various sources, including GenBank. NCBI was used in this project as a source of draft genomes, due to the public availability aspect of the NCBI draft genome database, the Sequence Read Archive (SRA) [35]. Not all sequences available on the NCBI genome database are publicly available. The genome database consists of complete genomes and draft genomes. Only 10% of genomes on the genome database are closed or complete [36], leaving the remaining 90% as draft genomes. A common weakness of draft assemblies is incorrect assembly of the repeated rDNA region of the genome, which often get collapsed/merged into a single rRNA (which in turn may end up in SILVA, GreenGenes, or RDP).
+ 
+The popularity of short-read sequencing platforms has driven the issue of incorrect assembly of 16S rDNA in species containing multiple copies of the gene. The vast majority of sequences deposited on the three major databases and NCBI are a result of Illumina environmental sequencing, and thus the assembly of any species with multiple rDNA operon copies by short-read sequencers is likely incomplete. As Illumina-sequenced 16S rDNA regions are prone to errors in assembly, as the length of the repeated operon exceeds the read length of the sequencer. Sanger sequencing or the use of long-read technologies such as PacBio or Nanopore sequencing can resolve these repeats, but as the majority of the data generated over the last two decades comes from short read sequences, fixing these collapsed regions remains a valuable goal.
+ 
+The correct reassembly of multiple rrn regions of draft genomes is done so by riboSeed, which uses a reference genome to correctly assemble an organisms’ genome, with specific emphasis on the rDNA regions [36]. The flanking regions of rDNA is highly conserved between species yet highly variable between rDNA copies in the same genome. The unique flanking regions of the rrn operon are exploited by riboSeed mapping the genome against a reference genome, correctly identifying and constructing each rDNA region. The reference genome is the genome of an organism that is as genetically similar as possible to the genome of the organism that is being assembled.
+ 
+In order to maximize the information gained from 16s amplicon sequencing experiments, we developed 16db: a pipeline to improve existing 16S rDNA databases through mining the SRA for candidates for reassembly.  The use of 16db cannot correct existing amplicon sequencing efforts, however the number and improvement of 16S rDNA sequences for taxonomic reference can be improved with 16db, through the reassembly of draft genomes and extraction of 16S rDNA sequences.
+ 
+## db Overview
+16db is a pipeline to download draft genome SRAs for a species, reassemble, and extract the 16S rDNA sequences from each draft genome for use in a curated 16s database. These 16S sequences can then be used, in addition to pre-existing 16S sequences, to enhance taxonomic classification through the increased number of 16S rDNA sequences [Hopefully].
+ 
+16db requires certain required arguments to function, with a number of optional arguments to suit the users’ needs. Required arguments include: query species, output directory, reference genomes output directory and strain number. An input of the six aforementioned arguments leads to base functionality of the pipeline. Optional arguments can be used to increase suitability, such as specification of CPU and RAM capabilities of the system used.
+The 16db pipeline can be followed below in a basic flowchart (Fig. 1). Further details on all software used in 16db can be found in supplementary information.
+1)   The first step in the 16db pipeline is with sraFind, which uses an NCBI-produced text file containing all sequenced prokaryotes genome information, as a basis for which to locate and download complete genomes for the query species. The number of complete genomes downloaded is determined by an argument, or the number of complete genomes available on the NCBI.
+2)   A list of SRA (draft genome raw reads) entries is compiled and downloaded by fasterq-dump. The maximum number of SRAs downloaded is also determined by an argument.
+ 
+The following process occurs in a loop for each SRA:
+3)   The average length of the reads is checked based on the first 30 reads. This is to prevent further processing of an SRA that contains reads of very low length (<65bp). As riboSeed cannot assemble genomes with reads of this length.
+4)   The best reference genome is assessed through pyani, a python-based program that calculates average nucleotide identity. The pool of potential genomes is obtained in step 1.
+5)   The amount of ribosomal RNA operons present in the reference genome is assessed with barrnap, a program capable of locating and returning the coordinates of ribosomal features. This step is to evaluate the highest possible number of 16S sequences that can be assembled for the current SRA.
+6)   Each read undergoes trimming with sickle, a program that performs quality-based read trimming. This enhances the quality of assembly later on in the pipeline.
+7)   Read coverage is assessed using a user-inputted genome length if given, or the length of the reference genome if not.
+8)   If read coverage exceeds 50X, reads are down-sampled to 50X with seqtk. Maximum coverage can be altered.
+9)   The SRA reads are then assembled using riboSeed, which uses the reference genome from 4) as a template genome.
+10)  16S rDNA sequences are extracted from the assembled genome using barrnap and concatenated to a single file, where all 16S sequences from all SRAs for the query species are stored.
+For all 16S rDNA sequences:
+11)  A multiple sequence alignment and maximum-likelihood tree are produced with mafft and iqtree respectively.
+ 
+
+ 
+Fig 1. Flowchart demonstrating the process of 16db. Programs called upon are beside their corresponding box. The numbers correlate to the processes described in [16db overview].
+ 
+## Methods
+ 
+### DADA2 Extreme dataset
+In order to showcase 16db, a dataset was chosen to suitably demonstrate the effect that 16db had on the taxonomic classification. The dataset chosen was taken from the DADA2 pipeline paper [REF]. DADA2 is an amplicon analysis pipeline used specifically for high-resolution illumina data. The DADA2 paper generated three mock communities to test their pipeline; balanced, HMP and extreme with 57, 21 and 27 members respectively. Each community had varying levels of diversity in the form of nucleotide similarity between species, with the extreme dataset containing strains that were separated by as little as a single nucleotide. Each of the three mock communities were sequenced at a depth of 500,000 Illumina MiSeq paired-end reads 2x250bp. The extreme dataset was obtained from NCBI using the accession SRX1478507 (http://www.ncbi.nlm.nih.gov/sra/SRX1478507) and run through the DADA2 1.12.1 pipeline.
+The R script used for the DADA2 pipeline is available in the supplementary information.
+ 
+Describe how and why the sequencing data such as the SILVA dataset used by DADA2 and the same species were chosen for the analysis with the shannon entropy also.
+-       Describe the process for how out of 27, only 6 species were left in the analysis. Perhaps leave it to the discussion to talk about how more draft genomes will be generated in the future with pacbio etc.
+-       Describe how the 16db pipeline ran the 6 species with reference to the 16db program part of the paper. (as below)
+ 
+### Parabacteroides
+A total of 240 16S sequences were obtained from 6 species across 2 genera. mafft was used to produce a multiple sequence alignment and the result was processed with iqtree to cluster and produce a maximum-likelihood tree. This was done to determine the similarity between the amplicon sequence variants (ASV), the sequences present on the reference database used by DADA2 (silva_nr_132) and the sequences extracted by 16db. This was used as the benchmark to determine the effectiveness of the 16db-generated 16S rDNA sequences as reference sequences for taxonomic classification. Using mash, each genus was clustered.
+ 
+### Bacteroides
+-       ...
+ 
+ 
+### Shannon Entropy Analysis
+-       Describe why and how the shannon entropy analysis was done. Essentially to determine if and how much diversity was added to the sequence dataset for both Parabacteroides and Bacteroides.
+ 
+ 
+### Results & Discussion
+ 
+-       Talk about limitations of 16db here and why not 100% of the 16S sequences were not assembled and extracted, such as ref genome similarity, extreme similarity of 16s copies etc.
+34 Amplicon sequencing variants were detected from the extreme dataset containing 27 strains, from 26 species. For each species, in order to add sequences using 16db, certain criteria were required; complete genomes available for download from the NCBI website for use as reference genomes, draft genome raw reads available on the Sequence Read Archive (SRA) and finally that species must contain multiple rDNA operons. Of the 26 species in the extreme dataset, only 6 satisfied these criteria. All 6 species were run through 16db:
+ 
+ 
+Fig. 2. Success of 16db in reassembling the six species from the extreme dataset for which the required criteria were met. The maximum number of SRAs analysed for any species was set to 15.
+ 
+### Parabacteroides
+         Extreme Dataset Analysis
+ 
+The SILVA database used by DADA2 [ref to database] contained 120 16S rDNA sequences for the genus Parabacteroides. Three ASVs from the DADA2 pipeline were identified by DADA2 as belonging to this genus, two of which were Parabacteroides distasonis and the remaining ASV was Parabacteroides merdae. 16db generated 31 16S rDNA sequences from SRAs of Parabacteroides distasonis. All sequences were concatenated to a single file, resulting in 154 sequences. This file was then processed for MSA, clustering and phylogenetic construction. 
+Of the two Parabacteroides distasonis ASVs, both clustered more closely to 16db derived 16S rDNA sequences.
+-       Explain in more detail.
+-       Visualise extreme dataset mash results.
+            Shannon Entropy Analysis
+ 
+Fig.x Shannon entropy for nucleotide diversity from 151 Parabacteroides sequences, 31 16db generated Bacteroides sequences and 120 SILVA-derived Bacteroides sequences.
+ 
+ 
+Fig. x.2 Shannon entropy for nucleotide diversity from 120 SILVA-derived Parabacteroides sequences.
+ 
+Bacteroides
+         Extreme Dataset Analysis
+-       Same as with Parabacteroides
+ 
+ 
+ 
+            Shannon Entropy Analysis
+-        
+ 
+ 
+ 
+ 
+Fig.x Shannon entropy for nucleotide diversity from 946 Bacteroides sequences, including 209 16db generated Bacteroides sequences.
+ 
+ 
+Fig. x.2 Shannon entropy for nucleotide diversity from 946 Bacteroides sequences, excluding 16db generated Bacteroides sequences.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Other things to cite:
+-       This comparison of copy correction tools: https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-018-0420-9
+-       DADA2
+ 
+
+Notes from meeting 2019-09-17
+
+Carlos’s Paper: https://www.nature.com/articles/sdata20197
+Try multiple alpha diversity tests to show diversity increase
+Hunt down the 16s from SRA non-riboSeed assignment, compare to the “7” rDNAs from riboSeed 
+Note how ASV assignment is hampered by wrong 16s in the databases
+Skip final assemblies riboSeed? 
+

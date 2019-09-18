@@ -1,0 +1,30 @@
+---
+title: "Supplementary Materials"
+author: "Ben Nolan and  Nicholas Waters"
+date: "9/18/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assembling candidate taxa from Extreme dataset
+- command used for each of the organisms
+- explanation of where some failed (which organisms didn't have usable references, which didn't have SRAs, etc)
+- Where in the repo the resulting assembly is stored
+## Generating Multiplee Sequence Alignments
+- parameters used for mafft
+- where in the repo the resulting alingmnts are
+
+## Calcualting Alpha Diversity
+- either put 
+- copy the code to calculate the Shannon entropy here
+
+
+## how we determined the 
+
+
+
+
+

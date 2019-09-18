@@ -45,7 +45,7 @@ For all 16S rDNA sequences:
 11)  A multiple sequence alignment and maximum-likelihood tree are produced with mafft and iqtree respectively.
  
 
- 
+ ![flowchart](images/flowchart.png)
 Fig 1. Flowchart demonstrating the process of 16db. Programs called upon are beside their corresponding box. The numbers correlate to the processes described in [16db overview].
  
 ## Methods

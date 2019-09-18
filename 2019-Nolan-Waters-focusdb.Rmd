@@ -3,6 +3,7 @@ title: 'FocusDB: mining underutilized SRAs to make a high-resolution 16S rRNA da
 author: "Ben Nolan and  Nicholas Waters"
 date: "9/18/2019"
 output: html_document
+bibliography: focusdb_references.bib
 ---
 
 ```{r setup, include=FALSE}

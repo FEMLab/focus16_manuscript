@@ -1,0 +1,107 @@
+---
+title: "Supplementary Materials"
+author: "Ben Nolan and  Nicholas Waters"
+date: "9/18/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Assembling candidate taxa from Extreme dataset
+- command used for each of the organisms
+- explanation of where some failed (which organisms didn't have usable references, which didn't have SRAs, etc)
+- Where in the repo the resulting assembly is stored
+
+27 strains from 26 species were in the extreme dataset from DADA2. 
+```{}
+Bacteroides cellulosilyticus DSM 14838: 3
+Bacteroides eggerthii BEI HM-210: 0 
+Bacteroides fragilis ATCC 23745: 112
+Bacteroides massiliensis JCM 12982: 1
+Bacteroides ovatus DSM 1896: 12
+Bacteroides thetaiotaomicron DSM 2079: 14
+Bacteroides uniformis DSM 6597: 15
+Bacteroides vulgatus DSM 1447: 14
+Barnesiella intestinihominis DSM 21032: 0
+Clostridium celatum JCM 1394: 0
+Clostridium cocleatum DSM 1551: 0 
+Clostridium methylpentosum DSM 5476: 0
+Clostridium phytofermentans ATCC 700394: 0
+Clostridium xylanovorans DSM 12503: 1: Renamed to Anaerocolumna xylanovorans
+Coprococcus comes ATCC 27758: 4
+Eubacterium rectale DSM 17629: 0
+Howardella ureilytica DSM 15118: 0
+Parabacteroides distasonis JCM 13400: 18
+Parabacteroides distasonis JCM 13401: 18
+Parabacteroides merdae DSM 19495: 2
+Parabacteroides sp. D13 BEI HM-77: 3
+Paraprevotella clara DSM 19731: 1
+Prevotella buccalis ATCC 35310: 0 
+Prevotella copri DSM 18205: 1
+Roseburia intestinalis DSM 14610: 1
+Roseburia inulinivorans DSM 16841: 3
+Ruminococcus gnavus ATCC 29149: 0
+```
+
+###### Number of SRAs available for each species
+
+Simple python script that for a species in a list, returns the number of occurances in the sraFind file.
+```{bash eval=FALSE}
+python scripts/sralist.py -s ~/Desktop/16db/py16db/sraFind-All-biosample-with-SRA-hits.txt -l ~/Desktop/focusdb/docs/extreme_species_list.txt -o results/extreme_sra_count
+```
+
+###### table for 6 successful strains
+```{r}
+table <- read.csv("~/Desktop/focusdb/docs/successful_strains_table.txt", header=TRUE, sep = " ")
+knitr::kable(table)
+```
+
+###### Commands used for each of the 6 species with SRAs and reference genomes
+```{bash eval=FALSE}
+16db -o /HDD1/Ben/16db/results/b_cellulosilyticus -n "Bacteroides cellulosilyticus" -g /HDD1/Ben/16db/results/b_cellulosilyticus/genomes/ -S 15 --memory 100 --cores 12
+
+16db -o /HDD1/Ben/16db/results/b_fragilis -n "Bacteroides fragilis" -g /HDD1/Ben/16db/results/b_fragilis/genomes/ -S 15 --memory 100 --cores 12
+
+16db -o /HDD1/Ben/16db/results/b_ovatus -n "Bacteroides ovatus" -g /HDD1/Ben/16db/results/b_ovatus/genomes/ -S 15 --memory 100 --cores 12
+
+16db -o /HDD1/Ben/16db/results/b_thetaiotaomicron -n "Bacteroides thetaiotaomicron" -g /HDD1/Ben/16db/results/b_thetaiotaomicron/genomes/ -S 15 --memory 100 --cores 12
+
+16db -o /HDD1/Ben/16db/results/b_vulgatus -n "Bacteroides vulgatus" -g /HDD1/Ben/16db/results/b_vulgatus/genomes/ -S 15 --memory 100 --cores 12
+
+16db -o /HDD1/Ben/16db/results/p_distasonis -n "Parabacteroids distasonis" -g /HDD1/Ben/16db/results/p_distasonis/genomes/ -S 15 --memory 100 --cores 12
+```
+
+
+## Generating Multiplee Sequence Alignments
+- parameters used for mafft
+- where in the repo the resulting alingmnts are
+
+## Calcualting Alpha Diversity
+```{r}
+
+```
+- copy the code to calculate the Shannon entropy here
+
+
+## Assessing the provenance of the Silva strains
+16s sequences in databases such a silva, greengenes,or RDP can come from several sources, namely:
+- complete genomes (in Refseq, Genbank, etc)
+- draft genomes (in the NCBI's Assembly database)
+- 16s amplicons from Sanger sequencing
+- 16s amplicons from high-throughput amplicon sequencing.
+
+As repeated rDNA operons are difficult to assembly, Draft genome rDNA can (and often do contain a single rDNA).  This is problematic for species ideentification -- the rDNA recovered is not just one of /n/ rDNAs, but it can be a consensus "summary" rDNA resulting from trying to assemble the repeated region.   In organisms that have multiple rDNAs with high intrageno 
+riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. 
+
+```{r}
+ribo16s <- readLines("./results/databases/speciesdb/silva16/b_ovat_16.fa.mafft")
+(ribo16s_headers <- ribo16s[grepl(">", ribo16s)])
+```
+
+
+
+
+

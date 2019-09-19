@@ -3,11 +3,13 @@ title: "Supplementary Materials"
 author: "Ben Nolan and  Nicholas Waters"
 date: "9/18/2019"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
+library(tidyverse)
 ```
 
 ## Assembling candidate taxa from Extreme dataset
@@ -55,7 +57,7 @@ python scripts/sralist.py -s ~/Desktop/16db/py16db/sraFind-All-biosample-with-SR
 
 ###### table for 6 successful strains
 ```{r}
-table <- read.csv("~/Desktop/focusdb/docs/successful_strains_table.txt", header=TRUE, sep = " ")
+table <- read.csv("./docs/successful_strains_table.txt", header=TRUE, sep = " ")
 knitr::kable(table)
 ```
 
@@ -98,7 +100,7 @@ As repeated rDNA operons are difficult to assembly, Draft genome rDNA can (and o
 riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. Here, we compare the 16s seqeunces from riboSeed reassembly of draft genomes to the initial (potentially collapsed) 16s seqeunces.
 
 ### Provenance of b_ovatus strains
-First, we read in the silva headers for the b_ovatus strains.  The header for the silva database constists of `>ACCESSION.start.end name`.  We are not concerned with the complete genomes, so we will try to match the acessions with the 
+First, we read in the silva headers for the b_ovatus strains. The header for the silva database constists of `>ACCESSION.start.end name`.  We are not concerned with the complete genomes, so we will try to match the acessions with the 
 ```{r}
 library(data.table)
 ribo16s <- readLines("./results/databases/speciesdb/silva16/b_ovat_16.fa.mafft")
@@ -107,14 +109,15 @@ sraFind_data <- fread("https://raw.githubusercontent.com/nickp60/sraFind/master/
 #  get the assembly
 #  esearch -db nuccore -query JNHG01000060 | elink -target assembly | esummary |xtract -pattern DocumentSummary -element AssemblyAccession
 #  get the SRA
-cmd_file <-  "tmp_link_accessions"
+cmd_file <-  file.path("docs/tmp_link_accessions")
 file.remove(cmd_file)
+file.remove(file.path("docs/b_ovatus_sras"))
 for (header in ribo16s_headers){
   # if not from riboSeed
   header <- gsub(">", "", header)
   if (!grepl("extracted", header)){
     id = gsub("(.*?)\\.(.*)", "\\1", header )
-    cmd = paste0("OLDIFS=\"$IFS\"; IFS=$\"\n\"; for line in `esearch -db nuccore -query ", id, " | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e \"",   strsplit(header, split = " ")[[1]][1], "\t$line\"; done; IFS=$OLDIFS")
+    cmd = paste0("OLDIFS=\"$IFS\"; assembly=`esearch -db nuccore -query ",id, " | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; IFS=$\"\n\"; for line in `esearch -db nuccore -query ", id, " | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e \"${assembly}\t",   strsplit(header, split = " ")[[1]][1], "\t$line\"; done; IFS=$OLDIFS")
     write(cmd, file=cmd_file, append=TRUE)
   }
 }
@@ -125,11 +128,20 @@ Then we can run those commands (from the terminal, doesn't tend to work from Rst
 
 ```{bash, eval=FALSE}
 # note this doesn't work from Rstudio due to how Rstudio get the system path.
-bash tmp_link_accessions > ovatus_sras
+bash tmp_link_accessions > b_ovatus_sras
 ```
 
-Now, we have a list any available SRAs for the list of strains in the Silva database, with columns for the name/region (from silva), the bioproject, tech, type, and SRA.
+Now, we have a list any available SRAs for the list of strains in the Silva database, with columns for the name/region (from silva), the assembly, the sample name, scientific name, tech, type, and SRA.  Note that the silva name referes to the sequence, not the assembly, so thats why we need  to fetch the column for the aassembly as well.
 
+Now, we can look at how many rDNAs are represented in the database.
+```{r}
+names <- c("assembly", "silva", "Run", "SampleName", "ScientificName", "LibraryStrategy", "LibrarySource")
+ovatus_sras <- read.csv("./docs/b_ovatus_sras", sep="\t", header = F, col.names = names)
+ovatus_sras  %>% group_by(assembly) %>% select(assembly, silva) %>% distinct() %>%  summarize(n=n())
+```
+Here, we can see  that GCF_000699725.1 and GCF_001314995.1 have 4 and 5 rDNAs in Silva, so we dont need to reassemble those: rrndb shows that we can expect around  5 rDNAs for B ovatus.
+
+The other three assemblies, we could re-assemble: GCF_000218325.1, GCF_000699665.1, and GCF_900107475.1 all only have a single rDNA.
 
 
 

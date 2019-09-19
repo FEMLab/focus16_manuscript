@@ -100,13 +100,42 @@ knitr::kable(table)
 - 16s amplicons from Sanger sequencing
 - 16s amplicons from high-throughput amplicon sequencing.
 
-As repeated rDNA operons are difficult to assembly, Draft genome rDNA can (and often do contain a single rDNA).  This is problematic for species ideentification -- the rDNA recovered is not just one of /n/ rDNAs, but it can be a consensus "summary" rDNA resulting from trying to assemble the repeated region.   In organisms that have multiple rDNAs with high intrageno 
-riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. 
+As repeated rDNA operons are difficult to assembly, Draft genome rDNA can (and often do contain a single rDNA).  This is problematic for species ideentification -- the rDNA recovered is not just one of /n/ rDNAs, but it can be a consensus "summary" rDNA resulting from trying to assemble the repeated region.  
 
+riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. Here, we compare the 16s seqeunces from riboSeed reassembly of draft genomes to the initial (potentially collapsed) 16s seqeunces.
+
+### Provenance of b_ovatus strains
+First, we read in the silva headers for the b_ovatus strains.  The header for the silva database constists of `>ACCESSION.start.end name`.  We are not concerned with the complete genomes, so we will try to match the acessions with the 
 ```{r}
+library(data.table)
 ribo16s <- readLines("./results/databases/speciesdb/silva16/b_ovat_16.fa.mafft")
+sraFind_data <- fread("https://raw.githubusercontent.com/nickp60/sraFind/master/results/sraFind-All-biosample-with-SRA-hits.txt")
 (ribo16s_headers <- ribo16s[grepl(">", ribo16s)])
+#  get the assembly
+#  esearch -db nuccore -query JNHG01000060 | elink -target assembly | esummary |xtract -pattern DocumentSummary -element AssemblyAccession
+#  get the SRA
+cmd_file <-  "tmp_link_accessions"
+file.remove(cmd_file)
+for (header in ribo16s_headers){
+  # if not from riboSeed
+  header <- gsub(">", "", header)
+  if (!grepl("extracted", header)){
+    id = gsub("(.*?)\\.(.*)", "\\1", header )
+    cmd = paste0("OLDIFS=\"$IFS\"; IFS=$\"\n\"; for line in `esearch -db nuccore -query ", id, " | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e \"",   strsplit(header, split = " ")[[1]][1], "\t$line\"; done; IFS=$OLDIFS")
+    write(cmd, file=cmd_file, append=TRUE)
+  }
+}
+
+   
 ```
+Then we can run those commands (from the terminal, doesn't tend to work from Rstudio):
+
+```{bash, eval=FALSE}
+# note this doesn't work from Rstudio due to how Rstudio get the system path.
+bash tmp_link_accessions > ovatus_sras
+```
+
+Now, we have a list any available SRAs for the list of strains in the Silva database, with columns for the name/region (from silva), the bioproject, tech, type, and SRA.
 
 
 

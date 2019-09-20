@@ -144,12 +144,19 @@ Now, we can look at how many rDNAs are represented in the database.
 ```{r}
 names <- c("assembly", "silva", "Run", "SampleName", "ScientificName", "LibraryStrategy", "LibrarySource")
 ovatus_sras <- read.csv("./docs/b_ovatus_sras", sep="\t", header = F, col.names = names)
-ovatus_sras  %>% group_by(assembly) %>% select(assembly, silva) %>% distinct() %>%  summarize(n=n())
+(ovatus_summary <- ovatus_sras  %>% group_by(assembly) %>% 
+    select(assembly, silva) %>% distinct() %>%  summarize(n=n()))
+left_join(ovatus_summary%>%filter(n!=1), ovatus_sras) %>% select(Run) %>% distinct()
+left_join(ovatus_summary%>%filter(n==1), ovatus_sras) %>% select(Run)
 ```
 Here, we can see  that GCF_000699725.1 and GCF_001314995.1 have 4 and 5 rDNAs in Silva, so we dont need to reassemble those: rrndb shows that we can expect around  5 rDNAs for B ovatus.
 
-The other three assemblies, we could re-assemble: GCF_000218325.1, GCF_000699665.1, and GCF_900107475.1 all only have a single rDNA.
+The other three assemblies, we could re-assemble: GCF_000218325.1, GCF_000699665.1, and GCF_900107475.1 all only have a single rDNA.  Lets run the pipeline on the 4 
 
+```
+16db --SRAs SRR9067260 SRR1006208 SRR1006209 SRR4236982 -o ovatus_draft -g ovatus_genomes -n "Bacteroides ovatus" --cores 4 --memory 8 
+16db --SRAs SRR1006214  SRR1006215 SRR2637631 SRR2637689 SRR2641383 -o ovatus_complete -g ovatus_genomes -n "Bacteroides ovatus" --cores 4 --memory 8
+```
 
-
+Now we can compare.
 

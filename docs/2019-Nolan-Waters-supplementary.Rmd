@@ -20,6 +20,13 @@ library(tidyverse)
 27 strains from 26 species were in the extreme dataset from DADA2.
 
 ###### 17 strains have SRAs. Only 7 were completed with focusdb (two of which are 1 species. 6 species in total)
+
+## Running FocusDB on the Extremes Dataset.
+DADA2's Extremes dataset is comprised of the strains shown here in table 1. Note that we included Anaerocolumna xylanovorans, a more recent name for Clostridium xylanovorans.
+
+```{r}
+res <- read.csv("./docs/extreme_species_list.txt", sep="\t", col.names = "strains")
+```
 ```{}
 Bacteroides cellulosilyticus DSM 14838: 3
 Bacteroides fragilis ATCC 23745: 112
@@ -48,11 +55,43 @@ Barnesiella intestinihominis DSM 21032: 0
 Clostridium celatum JCM 1394: 0
 Clostridium cocleatum DSM 1551: 0 
 Clostridium methylpentosum DSM 5476: 0
-Clostridium phytofermentans ATCC 700394: 0
+Clostridium phytofermentans ATCC 700394: 0 
 Eubacterium rectale DSM 17629: 0
 Howardella ureilytica DSM 15118: 0
 Prevotella buccalis ATCC 35310: 0 
 Ruminococcus gnavus ATCC 29149: 0
+```
+
+## Running focusDB on the Extremes dataset
+```
+# contents of extremes_orgs.txt manifests
+Bacteroides cellulosilyticus
+Bacteroides fragilis
+Bacteroides massiliensis
+Bacteroides ovatus
+Bacteroides thetaiotaomicron
+Bacteroides uniformis
+Bacteroides vulgatus
+Clostridium xylanovorans
+Anaerocolumna xylanovorans
+Coprococcus comes
+Parabacteroides distasonis
+Parabacteroides merdae
+Parabacteroides sp. 
+Paraprevotella clara
+Prevotella copri 
+Roseburia intestinalis
+Roseburia inulinivorans
+Bacteroides eggerthii 
+Barnesiella intestinihominis
+Clostridium celatum 
+Clostridium cocleatum 
+Clostridium methylpentosum
+Clostridium phytofermentans
+Eubacterium rectale 
+Howardella ureilytica 
+Prevotella buccalis 
+Ruminococcus gnavus 
 ```
 
 ###### Number of SRAs available for each species
@@ -70,6 +109,10 @@ knitr::kable(table)
 
 ###### Commands used for each of the 6 species with SRAs and reference genomes
 ```{bash eval=FALSE}
+# executed on gruffalo at $SCRATCH/2019-09-19-16db/
+# cat extremes_orgs.txt | parallel -j 16 --colsep ' ' 16db  -o {1}_{2} -g {1}_{2}_genomes -n \""{1} {2}"\" --cores 2 --memory 80 --n_references 50 --n_SRAs 20
+cat ./*/SUMMARY  > 2019-09-22-focusdb-results/results_summary.tab
+
 16db -o /HDD1/Ben/16db/results/b_cellulosilyticus -n "Bacteroides cellulosilyticus" -g /HDD1/Ben/16db/results/b_cellulosilyticus/genomes/ -S 15 --memory 100 --cores 12
 
 16db -o /HDD1/Ben/16db/results/b_fragilis -n "Bacteroides fragilis" -g /HDD1/Ben/16db/results/b_fragilis/genomes/ -S 15 --memory 100 --cores 12

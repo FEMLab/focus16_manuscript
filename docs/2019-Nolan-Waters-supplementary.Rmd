@@ -10,6 +10,189 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(diagram)
+# library(ggupset)
+
+mytheme <- ggplot2::theme_minimal() + ggplot2::theme(
+    rect = element_rect(fill = "transparent"),
+    #plot.background = element_rect(fill = "#FAFAFA", color=NA),
+    plot.background = element_rect(fill = "transparent", color=NA),
+    axis.text = element_text(size=8),
+    strip.background = element_rect(fill = "grey95", color=NA),
+    strip.text = element_text(face="bold"),
+    axis.title  = element_text(size=10),
+    panel.grid.minor.x = element_blank(),
+    title = element_text(size=14),
+    plot.caption=element_text(hjust = 0),
+    legend.text =  element_text(size=12), 
+    plot.subtitle = element_text(size=12, colour = "grey60"),
+    #legend.position = "bottom"
+  )
+```
+##  Assessing SILVA's composition
+```{bash eval=F}
+cat ~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz |gunzip  | grep ">" > ./silva132ref_headers.txt
+```
+
+```{r}
+codes_from_ncbi <- read.csv(text="Prefix	Database	Type
+BA,DF,DG,LD	DDBJ	CON division
+AN	EMBL	CON division
+CH,CM,DS,EM, EN,EP,EQ,FA, GG,GL,JH,KB, KD,KE,KI,KK, KL,KN,KQ,KV, KZ,ML	NCBI	CON division
+C,AT,AU,AV,BB, BJ,BP,BW,BY,CI, CJ,DA,DB,DC, DK,FS,FY,HX, HY,LU	DDBJ	EST
+F	EMBL	EST
+H,N,T,R,W,AA,AI, AW,BE,BF,BG, BI,BM,BQ,BU, CA,CB,CD,CF, CK,CN,CO,CV, CX,DN,DR,DT, DV,DW,DY,EB, EC,EE,EG,EH, EL,ES,EV,EW, EX,EY,FC,FD, FE,FF,FG,FK, FL,GD,GE,GH, GO,GR,GT,GW, HO,HS,JG,JK, JZ	GenBank	EST
+D,AB,LC	DDBJ	Direct submissions
+V,X,Y,Z,AJ,AM, FM,FN,HE,HF, HG,FO,LK,LL, LM,LN,LO,LR, LS,LT,OA,OB, OC,OD,OE	EMBL	Direct submissions
+U,AF,AY,DQ,EF, EU,FJ,GQ,GU, HM,HQ,JF,JN, JQ,JX,KC,KF, KJ,KM,KP,KR, KT,KU,KX,KY, MF,MG,MH,MK, MN	GenBank	Direct submissions
+AP	DDBJ	Genome project data
+BS	DDBJ	Chimpanzee genome data
+AL,BX,CR,CT, CU,FP,FQ,FR	EMBL	Genome project data
+AE,CP,CY	GenBank	Genome project data
+AG,DE,DH,FT, GA,LB	DDBJ	GSS
+B,AQ,AZ,BH,BZ, CC,CE,CG,CL, CW,CZ,DU,DX, ED,EI,EJ,EK, ER,ET,FH,FI, GS,HN,HR,JJ, JM,JS,JY,KG, KO,KS,MJ	GenBank	GSS
+AK	DDBJ	cDNA projects
+AC,DP	GenBank	HTGS
+E,BD,DD,DI,DJ, DL,DM,FU,FV, FW,FZ,GB,HV, HW,HZ,LF,LG, LV,LX,LY,LZ, MA,MB,MC	DDBJ	Patents
+A,AX,CQ,CS,FB, GM,GN,HA,HB, HC,HD,HH,HI, JA,JB,JC,JD, JE,LP,LQ,MP, MQ,MR,MS	EMBL	Patents (nucleotide only)
+I,AR,DZ,EA,GC, GP,GV,GX,GY, GZ,HJ,HK,HL, KH,MI,MM,MO	GenBank	Patents (nucleotide)
+G,BV,GF	GenBank	STS
+BR	DDBJ	TPA
+BN	EMBL	TPA
+BK	GenBank	TPA
+HT,HU	DDBJ	TPA CON division
+BL,GJ,GK	GenBank	TPA CON division
+EZ,HP,JI,JL, JO,JP,JR,JT, JU,JV,JW,KA	GenBank	TSA
+FX,LA,LE,LH, LI,LJ	DDBJ	TSA
+S	GenBank	From journal scanning
+AD	GenBank	From GSDB
+AH	GenBank	Segmented set header
+AS	GenBank	Other - not currently being used
+BC	GenBank	MGC project
+BT	GenBank	FLI-cDNA projects
+J,K,L,M	GenBank	from GSDB direct submissions
+N	GenBank and DDBJ	N0-N2 were used intially by both groups but have been removed from circulation, N2-N9 are ESTs
+AAAA-AZZZ, JAAA-JZZZ, LAAA-LZZZ, MAAA-MZZZ, NAAA-NZZZ, PAAA-PZZZ, QAAA-QZZZ, RAAA-RZZZ, SAAA-SZZZ, VAAA-VZZZ	GenBank	WGS
+AAAAAA-AZZZZZ	GenBank	WGS
+BAAA-BZZZ	DDBJ	WGS
+BAAAAA-BZZZZZ	DDBJ	WGS
+CAAA-CZZZ, FAAA-FZZZ, OAAA-OZZZ, UAAA-UZZZ	EMBL	WGS
+CAAAAA-CZZZZZ	EMBL	WGS
+DAAA-DZZZ	GenBank	WGS TPA
+DAAAAA-DZZZZZ	GenBank	WGS TPA
+EAAA-EZZZ	DDBJ	WGS TPA
+GAAA-GZZZ	GenBank	TSA
+HAAA-HZZZ	EMBL	TSA
+IAAA-IZZZ	DDBJ	TSA
+TAAA-TZZZ	DDBJ	Targeted Gene Projects
+KAAA-KZZZ	GenBank	Targeted Gene Projects
+AAAAA-AZZZZ	DDBJ	MGA", sep="\t", stringsAsFactors=F)
+
+silva_headers <- data.table::fread("./silva132ref_headers.txt", header=F, sep="\t")
+silva_headers$pre <- gsub(">(\\D*).*", "\\1", silva_headers$V1)
+#silva_headers$name <- gsub(">(.*?)\\s.*", "\\1", silva_headers$V1)
+silva_headers$start <- as.numeric(gsub(">(.*)\\.(.+)\\.(.*?)\\s.*", "\\2", silva_headers$V1))
+silva_headers$stop <-  as.numeric(gsub(">(.*)\\.(.+)\\.(.*?)\\s.*", "\\3", silva_headers$V1))
+silva_headers$wgs <- nchar(silva_headers$pre) > 3 # see table
+
+silva_headers$amplicon <- silva_headers$start < 10
+genome_pres <- codes_from_ncbi %>% filter(Type=="Genome project data") %>% unnest(Prefix = strsplit(Prefix, ",")) %>% select(Prefix) 
+silva_headers$cg <- silva_headers$pre %in% genome_pres$Prefix
+
+table(silva_headers$cg) / nrow(silva_headers)
+table(silva_headers$wgs) / nrow(silva_headers)
+table(silva_headers$amplicon) / nrow(silva_headers)
+
+silva_headers$category <- case_when(
+  silva_headers$wgs ~ "Draft",
+  silva_headers$cg ~ "Complete Genome",
+   silva_headers$amplicon ~  "Amplicon")
+round(table(silva_headers$category) / nrow(silva_headers) * 100, 2)
+```
+
+
+## Generating the flowchart
+```{r}
+png("docs/figures/flowchart.png", width = 6, height = 6, res = 300, units = "in")
+par(mar = c(1, 1, 1, 1))
+openplotmat() 
+cexd <- .5
+boxsize = 0.065
+thisrady = 0.04
+thisradx = 0.14
+cols <- c(.2,.35,  .5, .65, .8) # 5 cols
+rows <- seq(.1, .9, .11) - .05  # 6 
+
+shadowbox(box.type = "rect", mid = c(0.48, 0.52), box.col="gray95",lcol="gray85",
+          rady = 0.25, radx = 0.3, angle = 0, shadow.size=0)
+shadowbox(box.type = "rect", mid = c(0.49, 0.51),  box.col="gray95", lcol="gray85",
+          rady = 0.25, radx = 0.3, angle = 0, shadow.size=0)
+shadowbox(box.type = "rect", mid = c(0.5, 0.50), box.col="gray95", lcol="gray85",
+          rady = 0.25, radx = 0.3, angle = 0, shadow.size=0)
+# shadowbox(box.type = "rect", mid = c(0.52, 0.52),
+#           rady = 0.4, radx = 0.2, angle = 0)
+straightarrow(from =  c(cols[1], rows[8]),
+              to = c(cols[3], rows[7]),
+              arr.length=.2, arr.width=.2,
+              lwd = 1, arr.pos = 0.6)
+straightarrow(from =  c(cols[5], rows[8]),
+              to = c(cols[3], rows[7]),
+              arr.length=.2, arr.width=.2,
+              lwd = 1, arr.pos = 0.65)
+
+textellipse(mid=c(cols[1], 0.95), 
+        lab = "RefSeq Database",
+         col = "black",rady=thisrady, radx=thisradx, angle=0,
+         shadow.col = "#7b6c60", shadow.size = 0.005, cex = cexd) 
+textellipse(c(cols[5], .95),
+         boxsize, lab = "SRA Database",
+         box.col = "#ffe4ca",rady=thisrady, radx=thisradx, 
+         shadow.col = "#7b6c60", shadow.size = 0.005, cex = cexd)
+textrect(c(cols[1], rows[8]), 
+         boxsize, lab = "1. Download References \n(plentyofbugs)",
+         box.col = "#ffe4ca",rady=thisrady, radx=thisradx,
+         shadow.col = "#7b6c60", shadow.size = 0.005, cex = cexd) 
+textrect(c(cols[5], rows[8]), boxsize, lab = "2. Download SRAs\n(sraFind + sra-tools)",
+         box.col = "#ffe4ca",rady=thisrady, radx=thisradx, 
+         shadow.col = "#7b6c60", shadow.size = 0.005, cex = cexd) 
+textrect(c(cols[3], rows[7]), boxsize, lab = "For each SRA:",
+         box.col = "white",rady=thisrady, radx=thisradx, 
+         shadow.col = "grey80", shadow.size = 0.005, cex = cexd) 
+##  Sra Stuff
+textrect(c(cols[2], rows[6]), boxsize, lab = "3. Check Read Length;\nQuality Trim (sickle)",
+         box.col = "white",rady=thisrady, radx=thisradx, 
+         shadow.col = "grey80", shadow.size = 0.005, cex = cexd) 
+textrect(c(cols[2], rows[5]), boxsize, lab = "4. Downsample if \nCoverage > 50x (seqtk)",
+         box.col = "white",rady=thisrady, radx=thisradx, 
+         shadow.col = "grey80", shadow.size = 0.005, cex = cexd) 
+##  Reference Selection
+# textrect(c(cols[4], rows[4]), boxsize, lab = "Check Reference \nGenome Completeness",
+#          box.col = "white",rady=thisrady, radx=thisradx, 
+#          shadow.col = "grey80", shadow.size = 0.005, cex = cexd) 
+textrect(c(cols[4], .55), boxsize, lab = "5. Select Best Reference\n(plentyofbugs)",
+         box.col = "white",rady=thisrady, radx=thisradx, 
+         shadow.col = "grey80", shadow.size = 0.005, cex = cexd) 
+textrect(c(cols[3], rows[4]), boxsize, lab = "6. De fere novo Assembly\n(riboSeed)",
+         box.col = "white",rady=thisrady, radx=thisradx, 
+         shadow.col = "grey80", shadow.size = 0.005, cex = cexd) 
+textrect(c(cols[3], rows[3]), boxsize, 
+            lab = "7. Extract 16s from \n new assemblies (barrnap)",
+            box.col = "#a0ff9e",rady=thisrady, radx=thisradx,
+             shadow.col = "#83d283", shadow.size = 0.005, cex = cexd) 
+## Finalize
+textrect(c(cols[2], rows[2]), boxsize,  lab = "(8*) Extract Species's 16S \nfrom focusDB and Silva",
+         box.col = "#ffe4ca",rady=thisrady, radx=thisradx, 
+         shadow.col = "#7b6c60", shadow.size = 0.005, cex = cexd) 
+textrect(c(cols[4], rows[2]), boxsize, 
+            lab = "(9*)Align and Trim\n(mafft, TrimAl)",
+            box.col = "#d5b8af",rady=thisrady, radx=thisradx,
+             shadow.col = NA, shadow.size = 0.005, cex = cexd) 
+textrect(c(cols[3], rows[1]), boxsize, 
+            lab = "Use with DADA2, etc",
+            box.col = "white",rady=thisrady, radx=thisradx,
+             shadow.col = NA, shadow.size = 0.005, cex = cexd) 
+dev.off()
+
 ```
 
 ## Assembling candidate taxa from Extreme dataset
@@ -27,85 +210,38 @@ DADA2's Extremes dataset is comprised of the strains shown here in table 1. Note
 ```{r}
 res <- read.csv("./docs/extreme_species_list.txt", sep="\t", col.names = "strains")
 ```
-```{}
-Bacteroides cellulosilyticus DSM 14838: 3
-Bacteroides fragilis ATCC 23745: 112
-Bacteroides massiliensis JCM 12982: 1
-Bacteroides ovatus DSM 1896: 12
-Bacteroides thetaiotaomicron DSM 2079: 14
-Bacteroides uniformis DSM 6597: 15
-Bacteroides vulgatus DSM 1447: 14
-Clostridium xylanovorans DSM 12503: 1: Renamed to Anaerocolumna xylanovorans
-Coprococcus comes ATCC 27758: 4
-Parabacteroides distasonis JCM 13400: 18
-Parabacteroides distasonis JCM 13401: 18
-Parabacteroides merdae DSM 19495: 2
-Parabacteroides sp. D13 BEI HM-77: 3
-Paraprevotella clara DSM 19731: 1
-Prevotella copri DSM 18205: 1
-Roseburia intestinalis DSM 14610: 1
-Roseburia inulinivorans DSM 16841: 3
-```
 
 
-###### No SRAs
-```{}
-Bacteroides eggerthii BEI HM-210: 0
-Barnesiella intestinihominis DSM 21032: 0
-Clostridium celatum JCM 1394: 0
-Clostridium cocleatum DSM 1551: 0 
-Clostridium methylpentosum DSM 5476: 0
-Clostridium phytofermentans ATCC 700394: 0 
-Eubacterium rectale DSM 17629: 0
-Howardella ureilytica DSM 15118: 0
-Prevotella buccalis ATCC 35310: 0 
-Ruminococcus gnavus ATCC 29149: 0
-```
 
 ## Running focusDB on the Extremes dataset
-```
-# contents of extremes_orgs.txt manifests
-Bacteroides cellulosilyticus
-Bacteroides fragilis
-Bacteroides massiliensis
-Bacteroides ovatus
-Bacteroides thetaiotaomicron
-Bacteroides uniformis
-Bacteroides vulgatus
-Clostridium xylanovorans
-Anaerocolumna xylanovorans
-Coprococcus comes
-Parabacteroides distasonis
-Parabacteroides merdae
-Parabacteroides sp. 
-Paraprevotella clara
-Prevotella copri 
-Roseburia intestinalis
-Roseburia inulinivorans
-Bacteroides eggerthii 
-Barnesiella intestinihominis
-Clostridium celatum 
-Clostridium cocleatum 
-Clostridium methylpentosum
-Clostridium phytofermentans
-Eubacterium rectale 
-Howardella ureilytica 
-Prevotella buccalis 
-Ruminococcus gnavus 
-```
 
-###### Number of SRAs available for each species
+### Figure 1: Number of SRAs available for each species
 
-Simple python script that for a species in a list, returns the number of occurances in the sraFind file.
+A python script `sralist.py` was used to generate a list of the number of SRAs for a given species, based on parsing the results from sraFind.
 ```{bash eval=FALSE}
 python scripts/sralist.py -s ~/Desktop/16db/py16db/sraFind-All-biosample-with-SRA-hits.txt -l ~/Desktop/focusdb/docs/extreme_species_list.txt -o results/extreme_sra_count
 ```
-
-###### table for 6 successful strains
 ```{r}
-table <- read.csv("./docs/successful_strains_table.txt", header=TRUE, sep = " ")
-knitr::kable(table)
+srac <- read.csv2("results/extreme_sra_count/sralist.txt", sep=":", col.names = c("strain", "count"), stringsAsFactors = F)
+
+srac$genus <- gsub("(.*) .*","\\1", srac$strain)
+srac$species <- gsub("(.*) (.*)","\\2", srac$strain)
+srac$has <- ifelse(srac$count == 0, "None Available", "SRAs Available")
+(psrastrains <- ggplot(srac %>% filter(count > 0), aes(reorder(strain,count), y=count, fill=genus, color=genus)) + 
+  geom_bar(stat="identity") +
+  coord_flip() + 
+  labs(title=paste0(nrow(srac %>% filter(count > 0)), " of ", nrow(srac), " strains have availabe SRA data "),
+       fill="Genus",
+       color="Genus",
+       y= "Number of WGS SRAs", x="Strain") + 
+    mytheme +
+   theme(legend.position = c(.8, .3), 
+         text = element_text(size=8))
+  )
+ggsave("docs/figures/srastrains.png", psrastrains, device = "png", dpi = 300, width = 6, height = 5)
 ```
+
+
 
 ###### Commands used for each of the 6 species with SRAs and reference genomes
 ```{bash eval=FALSE}
@@ -113,17 +249,46 @@ knitr::kable(table)
 # cat extremes_orgs.txt | parallel -j 16 --colsep ' ' 16db  -o {1}_{2} -g {1}_{2}_genomes -n \""{1} {2}"\" --cores 2 --memory 80 --n_references 50 --n_SRAs 20
 cat ./*/SUMMARY  > 2019-09-22-focusdb-results/results_summary.tab
 
-16db -o /HDD1/Ben/16db/results/b_cellulosilyticus -n "Bacteroides cellulosilyticus" -g /HDD1/Ben/16db/results/b_cellulosilyticus/genomes/ -S 15 --memory 100 --cores 12
+```
 
-16db -o /HDD1/Ben/16db/results/b_fragilis -n "Bacteroides fragilis" -g /HDD1/Ben/16db/results/b_fragilis/genomes/ -S 15 --memory 100 --cores 12
 
-16db -o /HDD1/Ben/16db/results/b_ovatus -n "Bacteroides ovatus" -g /HDD1/Ben/16db/results/b_ovatus/genomes/ -S 15 --memory 100 --cores 12
+```{r}
+summary_data <- read.csv("results/summary_all", sep="\t", 
+                         col.names = c("org", "status", "state", "message"), stringsAsFactors = F)
+globals <- summary_data %>% filter(state=="global") %>%
+  select(org, message) %>% rename(globalmessage=message)
+(globals$globalmessage <- ifelse(globals$globalmessage == "", "Success", globals$globalmessage))
+# tidy things up
+(globals$globalmessage <- gsub("^no", "No", globals$globalmessage))
+(globals$globalmessage <- gsub("your", "", globals$globalmessage))
+(globals$globalmessage <- gsub("No available.*", "No available references", globals$globalmessage))
 
-16db -o /HDD1/Ben/16db/results/b_thetaiotaomicron -n "Bacteroides thetaiotaomicron" -g /HDD1/Ben/16db/results/b_thetaiotaomicron/genomes/ -S 15 --memory 100 --cores 12
 
-16db -o /HDD1/Ben/16db/results/b_vulgatus -n "Bacteroides vulgatus" -g /HDD1/Ben/16db/results/b_vulgatus/genomes/ -S 15 --memory 100 --cores 12
+p_summary_data_pre <- merge(summary_data %>% filter(state!="global"), globals, by="org", all=T) %>%   select(org, globalmessage, message, state )  distinct()
 
-16db -o /HDD1/Ben/16db/results/p_distasonis -n "Parabacteroids distasonis" -g /HDD1/Ben/16db/results/p_distasonis/genomes/ -S 15 --memory 100 --cores 12
+  # mutate(color=as.factor(globalmessage), 
+  #        fill=ifelse(is.na(message), globalmessage,message))
+
+p_summary_data <- merge(srac,  p_summary_data_pre, by.x="strain", by.y="org")
+
+p_summary_data <- p_summary_data %>% group_by(strain) %>% 
+  mutate(thisid = row_number()) %>%
+  transform(thisid = ifelse(is.na(message), 0, thisid),
+            message = case_when(
+              is.na(message) ~ "-",
+              message=="Processed strain" ~ "Yes", 
+              message=="riboSeed unsuccessful" ~ "No"))
+  
+# put in original number of orrganisms, for plotting purposes()
+(p_outcomes <- ggplot(p_summary_data, 
+                      aes(x=reorder(strain, desc(strain)), y=thisid, shape=message,
+                          color=globalmessage, fill=globalmessage)) + 
+    scale_shape_manual(guide = "legend", values = c(21, 22, 23)) + 
+    geom_point(size=5)  + coord_flip() + mytheme +
+    labs("SRAs Proccessed by focusDB",
+         y="Number of SRAs", x="Organism", color="Run Status", fill="Run Status", shape="16s recovered?")  +
+    theme(axis.text=element_text(size=13))
+)  
 ```
 
 
@@ -203,3 +368,13 @@ The other three assemblies, we could re-assemble: GCF_000218325.1, GCF_000699665
 
 Now we can compare.
 
+
+
+
+We ran the pipelin
+
+###### table for 6 successful strains
+```{r}
+table <- read.csv("./docs/successful_strains_table.txt", header=TRUE, sep = " ")
+knitr::kable(table)
+```

@@ -113,7 +113,7 @@ round(table(silva_headers$category) / nrow(silva_headers) * 100, 2)
 
 ## Generating the flowchart
 ```{r}
-png("docs/figures/flowchart.png", width = 6, height = 6, res = 300, units = "in")
+png("docs/figures/1-flowchart.png", width = 6, height = 6, res = 300, units = "in")
 par(mar = c(1, 1, 1, 1))
 openplotmat() 
 cexd <- .5
@@ -149,10 +149,10 @@ textellipse(c(cols[5], .95),
          box.col = "#ffe4ca",rady=thisrady, radx=thisradx, 
          shadow.col = "#7b6c60", shadow.size = 0.005, cex = cexd)
 textrect(c(cols[1], rows[8]), 
-         boxsize, lab = "1. Download References \n(plentyofbugs)",
+         boxsize, lab = "1. Download References\n(plentyofbugs)",
          box.col = "#ffe4ca",rady=thisrady, radx=thisradx,
          shadow.col = "#7b6c60", shadow.size = 0.005, cex = cexd) 
-textrect(c(cols[5], rows[8]), boxsize, lab = "2. Download SRAs\n(sraFind + sra-tools)",
+textrect(c(cols[5], rows[8]), boxsize, lab = "2. Download SRAs\n(sraFind, sra-tools)",
          box.col = "#ffe4ca",rady=thisrady, radx=thisradx, 
          shadow.col = "#7b6c60", shadow.size = 0.005, cex = cexd) 
 textrect(c(cols[3], rows[7]), boxsize, lab = "For each SRA:",
@@ -180,13 +180,18 @@ textrect(c(cols[3], rows[3]), boxsize,
             box.col = "#a0ff9e",rady=thisrady, radx=thisradx,
              shadow.col = "#83d283", shadow.size = 0.005, cex = cexd) 
 ## Finalize
-textrect(c(cols[2], rows[2]), boxsize,  lab = "(8*) Extract Species's 16S \nfrom focusDB and Silva",
+textrect(c(cols[2], rows[2]), boxsize,  lab = "(8*) Extract Species's 16S\nfrom focusDB and Silva",
          box.col = "#ffe4ca",rady=thisrady, radx=thisradx, 
          shadow.col = "#7b6c60", shadow.size = 0.005, cex = cexd) 
 textrect(c(cols[4], rows[2]), boxsize, 
-            lab = "(9*)Align and Trim\n(mafft, TrimAl)",
+            lab = "(9*) Align and Trim\n(mafft, TrimAl)",
             box.col = "#d5b8af",rady=thisrady, radx=thisradx,
              shadow.col = NA, shadow.size = 0.005, cex = cexd) 
+straightarrow(from =  c(cols[3], rows[1]),
+              to = c(cols[3], rows[1] - .05),
+              arr.length=.2, arr.width=.2,
+              lwd = 1, arr.pos = 0.65)
+
 textrect(c(cols[3], rows[1]), boxsize, 
             lab = "Use with DADA2, etc",
             box.col = "white",rady=thisrady, radx=thisradx,
@@ -215,7 +220,7 @@ res <- read.csv("./docs/extreme_species_list.txt", sep="\t", col.names = "strain
 
 ## Running focusDB on the Extremes dataset
 
-### Figure 1: Number of SRAs available for each species
+### Suppl Figure 1: Number of SRAs available for each species
 
 A python script `sralist.py` was used to generate a list of the number of SRAs for a given species, based on parsing the results from sraFind.
 ```{bash eval=FALSE}
@@ -238,7 +243,7 @@ srac$has <- ifelse(srac$count == 0, "None Available", "SRAs Available")
    theme(legend.position = c(.8, .3), 
          text = element_text(size=8))
   )
-ggsave("docs/figures/srastrains.png", psrastrains, device = "png", dpi = 300, width = 6, height = 5)
+ggsave("docs/figures/S1-sras.png", psrastrains, device = "png", dpi = 300, width = 6, height = 5)
 ```
 
 
@@ -251,7 +256,7 @@ cat ./*/SUMMARY  > 2019-09-22-focusdb-results/results_summary.tab
 
 ```
 
-
+### Figure 2: sra successes
 ```{r}
 summary_data <- read.csv("results/summary_all", sep="\t", 
                          col.names = c("org", "status", "state", "message"), stringsAsFactors = F)
@@ -261,13 +266,11 @@ globals <- summary_data %>% filter(state=="global") %>%
 # tidy things up
 (globals$globalmessage <- gsub("^no", "No", globals$globalmessage))
 (globals$globalmessage <- gsub("your", "", globals$globalmessage))
+(globals$globalmessage <- gsub("No 16s sequences detected in re-assemblies", "No reassembled 16S", globals$globalmessage))
 (globals$globalmessage <- gsub("No available.*", "No available references", globals$globalmessage))
 
 
-p_summary_data_pre <- merge(summary_data %>% filter(state!="global"), globals, by="org", all=T) %>%   select(org, globalmessage, message, state )  distinct()
-
-  # mutate(color=as.factor(globalmessage), 
-  #        fill=ifelse(is.na(message), globalmessage,message))
+p_summary_data_pre <- merge(summary_data %>% filter(state!="global"), globals, by="org", all=T) %>%   select(org, globalmessage, message, state ) %>%  distinct()
 
 p_summary_data <- merge(srac,  p_summary_data_pre, by.x="strain", by.y="org")
 
@@ -278,7 +281,6 @@ p_summary_data <- p_summary_data %>% group_by(strain) %>%
               is.na(message) ~ "-",
               message=="Processed strain" ~ "Yes", 
               message=="riboSeed unsuccessful" ~ "No"))
-  
 # put in original number of orrganisms, for plotting purposes()
 (p_outcomes <- ggplot(p_summary_data, 
                       aes(x=reorder(strain, desc(strain)), y=thisid, shape=message,
@@ -289,6 +291,8 @@ p_summary_data <- p_summary_data %>% group_by(strain) %>%
          y="Number of SRAs", x="Organism", color="Run Status", fill="Run Status", shape="16s recovered?")  +
     theme(axis.text=element_text(size=13))
 )  
+ggsave("docs/figures/2-success.png", p_outcomes, device = "png", dpi = 300, width = 11, height = 7)
+
 ```
 
 

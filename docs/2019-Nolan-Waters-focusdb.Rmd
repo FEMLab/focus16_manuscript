@@ -54,10 +54,9 @@ focusdb also includes some utility tools to use the seqeunces with 16s amplicon 
 (combine-focusdb-and-silva) Combine seqeunces for a given organism from focusdb results and Silva database
 (align-and-trim-focusdb) For pipelines requiring alligned seequnces, generate alignment and trim with `mafft` and `TrimAl`, respectively
 
- ```{r flowcahrt, echo=FALSE, fig.cap="A caption", out.width = '100%'}
+ ```{r flowchart, echo=FALSE, fig.cap="A caption", out.width = '100%'}
 knitr::include_graphics("figures/flowchart.png")
 ```
-
 Fig 1. Flowchart demonstrating the process of 16db. Programs called upon are beside their corresponding box. The numbers correlate to the processes described in [16db overview].
  
 ## Results

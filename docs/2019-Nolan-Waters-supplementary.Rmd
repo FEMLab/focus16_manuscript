@@ -8,9 +8,10 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse)
-library(diagram)
+knitr::opts_chunk$set(echo = TRUE, cache.lazy = FALSE)
+library(tidyverse); packageVersion("tidyverse")
+library(diagram); packageVersion("diagram")
+library(Biostrings); packageVersion("Biostrings")
 # library(ggupset)
 
 mytheme <- ggplot2::theme_minimal() + 
@@ -31,11 +32,13 @@ mytheme <- ggplot2::theme_minimal() +
   )
 ```
 ##  Assessing SILVA's composition
-```{bash eval=FALSE}
-cat ~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz |gunzip  | grep ">" > ./silva132ref_headers.txt
+```{bash, eval=FALSE}
+#cat ~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz |gunzip  | grep ">" > ./silva132ref_headers.txt
 ```
 
-```{r parse_headerrs}
+```{r parse_headers, cache=TRUE}
+silva <- readRNAStringSet("SILVA_132_SSURef_tax_silva.fasta")
+
 codes_from_ncbi <- read.csv(text="Prefix	Database	Type
 BA,DF,DG,LD	DDBJ	CON division
 AN	EMBL	CON division
@@ -89,15 +92,18 @@ TAAA-TZZZ	DDBJ	Targeted Gene Projects
 KAAA-KZZZ	GenBank	Targeted Gene Projects
 AAAAA-AZZZZ	DDBJ	MGA", sep="\t", stringsAsFactors=F)
 
-silva_headers <- data.table::fread("./silva132ref_headers.txt", header=F, sep="\t")
+silva_headers <- data.frame("V1"=names(silva), stringsAsFactors = F)
 silva_headers$pre <- gsub(">(\\D*).*", "\\1", silva_headers$V1)
 #silva_headers$name <- gsub(">(.*?)\\s.*", "\\1", silva_headers$V1)
-silva_headers$start <- as.numeric(gsub(">(.*)\\.(.+)\\.(.*?)\\s.*", "\\2", silva_headers$V1))
-silva_headers$stop <-  as.numeric(gsub(">(.*)\\.(.+)\\.(.*?)\\s.*", "\\3", silva_headers$V1))
+silva_headers$start <- as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\2", silva_headers$V1))
+silva_headers$stop <-  as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\3", silva_headers$V1))
 silva_headers$wgs <- nchar(silva_headers$pre) > 3 # see table
 
 silva_headers$amplicon <- silva_headers$start < 10
-genome_pres <- codes_from_ncbi %>% filter(Type=="Genome project data") %>% unnest(Prefix = strsplit(Prefix, ",")) %>% select(Prefix) 
+genome_pres <- codes_from_ncbi %>% 
+  filter(Type=="Genome project data") %>% 
+  unnest(Prefix = strsplit(Prefix, ",")) %>% 
+  select(Prefix) 
 patent_pres <- codes_from_ncbi %>% filter(grepl("Patent", Type)) %>%
   unnest(Prefix = strsplit(Prefix, ",")) %>% 
   transform(Prefix=gsub(" ", "", Prefix)) %>% select(Prefix) 
@@ -271,9 +277,9 @@ cp ./*/*ribo16s.fasta ./2019-09-26-focusdb-results/
 ### Figure 2: sra successes
 ```{r plot_success}
 summary_data <- read.csv("results/2019-09-26-focusdb-results/summary_all", sep="\t", header=F,
-                         col.names = c("org", "status", "state", "message"), stringsAsFactors = F)
+                         col.names = c("org", "status", "state", "messag"), stringsAsFactors = F)
 globals <- summary_data %>% filter(state=="global") %>%
-  select(org, message) %>% rename(globalmessage=message)
+  select(org, messag) %>% dplyr::rename(globalmessage=messag)
 (globals$globalmessage <- ifelse(globals$globalmessage == "", "Success", globals$globalmessage))
 # tidy things up
 (globals$globalmessage <- gsub("No 16s sequences detected in re-assemblies", "No reassembled 16S", globals$globalmessage))
@@ -283,24 +289,24 @@ globals <- summary_data %>% filter(state=="global") %>%
 p_summary_data_pre <- merge(
   summary_data %>% filter(state!="global"),
   globals, by="org", all=T) %>% 
-  select(org, globalmessage, message, state ) %>%  distinct()
+  select(org, globalmessage, messag, state ) %>%  distinct()
 
 p_summary_data <- merge(srac,  p_summary_data_pre, by.x="strain", by.y="org") %>% 
   mutate(
     pmessage = case_when(
-      is.na(message) ~ "QC Fail",
-      startsWith(message, "Reads were") ~ "QC Fail",
-      startsWith(message, "Unable to process") ~ "QC Fail",
-      message=="" ~ "16S Recovered", 
-      message=="riboSeed unsuccessful" ~ "No 16S Recovered")) %>%
+      is.na(messag) ~ "QC Fail",
+      startsWith(messag, "Reads were") ~ "QC Fail",
+      startsWith(messag, "Unable to process") ~ "QC Fail",
+      messag=="" ~ "16S Recovered", 
+      messag=="riboSeed unsuccessful" ~ "No 16S Recovered")) %>%
   arrange(pmessage) %>%
   group_by(strain) %>%
   mutate(thisid = row_number()) %>%
- transform(thisid = ifelse(is.na(message), 0, thisid)) 
-p_summary_data %>% group_by(strain) %>% summarize(n=n()) %>% View() 
+ transform(thisid = ifelse(is.na(messag), 0, thisid)) 
+#p_summary_data %>% group_by(strain) %>% summarize(n=n()) %>% View() 
 # put in original number of orrganisms, for plotting purposes()
 (p_outcomes <- ggplot(p_summary_data, 
-                      aes(x=reorder(strain, desc(strain)), y=thisid, shape=pmessage,
+                      aes(x=strain, y=thisid, shape=pmessage,
                           color=globalmessage, fill=globalmessage)) + 
     scale_shape_manual(guide = "legend", values = c(21, 22, 23,24)) + 
     geom_point(size=5)  + coord_flip() + mytheme +
@@ -315,10 +321,8 @@ ggsave("docs/figures/2-success.png", p_outcomes, device = "png", dpi = 300, widt
 ## Assessing uniqueness:
 
 ```{r plot_uniqueness, cache=TRUE}
-library(Biostrings)
 uniqueness <- data.frame("Organism"=NA, "Unique"=NA,  "Duplicated"=NA, "DB"=NA, stringsAsFactors = F)
 uniqueness <- uniqueness[!is.na(uniqueness),]
-silva = readRNAStringSet("~/Downloads/SILVA_132_SSURef_tax_silva.fasta")
 for (organism in c("Bacteroides cellulosilyticus", "Bacteroides fragilis", "Bacteroides ovatus",
                    "Bacteroides thetaiotaomicron", "Bacteroides vulgatus", 
                     "Bacteroides uniformis", "Parabacteroides distasonis")){
@@ -368,7 +372,7 @@ We us
 
 ## Calcualting Alpha Diversity
 
-```{r plot_shannon}
+```{r plot_shannon, eval=FALSE}
 shannon <- read.csv(
   "./tmpalign.mafft.shannon", sep="\t", header = F, 
   col.names = c("pos", "region", "entropy", "entropy_subset"), 

@@ -13,7 +13,8 @@ library(tidyverse)
 library(diagram)
 # library(ggupset)
 
-mytheme <- ggplot2::theme_minimal() + ggplot2::theme(
+mytheme <- ggplot2::theme_minimal() + 
+  ggplot2::theme(
     rect = element_rect(fill = "transparent"),
     #plot.background = element_rect(fill = "#FAFAFA", color=NA),
     plot.background = element_rect(fill = "transparent", color=NA),
@@ -30,11 +31,11 @@ mytheme <- ggplot2::theme_minimal() + ggplot2::theme(
   )
 ```
 ##  Assessing SILVA's composition
-```{bash eval=F}
+```{bash eval=FALSE}
 cat ~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz |gunzip  | grep ">" > ./silva132ref_headers.txt
 ```
 
-```{r}
+```{r parse_headerrs}
 codes_from_ncbi <- read.csv(text="Prefix	Database	Type
 BA,DF,DG,LD	DDBJ	CON division
 AN	EMBL	CON division
@@ -97,7 +98,12 @@ silva_headers$wgs <- nchar(silva_headers$pre) > 3 # see table
 
 silva_headers$amplicon <- silva_headers$start < 10
 genome_pres <- codes_from_ncbi %>% filter(Type=="Genome project data") %>% unnest(Prefix = strsplit(Prefix, ",")) %>% select(Prefix) 
+patent_pres <- codes_from_ncbi %>% filter(grepl("Patent", Type)) %>%
+  unnest(Prefix = strsplit(Prefix, ",")) %>% 
+  transform(Prefix=gsub(" ", "", Prefix)) %>% select(Prefix) 
 silva_headers$cg <- silva_headers$pre %in% genome_pres$Prefix
+silva_headers$patent <- silva_headers$pre %in% patent_pres$Prefix
+silva_headers$htgs <- silva_headers$pre %in% c("AC", "DP")
 
 table(silva_headers$cg) / nrow(silva_headers)
 table(silva_headers$wgs) / nrow(silva_headers)
@@ -105,14 +111,16 @@ table(silva_headers$amplicon) / nrow(silva_headers)
 
 silva_headers$category <- case_when(
   silva_headers$wgs ~ "Draft",
+  silva_headers$htgs ~ "HTGS",
+  silva_headers$patent ~ "Patent",
   silva_headers$cg ~ "Complete Genome",
-   silva_headers$amplicon ~  "Amplicon")
-round(table(silva_headers$category) / nrow(silva_headers) * 100, 2)
+  silva_headers$amplicon ~  "Amplicon")
+round(table(silva_headers$category, useNA = "always") / nrow(silva_headers) * 100, 2)
 ```
 
 
 ## Generating the flowchart
-```{r}
+```{r make_flowchart}
 png("docs/figures/1-flowchart.png", width = 6, height = 6, res = 300, units = "in")
 par(mar = c(1, 1, 1, 1))
 openplotmat() 
@@ -226,8 +234,8 @@ A python script `sralist.py` was used to generate a list of the number of SRAs f
 ```{bash eval=FALSE}
 python scripts/sralist.py -s ~/Desktop/16db/py16db/sraFind-All-biosample-with-SRA-hits.txt -l ~/Desktop/focusdb/docs/extreme_species_list.txt -o results/extreme_sra_count
 ```
-```{r}
-srac <- read.csv2("results/extreme_sra_count/sralist.txt", sep=":", col.names = c("strain", "count"), stringsAsFactors = F)
+```{r plot_sras}
+srac <- read.csv2("results/extreme_sra_count/sralist.txt", sep=":", col.names = c("strain", "count"), stringsAsFactors = F, header=F)
 
 srac$genus <- gsub("(.*) .*","\\1", srac$strain)
 srac$species <- gsub("(.*) (.*)","\\2", srac$strain)
@@ -251,60 +259,132 @@ ggsave("docs/figures/S1-sras.png", psrastrains, device = "png", dpi = 300, width
 ###### Commands used for each of the 6 species with SRAs and reference genomes
 ```{bash eval=FALSE}
 # executed on gruffalo at $SCRATCH/2019-09-19-16db/
+# tried running with parallel, but in cases like this, its 
+# not as efficient, as we wend up waiting for the organisms with more SRAs to finish
 # cat extremes_orgs.txt | parallel -j 16 --colsep ' ' 16db  -o {1}_{2} -g {1}_{2}_genomes -n \""{1} {2}"\" --cores 2 --memory 80 --n_references 50 --n_SRAs 20
-cat ./*/SUMMARY  > 2019-09-22-focusdb-results/results_summary.tab
+while read genus species; do 16db  -o ${genus}_${species} -g ${genus}_${species}_genomes -n "$genus $species" --cores 32 --memory 80 --n_references 50 --n_SRAs 20 --subassembler spades --threads 2  -v 1  ; done < extremes_orgs.txt
+cat ./*/SUMMARY  > 2019-09-26-focusdb-results/summary_all
+cp ./*/*ribo16s.fasta ./2019-09-26-focusdb-results/
 
 ```
 
 ### Figure 2: sra successes
-```{r}
-summary_data <- read.csv("results/summary_all", sep="\t", 
+```{r plot_success}
+summary_data <- read.csv("results/2019-09-26-focusdb-results/summary_all", sep="\t", header=F,
                          col.names = c("org", "status", "state", "message"), stringsAsFactors = F)
 globals <- summary_data %>% filter(state=="global") %>%
   select(org, message) %>% rename(globalmessage=message)
 (globals$globalmessage <- ifelse(globals$globalmessage == "", "Success", globals$globalmessage))
 # tidy things up
-(globals$globalmessage <- gsub("^no", "No", globals$globalmessage))
-(globals$globalmessage <- gsub("your", "", globals$globalmessage))
 (globals$globalmessage <- gsub("No 16s sequences detected in re-assemblies", "No reassembled 16S", globals$globalmessage))
-(globals$globalmessage <- gsub("No available.*", "No available references", globals$globalmessage))
+# (globals$globalmessage <- gsub("No available.*", "No available references", globals$globalmessage))
 
 
-p_summary_data_pre <- merge(summary_data %>% filter(state!="global"), globals, by="org", all=T) %>%   select(org, globalmessage, message, state ) %>%  distinct()
+p_summary_data_pre <- merge(
+  summary_data %>% filter(state!="global"),
+  globals, by="org", all=T) %>% 
+  select(org, globalmessage, message, state ) %>%  distinct()
 
-p_summary_data <- merge(srac,  p_summary_data_pre, by.x="strain", by.y="org")
-
-p_summary_data <- p_summary_data %>% group_by(strain) %>% 
+p_summary_data <- merge(srac,  p_summary_data_pre, by.x="strain", by.y="org") %>% 
+  mutate(
+    pmessage = case_when(
+      is.na(message) ~ "QC Fail",
+      startsWith(message, "Reads were") ~ "QC Fail",
+      startsWith(message, "Unable to process") ~ "QC Fail",
+      message=="" ~ "16S Recovered", 
+      message=="riboSeed unsuccessful" ~ "No 16S Recovered")) %>%
+  arrange(pmessage) %>%
+  group_by(strain) %>%
   mutate(thisid = row_number()) %>%
-  transform(thisid = ifelse(is.na(message), 0, thisid),
-            message = case_when(
-              is.na(message) ~ "-",
-              message=="Processed strain" ~ "Yes", 
-              message=="riboSeed unsuccessful" ~ "No"))
+ transform(thisid = ifelse(is.na(message), 0, thisid)) 
+p_summary_data %>% group_by(strain) %>% summarize(n=n()) %>% View() 
 # put in original number of orrganisms, for plotting purposes()
 (p_outcomes <- ggplot(p_summary_data, 
-                      aes(x=reorder(strain, desc(strain)), y=thisid, shape=message,
+                      aes(x=reorder(strain, desc(strain)), y=thisid, shape=pmessage,
                           color=globalmessage, fill=globalmessage)) + 
-    scale_shape_manual(guide = "legend", values = c(21, 22, 23)) + 
+    scale_shape_manual(guide = "legend", values = c(21, 22, 23,24)) + 
     geom_point(size=5)  + coord_flip() + mytheme +
     labs("SRAs Proccessed by focusDB",
-         y="Number of SRAs", x="Organism", color="Run Status", fill="Run Status", shape="16s recovered?")  +
+         y="Number of SRAs", x="Organism", color="Run Status", fill="Run Status", shape="SRA status")  +
     theme(axis.text=element_text(size=13))
 )  
 ggsave("docs/figures/2-success.png", p_outcomes, device = "png", dpi = 300, width = 11, height = 7)
 
 ```
 
+## Assessing uniqueness:
 
-## Generating Multiplee Sequence Alignments
+```{r plot_uniqueness, cache=TRUE}
+library(Biostrings)
+uniqueness <- data.frame("Organism"=NA, "Unique"=NA,  "Duplicated"=NA, "DB"=NA, stringsAsFactors = F)
+uniqueness <- uniqueness[!is.na(uniqueness),]
+silva = readRNAStringSet("~/Downloads/SILVA_132_SSURef_tax_silva.fasta")
+for (organism in c("Bacteroides cellulosilyticus", "Bacteroides fragilis", "Bacteroides ovatus",
+                   "Bacteroides thetaiotaomicron", "Bacteroides vulgatus", 
+                    "Bacteroides uniformis", "Parabacteroides distasonis")){
+  print(paste("processing", organism))
+  silva_subset <-silva[grepl(organism, names(silva))]
+  thistab <- table(duplicated(silva_subset))
+  uniqueness <- rbind(
+    uniqueness, 
+    data.frame("Organism"=organism, "Unique"=thistab[[1]],  "Duplicated"=thistab[[2]], "DB"="SILVA"))
+  focus_subset <- readDNAStringSet(paste0("./results/extracted_sequences/", gsub(" ",  "_", organism), "_db.fasta"))
+  thistab <- table(duplicated(focus_subset))
+  uniqueness <- rbind(
+    uniqueness, 
+    data.frame("Organism"=organism, "Unique"=thistab[[1]],  "Duplicated"=thistab[[2]], "DB"="focusDB + SILVA"))
+  
+}
+
+(p_unique <- ggplot(uniqueness %>% gather(key="grp", value="val", -Organism, -DB ), 
+       aes(x=Organism, y=val, fill=DB)) +
+  coord_flip() +
+  geom_bar(stat="identity", position="dodge") + facet_wrap(~grp) 
+)
+
+ggsave("docs/figures/2-unique.png", p_unique, device = "png", dpi = 300, width = 7, height = 5)
+
+
+```
+
+## Generating Multiple Sequence Alignments
+### Defining the regions of 16S in E coli
+The coordinates for the common 16S primers correspond to E coli, so we selected this sequence.
+Reference: 
+ - https://www.ncbi.nlm.nih.gov/nuccore/NC_000913.3?report=fasta&from=4166659&to=4168200
+ - the regions https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/s12859-016-0992-
+These are implemented in the `calculate-shannon-entropy` script.
+
+```{bash eval=FALSE}
+# Combining sequences
+while read genus species; do if [ -f "./results/2019-09-26-focusdb-results/${genus}_${species}_ribo16s.fasta" ] ; then combine-focusdb-and-silva -d ~/Downloads/SILVA_132_SSURef_tax_silva.fasta -n "$genus $species" -S  ./results/2019-09-26-focusdb-results/${genus}_${species}_ribo16s.fasta --dna --lower  > ./results/extracted_sequences/${genus}_${species}_db.fasta ; fi; done < ./docs/extreme_species_list.txt
+# alignment + trimming
+while read genus species; do if [ -f "./results/2019-09-26-focusdb-results/${genus}_${species}_ribo16s.fasta" ] ; then align-and-trim-focusdb --i ./results/extracted_sequences/${genus}_${species}_db.fasta -o ./results/extracted_sequences/${genus}_${species}_db ; fi; done < ./docs/extreme_species_list.txt
+#  
+```
+We us
 - parameters used for mafft
 - where in the repo the resulting alingmnts are
 
 ## Calcualting Alpha Diversity
-```{r}
 
+```{r plot_shannon}
+shannon <- read.csv(
+  "./tmpalign.mafft.shannon", sep="\t", header = F, 
+  col.names = c("pos", "region", "entropy", "entropy_subset"), 
+  stringsAsFactors = F) %>% 
+  gather(key="subset", value="entropy", -pos, -region) %>%
+  mutate(grp = case_when(
+    subset == "entropy" ~ "SILVA + focusDB",
+    subset == "entropy_subset" ~ "SILVA"
+  ))
+str(shannon)
+
+(p_diversity <- ggplot(shannon, aes(x=pos, color=grp, shape=grp, fill=region, y=entropy)) + 
+    scale_shape_manual(values=c(21, 22)) + 
+  geom_point(size=4, alpha=.5) + geom_smooth())
+ggsave("docs/figures/4-diversity.png", p_diversity, device = "png", dpi = 300, width = 11, height = 7)
 ```
-- copy the code to calculate the Shannon entropy here
 
 
 ## Assessing the provenance of the Silva strains
@@ -320,7 +400,7 @@ riboSeed has been show to generate high-quality reconstructions of each rDNA whe
 
 ### Provenance of b_ovatus strains
 First, we read in the silva headers for the b_ovatus strains. The header for the silva database constists of `>ACCESSION.start.end name`.  We are not concerned with the complete genomes, so we will try to match the acessions with the 
-```{r}
+```{r, eval=FALSE}
 library(data.table)
 ribo16s <- readLines("./results/databases/speciesdb/silva16/b_ovat_16.fa.mafft")
 sraFind_data <- fread("https://raw.githubusercontent.com/nickp60/sraFind/master/results/sraFind-All-biosample-with-SRA-hits.txt")
@@ -353,7 +433,7 @@ bash tmp_link_accessions > b_ovatus_sras
 Now, we have a list any available SRAs for the list of strains in the Silva database, with columns for the name/region (from silva), the assembly, the sample name, scientific name, tech, type, and SRA.  Note that the silva name referes to the sequence, not the assembly, so thats why we need  to fetch the column for the aassembly as well.
 
 Now, we can look at how many rDNAs are represented in the database.
-```{r}
+```{r eval=FALSE}
 names <- c("assembly", "silva", "Run", "SampleName", "ScientificName", "LibraryStrategy", "LibrarySource")
 ovatus_sras <- read.csv("./docs/b_ovatus_sras", sep="\t", header = F, col.names = names)
 (ovatus_summary <- ovatus_sras  %>% group_by(assembly) %>% 

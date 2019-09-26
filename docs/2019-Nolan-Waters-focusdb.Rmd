@@ -15,7 +15,7 @@ library(tidyverse)
 library(diagram)
 ```
 ## Abstract
-Current approaches to interpretting 16s amplicon data are hampered by several factors, among these are database inaccuracy/completeness, sequencing inaccuracy, biased DNA/RNA extraction, and more. The limitation of database accuracy stems from where the seqeunces are sourced: namely, from draft genomes. Ribosomal regions are nortoriously difficult to assemble well due to their repeated regions, and as such, the 16s region assembled is frequently an amalgamation of the different loci within the genome. Especially when using Actual Sequnce Variants for high-resolution community analysis, assigning exact taxonomy to a given amplicon would be impossible in such a case, as even a perfectly seqeunced amplicon would not be an exact match to an amalgamated 16s sequence in the database. Here, we present focusDB, a pipeline for improving 16s databases by mining the SRA for underexploited whole-genome sequencing runs.  Using riboSeed (a genome assembly tool for correcting rDNA missassembly), focusDB allows for high-throughput curation of 16S databases. We show the improvements that can be gained for a number of species, and invite the community for the opportunity to expand our work to existing resources such as SILVA, GreenGenes, and RDP.
+Current approaches to interpretting 16s amplicon data are hampered by several factors, among these are database inaccuracy/incompleteness, sequencing inaccuracy, biased DNA/RNA extraction, and more. The limitation of database accuracy stems from where the seqeunces are sourced: namely, from draft genomes. Ribosomal regions are nortoriously difficult to assemble well due to their repeated regions, and as such, the 16s region assembled is frequently an amalgamation of the different loci within the genome. Especially when using Actual Sequnce Variants for high-resolution community analysis, assigning exact taxonomy to a given amplicon would be impossible in such a case, as even a perfectly seqeunced amplicon would not be an exact match to an amalgamated 16s sequence in the database. Here, we present focusDB, a pipeline for improving 16s databases by mining the SRA for underexploited whole-genome sequencing runs.  Using riboSeed (a genome assembly tool for correcting rDNA missassembly), focusDB allows for high-throughput curation of 16S databases. We show the improvements that can be gained for a number of species, and invite the community for the opportunity to expand our work to existing resources such as SILVA, GreenGenes, and RDP.
 
 ## Introduction
 16S rDNA is the standard in amplicon sequencing of community analysis, and such is a testament to the success of this gene as a universal indicator of microbial diversity [@klindworth2013evaluation]. 16S rDNA has proven effectiveness in community analysis in environments such as the gut microbiota of cattle and pigs [@avila2018prediction], soil [@santamaria2018soil] and marine environments [@dang2000bacterial]. The rDNA regions are highly conserved between species however maintain enough diversity that organisms can be differentiated at the genus level with great accuracy [@woo2008then], whilst also maintaining enough conservation to distinguish at the Domain level [@woese1990towards]. Prokaryotes contain up to 21 rDNA operons, with approximately 40% of prokaryotes containing 1 or 2 copies of the rDNA region [@acinas2004divergence]. Although there are usually multiple copies of the rDNA operon, there still lies variability between each rDNA region within a single genome.
@@ -28,7 +28,6 @@ The popularity of short-read sequencing platforms has driven the issue of incorr
 
 A survey of the Silva 132 database shows that 9.5% of seqeunces come from draft genome assemblies;  the  vast majority (87%) consist of amplicon sequences (usually sanger  seqeunced, etc), and the remaining 2% come from complete genomes.  
 
- 
 The correct reassembly of multiple rDNA regions of draft genomes is done so by riboSeed, which uses a reference genome to correctly assemble an organisms’ genome, with specific emphasis on the rDNA regions [@waters2018riboseed]. The flanking regions of rDNA is highly conserved between species yet variable between rDNA copies in the same genome. The unique flanking regions of the rDNA operon are exploited by riboSeed mapping the genome against a reference genome, correctly identifying and constructing each rDNA region. The reference genome is the genome of an organism that is as genetically similar as possible to the genome of the organism that is being assembled.
  
 In order to maximize the information gained from 16s amplicon sequencing experiments, we developed 16db: a pipeline to improve existing 16S rDNA databases through mining the SRA for candidates for reassembly. The use of 16db cannot correct existing amplicon sequencing efforts, however the number and improvement of 16S rDNA sequences for taxonomic reference can be improved with 16db, through the reassembly of draft genomes and extraction of 16S rDNA sequences.
@@ -40,36 +39,68 @@ In order to maximize the information gained from 16s amplicon sequencing experim
  
 16db requires certain required arguments to function, with a number of optional arguments to suit the users’ needs. Required arguments include: query species, output directory, reference genomes output directory and strain number. An input of the six aforementioned arguments leads to base functionality of the pipeline. Optional arguments can be used to increase suitability, such as specification of CPU and RAM capabilities of the system used.
 The 16db pipeline is shown as a flowchart (Fig. 1). Further details on all software used in 16db can be found in supplementary information.
+
 1) `plentyofbugs` is used to download all (or a user-defined subsample) of potential reference genomes from Refseq.  The amount of ribosomal RNA operons present in the reference genome is assessed with barrnap, a program capable of locating and returning the coordinates of ribosomal features. This step is to evaluate the highest possible number of 16S sequences that can be assembled for the current SRA.
 2)  `sraFind` is used to identify whole-genome sequencing SRA accessions for the organism of interest.  All of these are downloaded with fasterq-dump[cite].
 The following process occurs in a loop for each SRA:
 3)   Reads are run through several quality control steps. This  will reject SRAs where reads are too short to be effectivley used with riboSeed  (<65bp)The average length of the reads is checked based on the first 30 reads. This is to prevent further processing of an SRA that contains reads of very low length (<65bp). As riboSeed cannot assemble genomes with reads of this length. Reads are then trimmed with `sickle`.
 4)   Read coverage is assessed using a user-inputted genome length if given, or the length of the reference genome if not. If read coverage exceeds a user-specified threshold (default 50X, see SPAdes paper), reads are down-sampled to reach the desired coverage.
 5)  The best reference genome is determined via `plentyofbugs`. In short, given reads and set of potential reference genomes, `plentyofbugs` uses Mash distances to quickly determine the closest reference to a preliminary assembly generated with SKESA.
-6)   The SRA reads are then assembled using riboSeed, which uses the reference genome from 4) as a template genome.
-7)  16S rDNA sequences are extracted from the assembled genome using barrnap and concatenated to a single file, where all 16S sequences from all SRAs for the query species are stored.
+6) The SRA reads are then assembled using riboSeed, which uses the reference genome from 4) as a template genome.
+7) 16S rDNA sequences are extracted from the assembled genome using barrnap and concatenated to a single file, where all 16S sequences from all SRAs for the query species are stored.
 
 focusdb also includes some utility tools to use the seqeunces with 16s amplicon analysis pipelines.
 
-(combine-focusdb-and-silva) Combine seqeunces for a given organism from focusdb results and Silva database
-(align-and-trim-focusdb) For pipelines requiring alligned seequnces, generate alignment and trim with `mafft` and `TrimAl`, respectively
+- (combine-focusdb-and-silva) Combine seqeunces for a given organism from focusdb results and Silva database
+- (align-and-trim-focusdb) For pipelines requiring alligned seequnces, generate alignment and trim with `mafft` and `TrimAl`, respectively
 
  ```{r flowchart, echo=FALSE, fig.cap="A caption", out.width = '100%'}
-knitr::include_graphics("figures/flowchart.png")
+knitr::include_graphics("figures/1-flowchart.png")
 ```
 Fig 1. Flowchart demonstrating the process of 16db. Programs called upon are beside their corresponding box. The numbers correlate to the processes described in [16db overview].
  
 ## Results
-### DADA2 Extreme dataset
-In order to showcase 16db, a dataset was chosen to suitably demonstrate the effect that 16db had on the taxonomic classification. The dataset chosen was taken from the DADA2 pipeline paper [REF]. DADA2 is an amplicon analysis pipeline used specifically for high-resolution illumina data. The DADA2 paper generated three mock communities to test their pipeline; balanced, HMP and extreme with 57, 21 and 27 members respectively. Each community had varying levels of diversity in the form of nucleotide similarity between species, with the extreme dataset containing strains that were separated by as little as a single nucleotide. Each of the three mock communities were sequenced at a depth of 500,000 Illumina MiSeq paired-end reads 2x250bp. The extreme dataset was obtained from NCBI using the accession SRX1478507 (http://www.ncbi.nlm.nih.gov/sra/SRX1478507) and run through the DADA2 1.12.1 pipeline.
+
+### DADA2 Extreme dataset: a case study
+In order to showcase 16db, a dataset was chosen to suitably demonstrate the effect that 16db had on the taxonomic classification. The dataset chosen was taken from the DADA2 pipeline paper [REF]. DADA2 is an amplicon analysis pipeline used specifically for high-resolution illumina data. The DADA2 paper generated three mock communities to test their pipeline; balanced, HMP and extreme with 57, 21 and 27 members respectively. Each community had varying levels of diversity in the form of nucleotide similarity between species, with the extreme dataset containing strains that were differentiated by as little as a single nucleotide. Each of the three mock communities were sequenced at a depth of 500,000 Illumina MiSeq paired-end reads 2x250bp. The extreme dataset was obtained from NCBI using the accession SRX1478507 (http://www.ncbi.nlm.nih.gov/sra/SRX1478507) and run through the DADA2 1.12.1 pipeline.
 The R script used for the DADA2 pipeline is available in the supplementary information.
- 
-Of the organisms, 16 had publicly available WGS data in the SRA database.
+
+In the DADA2 tutorial, they recover XX ASVs; our hands with version 1.12.1, we recovered 34 ASVs.  Using table X from the DADA2 paper, we ran focusDB on eacho of the 27 species listed, also including  _Anaerocolumna xylanovorans_, an updated name for _Clostridium xylanovorans_.
+
+
+Of the 27 organisms in the Extreme dataset, 16 had publicly available WGS data in the SRA database. Others were excluded as no reference genomes were available for reassembly. From those remaining, focusDB successfully recovered potentially novel 16S seqeunces from 6 strains.
+
  ```{r srafig, echo=FALSE, fig.cap="Strains with whole genome seqeuncing SRAs available", out.width = '100%'}
-knitr::include_graphics("figures/srastrains.png")
+knitr::include_graphics("figures/2-success.png")
 ```
- 
- 
+
+### Assessing the database Diversity
+Ideally focusDB would be applied to every eligible SRA currently available; we do not have the resources to do this. In order to show what data yields could be expected, we assessed charactaristics of species-specific and genus-specific databases for the applicable organisms in the Extremes dataset.
+
+Table 1: Organisms for which focusDB could recover sequences.
+
+| Organism        |                  | SRAs      |          | focusDB | SILVA | FocusDB + SILVA |
+|-----------------|------------------|-----------|----------|---------|-------|-----------------|
+| Genus           | Species          | Processed | Pass QC  | New 16S | 16s   | Unique 16S      |
+| Bacteroides     | cellulosilyticus |         3 |        2 |       7 |    19 |                 |
+| Bacteroides     | fragilis         |       20* |       20 |     187 |   344 |                 |
+| Bacteroides     | ovatus           |        12 |       10 |      35 |    56 |                 |
+| Bacteroides     | thetaiotaomicron |        14 |       14 |      45 |    73 |                 |
+| Bacteroides     | uniformis        |        15 |       14 |      45 |    74 |                 |
+| Bacteroides     | vulgatus         |        14 |       11 |      45 |    61 |                 |
+| Parabacteroides | distasonis       |        18 |       13 |      35 |    84 |                 |
+** 112 B. fragilis SRAs were availible
+
+NOTE: generate table with https://www.tablesgenerator.com/markdown_tables
+
+Shannon entropy was then used to determine thedatabase diversity with and without the additions from focusDB.
+
+
+
+
+### Comparing reassembled 16S to Draft 16S
+### Species Assignment of DADA2's Extremes ASVs
+
 Describe how and why the sequencing data such as the SILVA dataset used by DADA2 and the same species were chosen for the analysis with the shannon entropy also.
 -       Describe the process for how out of 27, only 6 species were left in the analysis. Perhaps leave it to the discussion to talk about how more draft genomes will be generated in the future with pacbio etc.
 -       Describe how the 16db pipeline ran the 6 species with reference to the 16db program part of the paper. (as below)

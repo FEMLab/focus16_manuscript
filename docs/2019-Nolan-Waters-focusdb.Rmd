@@ -1,6 +1,6 @@
 ---
 title: 'FocusDB: mining underutilized SRAs to make a high-resolution 16S rRNA database'
-author: "Ben Nolan and  Nicholas Waters"
+author: "Ben Nolan, Nicholas Waters"
 date: "9/18/2019"
 output: html_document
 bibliography: focusdb_references.bib
@@ -36,7 +36,8 @@ In order to maximize the information gained from 16s amplicon sequencing experim
 16db is a pipeline to download draft genome SRAs for a species, reassemble, and extract the 16S rDNA sequences from each draft genome for use in a curated 16s database. These 16S sequences can then be used, in addition to pre-existing 16S sequences, to enhance taxonomic classification through the increased number of 16S rDNA sequences.
 
 16db can be installed via pip into a conda enviroment, for maximum reproducibility.
- 
+
+### 
 16db requires certain required arguments to function, with a number of optional arguments to suit the users’ needs. Required arguments include: query species, output directory, reference genomes output directory and strain number. An input of the six aforementioned arguments leads to base functionality of the pipeline. Optional arguments can be used to increase suitability, such as specification of CPU and RAM capabilities of the system used.
 The 16db pipeline is shown as a flowchart (Fig. 1). Further details on all software used in 16db can be found in supplementary information.
 
@@ -54,7 +55,7 @@ focusdb also includes some utility tools to use the seqeunces with 16s amplicon 
 - (combine-focusdb-and-silva) Combine seqeunces for a given organism from focusdb results and Silva database
 - (align-and-trim-focusdb) For pipelines requiring alligned seequnces, generate alignment and trim with `mafft` and `TrimAl`, respectively
 
- ```{r flowchart, echo=FALSE, fig.cap="A caption", out.width = '100%'}
+ ```{r flowchart, echo=FALSE, fig.cap="", out.width = '80%'}
 knitr::include_graphics("figures/1-flowchart.png")
 ```
 Fig 1. Flowchart demonstrating the process of 16db. Programs called upon are beside their corresponding box. The numbers correlate to the processes described in [16db overview].
@@ -75,102 +76,53 @@ knitr::include_graphics("figures/2-success.png")
 ```
 
 ### Assessing the database Diversity
-Ideally focusDB would be applied to every eligible SRA currently available; we do not have the resources to do this. In order to show what data yields could be expected, we assessed charactaristics of species-specific and genus-specific databases for the applicable organisms in the Extremes dataset.
+Ideally focusDB would be applied to every eligible SRA currently available; we do not have the resources to do this. In order to show what data yields could be expected, we assessed charactaristics of species-specific databases for the eligible organisms in the Extremes dataset.
 
-Table 1: Organisms for which focusDB could recover sequences.
+Table 1: Unique sequences for which focusDB could recovered 16S seqeunces from re-assembled draft genomes
 
-| Organism        |                  | SRAs      |          | focusDB | SILVA | FocusDB + SILVA |
-|-----------------|------------------|-----------|----------|---------|-------|-----------------|
-| Genus           | Species          | Processed | Pass QC  | New 16S | 16s   | Unique 16S      |
-| Bacteroides     | cellulosilyticus |         3 |        2 |       7 |    19 |                 |
-| Bacteroides     | fragilis         |       20* |       20 |     187 |   344 |                 |
-| Bacteroides     | ovatus           |        12 |       10 |      35 |    56 |                 |
-| Bacteroides     | thetaiotaomicron |        14 |       14 |      45 |    73 |                 |
-| Bacteroides     | uniformis        |        15 |       14 |      45 |    74 |                 |
-| Bacteroides     | vulgatus         |        14 |       11 |      45 |    61 |                 |
-| Parabacteroides | distasonis       |        18 |       13 |      35 |    84 |                 |
-** 112 B. fragilis SRAs were availible
+| Genus           | Species          | SRAs Used    | SRAs Pass QC | focusDB | SILVA | focusDB + SILVA |
+|-----------------|------------------|----------|-----------|---------|-------|-----------------|
+| Bacteroides     | cellulosilyticus | 3        | 2         | 7       | 14    | 21       |
+| Bacteroides     | fragilis         | 20**     | 18        | 152     | 229   | 381      |
+| Bacteroides     | ovatus           | 12       | 7         | 29      | 51    | 80       |
+| Bacteroides     | thetaiotaomicron | 14       | 9         | 36      | 65    | 101      |
+| Bacteroides     | vulgatus         | 14       | 10        | 41      | 52    | 93       |
+| Bacteroides     | uniformis        | 15       | 13        | 29      | 43    | 72       |
+| Parabacteroides | distasonis       | 18       | 9         | 30      | 65    | 95       |
 
-NOTE: generate table with https://www.tablesgenerator.com/markdown_tables
+** 112 total _B. fragilis_ SRAs were availible; we limitted our scope to 20 for computational purposes.
 
-Shannon entropy was then used to determine thedatabase diversity with and without the additions from focusDB.
+<!-- NOTE: generate table with https://www.tablesgenerator.com/markdown_tables -->
 
 
+ ```{r uniquefig, echo=FALSE, fig.cap="Sequences", out.width = '100%'}
+knitr::include_graphics("figures/3-unique.png")
+```
 
 
 ### Comparing reassembled 16S to Draft 16S
+
+As repeated rDNA operons are difficult to assembly, Draft genome rDNA can (and often do) contain a single rDNA.  This is problematic for species identification -- the rDNA recovered is not just one of /n/ rDNAs, but it can be a consensus "summary"/"collapsed" rDNA resulting from imperfect assembly of the repeated region. 
+
+riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. Here, we compare the 16s seqeunces from riboSeed reassembly of draft genomes to the initial (potentially collapsed) 16s seqeunces.
+
+For the 7 organisms, we identified which of SILVAs originated from which assemblies, and assessed their levels of completeness.  In some cases (such as XX and YY), we found that the the original draft genome contained all the rDNAs. 
+
+For those that didn't, we determined whether the rDNAs assembled with riboSeed matched any of the rDNAs in the  database for that particular strain.
+
+
 ### Species Assignment of DADA2's Extremes ASVs
 
-Describe how and why the sequencing data such as the SILVA dataset used by DADA2 and the same species were chosen for the analysis with the shannon entropy also.
--       Describe the process for how out of 27, only 6 species were left in the analysis. Perhaps leave it to the discussion to talk about how more draft genomes will be generated in the future with pacbio etc.
--       Describe how the 16db pipeline ran the 6 species with reference to the 16db program part of the paper. (as below)
- 
-### Parabacteroides
-A total of 240 16S sequences were obtained from 6 species across 2 genera. mafft was used to produce a multiple sequence alignment and the result was processed with iqtree to cluster and produce a maximum-likelihood tree. This was done to determine the similarity between the amplicon sequence variants (ASV), the sequences present on the reference database used by DADA2 (silva_nr_132) and the sequences extracted by 16db. This was used as the benchmark to determine the effectiveness of the 16db-generated 16S rDNA sequences as reference sequences for taxonomic classification. Using mash, each genus was clustered.
- 
-### Bacteroides
--       ...
- 
- 
-### Shannon Entropy Analysis
--       Describe why and how the shannon entropy analysis was done. Essentially to determine if and how much diversity was added to the sequence dataset for both Parabacteroides and Bacteroides.
- 
- 
-### Results & Discussion
- 
--       Talk about limitations of 16db here and why not 100% of the 16S sequences were not assembled and extracted, such as ref genome similarity, extreme similarity of 16s copies etc.
-34 Amplicon sequencing variants were detected from the extreme dataset containing 27 strains, from 26 species. For each species, in order to add sequences using 16db, certain criteria were required; complete genomes available for download from the NCBI website for use as reference genomes, draft genome raw reads available on the Sequence Read Archive (SRA) and finally that species must contain multiple rDNA operons. Of the 26 species in the extreme dataset, only 6 satisfied these criteria. All 6 species were run through 16db:
- 
- 
-Fig. 2. Success of 16db in reassembling the six species from the extreme dataset for which the required criteria were met. The maximum number of SRAs analysed for any species was set to 20.
- 
-### Parabacteroides
-         Extreme Dataset Analysis
- 
-The SILVA database used by DADA2 [ref to database] contained 120 16S rDNA sequences for the genus Parabacteroides. Three ASVs from the DADA2 pipeline were identified by DADA2 as belonging to this genus, two of which were Parabacteroides distasonis and the remaining ASV was Parabacteroides merdae. 16db generated 31 16S rDNA sequences from SRAs of Parabacteroides distasonis. All sequences were concatenated to a single file, resulting in 154 sequences. This file was then processed for MSA, clustering and phylogenetic construction. 
-Of the two Parabacteroides distasonis ASVs, both clustered more closely to 16db derived 16S rDNA sequences.
--       Explain in more detail.
--       Visualise extreme dataset mash results.
-            Shannon Entropy Analysis
- 
-Fig.x Shannon entropy for nucleotide diversity from 151 Parabacteroides sequences, 31 16db generated Bacteroides sequences and 120 SILVA-derived Bacteroides sequences.
- 
- 
-Fig. x.2 Shannon entropy for nucleotide diversity from 120 SILVA-derived Parabacteroides sequences.
- 
-Bacteroides
-         Extreme Dataset Analysis
--       Same as with Parabacteroides
- 
- 
- 
-            Shannon Entropy Analysis
--        
- 
- 
- 
- 
-Fig.x Shannon entropy for nucleotide diversity from 946 Bacteroides sequences, including 209 16db generated Bacteroides sequences.
- 
- 
-Fig. x.2 Shannon entropy for nucleotide diversity from 946 Bacteroides sequences, excluding 16db generated Bacteroides sequences.
- zeto
- 
- 
- 
- 
- 
- 
-Other things to cite:
--       This comparison of copy correction tools: https://microbiomejournal.biomedcentral.com/articles/10.1186/s40168-018-0420-9
--       DADA2
- 
 
-Notes from meeting 2019-09-17
+## Discussion
 
-Carlos’s Paper: https://www.nature.com/articles/sdata20197
-Try multiple alpha diversity tests to show diversity increase
-Hunt down the 16s from SRA non-riboSeed assignment, compare to the “7” rDNAs from riboSeed 
-Note how ASV assignment is hampered by wrong 16s in the databases
-Skip final assemblies riboSeed? 
+focusDB orchestrates the reassembly of whole-genome sequencing datasets in SRA to recover rDNA seqeunces that may not be missing from the existing databases. Using the _de fere novo_ assembly tool riboSeed, draft genomes that currently contribue a single (often collapsed rDNA) can be reassembled to resolve instances of the rDNA operon. We show that this increases the seqeunce diversity of the sequence databases. 
 
+There are three main limitations facing the lage-scale application of focusDB:  The first is the computational power required to reassemble the $\approx$ 94,000  SRAs (as of summer 2019) that were used to generate draft genomes. This is ignoring the $\approx$ 119,000 Draft genomes for which no reads were ever released, which leads to the second limitation: data availability. Releasing draft genomes without the reads used to generate them hampers efforts such as this one to expand on the purpose of the original study.  
+
+The third limitation is the availability of high-quality closed genomes to use as references. With the increased adoption of long read technologies, this limitation will decrease with time.
+
+Further limitations exist within focusDB and within riboSeed. The success of riboSeed's _de fere novo_ assembly hinges on thethe similarity of the reference to the sequenced isolate (and the differentiating power of the  rDNA flanking regions).  As mentioned above, as the difficulty of genome completion is decreases with the use of long read seqeuncing, this limitation will be decreased. The vast majority of short-read seqeuncing is performed with pair-end libraries; currently riboSeed does not support less popular strategies such as mate-paired libraries. Lastly, riboSeed is of limitted use for organisms lacking sufficiently unique flanking regions.
+
+## Author Contributions
+## References

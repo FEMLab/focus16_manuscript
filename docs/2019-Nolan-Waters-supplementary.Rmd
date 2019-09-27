@@ -321,6 +321,7 @@ ggsave("docs/figures/2-success.png", p_outcomes, device = "png", dpi = 300, widt
 ## Assessing uniqueness:
 
 ```{r plot_uniqueness, cache=TRUE}
+all_focus <- DNAStringSet()
 uniqueness <- data.frame("Organism"=NA, "Unique"=NA,  "Duplicated"=NA, "DB"=NA, stringsAsFactors = F)
 uniqueness <- uniqueness[!is.na(uniqueness),]
 for (organism in c("Bacteroides cellulosilyticus", "Bacteroides fragilis", "Bacteroides ovatus",
@@ -331,24 +332,51 @@ for (organism in c("Bacteroides cellulosilyticus", "Bacteroides fragilis", "Bact
   thistab <- table(duplicated(silva_subset))
   uniqueness <- rbind(
     uniqueness, 
-    data.frame("Organism"=organism, "Unique"=thistab[[1]],  "Duplicated"=thistab[[2]], "DB"="SILVA"))
+    data.frame("Organism"=organism, "Unique"=thistab[[1]],  "Duplicated"=thistab[[2]], "DB"="silv"))
   focus_subset <- readDNAStringSet(paste0("./results/extracted_sequences/", gsub(" ",  "_", organism), "_db.fasta"))
   thistab <- table(duplicated(focus_subset))
   uniqueness <- rbind(
     uniqueness, 
-    data.frame("Organism"=organism, "Unique"=thistab[[1]],  "Duplicated"=thistab[[2]], "DB"="focusDB + SILVA"))
-  
+    data.frame("Organism"=organism, "Unique"=thistab[[1]],  "Duplicated"=thistab[[2]], "DB"="combined"))
+  focus_subset_only <- focus_subset[grepl("extracted_seed",names(focus_subset))]
+  all_focus  <- append(all_focus, focus_subset_only)
+  Fa <- table(duplicated(focus_subset_only))[1]
+  Tr <- table(duplicated(focus_subset_only))[2]
+  if (is.na(Tr)) Tr <- 0
+  uniqueness <- rbind(
+    uniqueness, 
+    data.frame("Organism"=organism, "Unique"=Fa,  "Duplicated"=Tr, "DB"="focus"))
 }
-
-(p_unique <- ggplot(uniqueness %>% gather(key="grp", value="val", -Organism, -DB ), 
-       aes(x=Organism, y=val, fill=DB)) +
-  coord_flip() +
-  geom_bar(stat="identity", position="dodge") + facet_wrap(~grp) 
+p_uniqueness <- uniqueness %>%  gather(key="grp", value="val", -Organism, -DB ) %>%
+  spread(key=DB, value=val) %>% 
+  mutate(SILVA=combined-focus, focusDB=combined-silv) %>% 
+  select(-silv, -combined, -focus)  %>%
+  gather(key="DB", value="val", -Organism, -grp ) %>%
+  # reverse levels for plottting
+  mutate(Organism = factor(Organism), 
+                    Organism = factor(Organism, levels = rev(levels(Organism))))
+(p_unique <- ggplot(
+  p_uniqueness,
+  aes(x=Organism, y=val, alpha=grp, group=grp, fill=DB)) +
+    coord_flip() +
+    scale_fill_manual(values = viridis::viridis(n=3)[c(2, 1)]) +
+    scale_alpha_manual(values = c(.2, 1)) + mytheme +
+    labs(x="Number of Sequence", y="Organism", alpha="", fill="Database") +
+    theme(axis.text=element_text(size=13)) +
+    geom_bar(stat="identity", position="stack") #+ facet_wrap(~grp) 
 )
 
-ggsave("docs/figures/2-unique.png", p_unique, device = "png", dpi = 300, width = 7, height = 5)
+ggsave("docs/figures/3-unique.png", p_unique, device = "png", dpi = 300, width = 9, height = 5)
 
+```
 
+```{r tabledata}
+A <- uniqueness %>% select(Organism, Unique, DB ) %>%spread(key=DB, value=Unique)
+B <- p_summary_data %>% select(strain, pmessage, state) %>% filter(!is.na(state)) %>% group_by(strain) %>% summarise(All_SRAs=n(), Good_SRAs=table(pmessage)["16S Recovered"]) 
+right_join(B, A, by=c("strain"="Organism")) %>% 
+  mutate(Genus=gsub("(.*) (.*)", "\\1", strain),
+         Species=gsub("(.*) (.*)", "\\2", strain)) %>%
+  select(Genus, Species, All_SRAs, Good_SRAs, focus, silv, combined) %>% View()
 ```
 
 ## Generating Multiple Sequence Alignments
@@ -366,9 +394,7 @@ while read genus species; do if [ -f "./results/2019-09-26-focusdb-results/${gen
 while read genus species; do if [ -f "./results/2019-09-26-focusdb-results/${genus}_${species}_ribo16s.fasta" ] ; then align-and-trim-focusdb --i ./results/extracted_sequences/${genus}_${species}_db.fasta -o ./results/extracted_sequences/${genus}_${species}_db ; fi; done < ./docs/extreme_species_list.txt
 #  
 ```
-We us
-- parameters used for mafft
-- where in the repo the resulting alingmnts are
+
 
 ## Calcualting Alpha Diversity
 
@@ -405,33 +431,41 @@ riboSeed has been show to generate high-quality reconstructions of each rDNA whe
 ### Provenance of b_ovatus strains
 First, we read in the silva headers for the b_ovatus strains. The header for the silva database constists of `>ACCESSION.start.end name`.  We are not concerned with the complete genomes, so we will try to match the acessions with the 
 ```{r, eval=FALSE}
-library(data.table)
-ribo16s <- readLines("./results/databases/speciesdb/silva16/b_ovat_16.fa.mafft")
-sraFind_data <- fread("https://raw.githubusercontent.com/nickp60/sraFind/master/results/sraFind-All-biosample-with-SRA-hits.txt")
-(ribo16s_headers <- ribo16s[grepl(">", ribo16s)])
+# ribo16s <- readLines("./results/databases/speciesdb/silva16/b_ovat_16.fa.mafft")
+# (ribo16s_headers <- ribo16s[grepl(">", ribo16s)])
 #  get the assembly
 #  esearch -db nuccore -query JNHG01000060 | elink -target assembly | esummary |xtract -pattern DocumentSummary -element AssemblyAccession
 #  get the SRA
 cmd_file <-  file.path("docs/tmp_link_accessions")
+res_file <-  file.path("docs/accessions")
 file.remove(cmd_file)
-file.remove(file.path("docs/b_ovatus_sras"))
-for (header in ribo16s_headers){
-  # if not from riboSeed
-  header <- gsub(">", "", header)
-  if (!grepl("extracted", header)){
-    id = gsub("(.*?)\\.(.*)", "\\1", header )
-    cmd = paste0("OLDIFS=\"$IFS\"; assembly=`esearch -db nuccore -query ",id, " | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; IFS=$\"\n\"; for line in `esearch -db nuccore -query ", id, " | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e \"${assembly}\t",   strsplit(header, split = " ")[[1]][1], "\t$line\"; done; IFS=$OLDIFS")
-    write(cmd, file=cmd_file, append=TRUE)
+#file.remove(res_file)
+counter <- 0
+for (organism in c("Bacteroides cellulosilyticus", "Bacteroides fragilis", "Bacteroides ovatus",
+                   "Bacteroides thetaiotaomicron", "Bacteroides vulgatus", 
+                   "Bacteroides uniformis", "Parabacteroides distasonis")){
+  focus_subset <- readDNAStringSet(paste0("./results/extracted_sequences/", gsub(" ",  "_", organism), "_db.fasta"))
+  for (header in names(focus_subset)){
+    # if not from riboSeed
+    if (!grepl("extracted", header)){
+      # if a wgs record, see above
+      isdraft <-  nchar(gsub("(\\D*).*", "\\1", header)) > 3
+      # skip if not wgs
+      if (! isdraft) {next}
+      id = gsub("(.*?)\\.(.*)", "\\1", header )
+      if (counter == 0){ {write("OLDIFS=\"$IFS\"; IFS=$\"\n\"", file=cmd_file, append=TRUE) }}
+      cmd = paste0("assembly=`esearch -db nuccore -query ",id, " | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ", id, " | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e \"${assembly}\t",   strsplit(header, split = " ")[[1]][1], "\t$line\"; done")
+      write(cmd, file=cmd_file, append=TRUE)
+    }
   }
 }
-
-   
+write("IFS=$OLDIFS", file=cmd_file, append=TRUE)
 ```
 Then we can run those commands (from the terminal, doesn't tend to work from Rstudio):
 
 ```{bash, eval=FALSE}
 # note this doesn't work from Rstudio due to how Rstudio get the system path.
-bash tmp_link_accessions > b_ovatus_sras
+bash docs/tmp_link_accessions > docs/accessions
 ```
 
 Now, we have a list any available SRAs for the list of strains in the Silva database, with columns for the name/region (from silva), the assembly, the sample name, scientific name, tech, type, and SRA.  Note that the silva name referes to the sequence, not the assembly, so thats why we need  to fetch the column for the aassembly as well.
@@ -439,30 +473,40 @@ Now, we have a list any available SRAs for the list of strains in the Silva data
 Now, we can look at how many rDNAs are represented in the database.
 ```{r eval=FALSE}
 names <- c("assembly", "silva", "Run", "SampleName", "ScientificName", "LibraryStrategy", "LibrarySource")
-ovatus_sras <- read.csv("./docs/b_ovatus_sras", sep="\t", header = F, col.names = names)
-(ovatus_summary <- ovatus_sras  %>% group_by(assembly) %>% 
-    select(assembly, silva) %>% distinct() %>%  summarize(n=n()))
-left_join(ovatus_summary%>%filter(n!=1), ovatus_sras) %>% select(Run) %>% distinct()
-left_join(ovatus_summary%>%filter(n==1), ovatus_sras) %>% select(Run)
+silva_sras <- read.csv("./docs/accessions", sep="\t", header = F, col.names = names,stringsAsFactors = F)
+#(silva_sras$org <- gsub("(\\W*)\\s(\\W)[$| ]*", "\\1", silva_sras$ScientificName))
+(p_summary <- silva_sras  %>% group_by(ScientificName,  assembly) %>% 
+    select(ScientificName, assembly, silva) %>% distinct() %>%  summarize(n=n()))
+# left_join(p_summary%>%filter(n!=1), silva_sras) %>% select(ScientificName, Run) %>% distinct() %>%View()
+# left_join(p_summary%>%filter(n==1), silva_sras) %>% select(ScientificName, Run)
+ovautus <- p_summary[grepl("ovatus", p_summary$ScientificName),  ]
 ```
-Here, we can see  that GCF_000699725.1 and GCF_001314995.1 have 4 and 5 rDNAs in Silva, so we dont need to reassemble those: rrndb shows that we can expect around  5 rDNAs for B ovatus.
+Here,  looking at _B. ovatus_, we can see  that GCF_000699725.1 has 4 , so we dont need to reassemble those: rrndb shows that we can expect around  5 rDNAs for B ovatus.  For starters though, lets assess how we assembledthe GCF_000699725.1
 
-The other three assemblies, we could re-assemble: GCF_000218325.1, GCF_000699665.1, and GCF_900107475.1 all only have a single rDNA.  Lets run the pipeline on the 4 
+```{r}
+ovatus_silva <- unique(silva_sras[grepl("GCF_000699725.1", silva_sras$assembly), "silva" ])
+# paste tofgether to make a query string with ors
+ovatus_silva_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("(.*?)\\..*", "\\1", ovatus_silva), collapse = "", sep="|"))
+ovatus_focus <- unique(silva_sras[grepl("GCF_000699725.1", silva_sras$assembly), "Run" ])
+ovatus_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",ovatus_focus), collapse = "", sep="|"))
 
+silva_seqs <- silva[grepl(ovatus_silva_query,  names(silva))]
+focus_seqs <- all_focus[grepl(ovatus_focus_query, names(all_focus))]
+setdiff(focus_seqs, DNAStringSet(silva_seqs))
+pairwiseAlignment(pattern = DNAStringSet(silva_seqs), subject = focus_seqs)
+# keep in mind  comparing an RNAString object with a DNAString object,
+## U and T are considered equals:
+"GCF_000699725.1"
 ```
-16db --SRAs SRR9067260 SRR1006208 SRR1006209 SRR4236982 -o ovatus_draft -g ovatus_genomes -n "Bacteroides ovatus" --cores 4 --memory 8 
-16db --SRAs SRR1006214  SRR1006215 SRR2637631 SRR2637689 SRR2641383 -o ovatus_complete -g ovatus_genomes -n "Bacteroides ovatus" --cores 4 --memory 8
-```
+
+The other three assemblies, we could re-assemble: GCF_000218325.1, GCF_000699665.1, and GCF_900107475.1 all only have a single rDNA.  Lets run the pipeline on the 4.
 
 Now we can compare.
 
+## Discussion
+```{r calculate_needs_assembl}
+sraFind_data <- read.table("../16db/sraFind-All-biosample-with-SRA-hits.txt", header=T, sep="\t", stringsAsFactors = F)
 
-
-
-We ran the pipelin
-
-###### table for 6 successful strains
-```{r}
-table <- read.csv("./docs/successful_strains_table.txt", header=TRUE, sep = " ")
-knitr::kable(table)
+tbassembled <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(!is.na(study_acc)) %>% nrow()
+tbreleased  <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(is.na(study_acc)) %>% nrow()
 ```

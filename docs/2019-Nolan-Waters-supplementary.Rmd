@@ -491,23 +491,26 @@ Now, we have a list any available SRAs for the list of strains in the Silva data
 Now, we can look at how many rDNAs are represented in the database.
 ```{r eval=FALSE}
 names <- c("assembly", "silva", "Run", "SampleName", "ScientificName", "LibraryStrategy", "LibrarySource")
-silva_sras <- read.csv("./docs/accessions", sep="\t", header = F, col.names = names,stringsAsFactors = F)
-#(silva_sras$org <- gsub("(\\W*)\\s(\\W)[$| ]*", "\\1", silva_sras$ScientificName))
-(p_summary <- silva_sras  %>% group_by(ScientificName,  assembly) %>% 
+draft_silva_sras <- read.csv("./docs/accessions", sep="\t", header = F, col.names = names,stringsAsFactors = F)
+cg_silva_sras <- read.csv("./docs/cgaccessions", sep="\t", header = F, col.names = names,stringsAsFactors = F)
+#(draft_silva_sras$org <- gsub("(\\W*)\\s(\\W)[$| ]*", "\\1", draft_silva_sras$ScientificName))
+(p_summary_draft <- draft_silva_sras  %>% group_by(ScientificName,  assembly) %>% 
     select(ScientificName, assembly, silva) %>% distinct() %>%  summarize(n=n()))
-# left_join(p_summary%>%filter(n!=1), silva_sras) %>% select(ScientificName, Run) %>% distinct() %>%View()
-# left_join(p_summary%>%filter(n==1), silva_sras) %>% select(ScientificName, Run)
-ovatus <- p_summary[grepl("ovatus", p_summary$ScientificName),  ]
-fragilis <- p_summary[grepl("fragilis", p_summary$ScientificName),  ]
+(p_summary_cg    <-    cg_silva_sras  %>% group_by(ScientificName,  assembly) %>% 
+    select(ScientificName, assembly, silva) %>% distinct() %>%  summarize(n=n()))
+# left_join(p_summary_draft%>%filter(n!=1), draft_silva_sras) %>% select(ScientificName, Run) %>% distinct() %>%View()
+# left_join(p_summary_draft%>%filter(n==1), draft_silva_sras) %>% select(ScientificName, Run)
+draft_ovatus <- p_summary_draft[grepl("ovatus", p_summary_draft$ScientificName),  ]
+draft_fragilis <- p_summary_draft[grepl("fragilis", p_summary_draft$ScientificName),  ]
 ```
 Here,  looking at _B. ovatus_, we can see  that GCF_000699725.1 has 4 , so we dont need to reassemble those: rrndb shows that we can expect around  5 rDNAs for B ovatus.  For starters though, lets assess how we assembledthe GCF_000699725.1
 
 ```{r eval=FALSE}
-build_aln_for_assembly <- function(assembly="GCF_000699725.1"){
-  this_silva <- unique(silva_sras[grepl(assembly, silva_sras$assembly), "silva" ])
+build_aln_for_assembly <- function(db, assembly="GCF_000699725.1"){
+  this_silva <- unique(db[grepl(assembly, db$assembly), "silva" ])
   # paste tofgether to make a query string with ors
   this_silva_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("(.*?)\\..*", "\\1", this_silva), collapse = "", sep="|"))
-  this_focus <- unique(silva_sras[grepl("GCF_000699725.1", silva_sras$assembly), "Run" ])
+  this_focus <- unique(db[grepl(assembly, db$assembly), "Run" ])
   this_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",this_focus), collapse = "", sep="|"))
   
   silva_subset_seqs <- silva[grepl(this_silva_query,  names(silva))]
@@ -523,10 +526,27 @@ build_aln_for_assembly <- function(assembly="GCF_000699725.1"){
 
 The other three assemblies, we could re-assemble: GCF_000218325.1, GCF_000699665.1, and GCF_900107475.1 all only have a single rDNA.  Lets run the pipeline on the 4.
 ```{r}
+# cellulosilyticus, excluded as no whole genomes short read available; reference was PacBio
+GCF_001318345 <- build_aln_for_assembly(db=cg_silva_sras, assembly="GCF_001318345.1")
+BrowseSeqs(GCF_001318345)
+#ovatus
+GCF_001314995 <- build_aln_for_assembly(db=cg_silva_sras, assembly="GCF_001314995.1")
+BrowseSeqs(subseq(GCF_001314995, 5, -5))
+duplicated(subseq(GCF_001314995, 5, -5))
+# thetaiotaomicron
+GCF_001314975 <- build_aln_for_assembly(db=cg_silva_sras, assembly="GCF_001314975.1")
+BrowseSeqs(subseq(GCF_001314975, 5, -5))
+duplicated(subseq(GCF_001314975, 5, -5))
+
+# vulgatus# also pac bio
+GCF_001412315 <- build_aln_for_assembly(db=cg_silva_sras, assembly="GCF_001412315.1")
+BrowseSeqs(subseq(GCF_001412315, 5, -5))
+duplicated(subseq(GCF_001412315, 5, -5))
 
 
-GCF_000699725 <- build_aln_for_assembly(assembly="GCF_000699725.1")
-GCF_000699665 <- build_aln_for_assembly(assembly="GCF_000699665.1")
+GCF_000699725 <- build_aln_for_assembly(db=draft_silva_sras, assembly="GCF_000699725.1")
+GCF_000699665 <- build_aln_for_assembly(db=draft_silva_sras, assembly="GCF_000699665.1")
+
 # BrowseSeqs(GCF_000699725)
 # BrowseSeqs(GCF_000699665)
 ```

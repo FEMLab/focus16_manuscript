@@ -106,6 +106,11 @@ As repeated rDNA operons are difficult to assembly, Draft genome rDNA can (and o
 
 riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. Here, we compare the 16s seqeunces from riboSeed reassembly of draft genomes to the initial (potentially collapsed) 16s seqeunces.
 
+| Bacteroides cellulosilyticus |GCF_001318345.1| 
+| Bacteroides ovatus           |GCF_001314995.1|
+| Bacteroides thetaiotaomicron |GCF_001314975.1|
+| Bacteroides vulgatus         |GCF_001412315.1|
+
 For the 7 organisms, we identified which of SILVAs originated from which assemblies, and assessed their levels of completeness.  In some cases (such as XX and YY), we found that the the original draft genome contained all the rDNAs. 
 
 For those that didn't, we determined whether the rDNAs assembled with riboSeed matched any of the rDNAs in the  database for that particular strain.

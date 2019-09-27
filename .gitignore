@@ -5,3 +5,6 @@
 focusdb.Rproj
 *.DS_Store
 results/2019-09-26-focusdb-results/ 
+results/extracted_sequences/
+docs/2019-Nolan-Waters-supplementary_cache/
+docs/2019-Nolan-Waters-supplementary_files/

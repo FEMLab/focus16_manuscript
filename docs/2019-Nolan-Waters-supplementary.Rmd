@@ -12,7 +12,8 @@ knitr::opts_chunk$set(echo = TRUE, cache.lazy = FALSE)
 library(tidyverse); packageVersion("tidyverse")
 library(diagram); packageVersion("diagram")
 library(Biostrings); packageVersion("Biostrings")
-# library(ggupset)
+#BiocManager::install("DECIPHER")
+library(DECIPHER)
 
 mytheme <- ggplot2::theme_minimal() + 
   ggplot2::theme(
@@ -436,39 +437,56 @@ First, we read in the silva headers for the b_ovatus strains. The header for the
 #  get the assembly
 #  esearch -db nuccore -query JNHG01000060 | elink -target assembly | esummary |xtract -pattern DocumentSummary -element AssemblyAccession
 #  get the SRA
-cmd_file <-  file.path("docs/tmp_link_accessions")
-res_file <-  file.path("docs/accessions")
-file.remove(cmd_file)
-#file.remove(res_file)
-counter <- 0
-for (organism in c("Bacteroides cellulosilyticus", "Bacteroides fragilis", "Bacteroides ovatus",
-                   "Bacteroides thetaiotaomicron", "Bacteroides vulgatus", 
-                   "Bacteroides uniformis", "Parabacteroides distasonis")){
-  focus_subset <- readDNAStringSet(paste0("./results/extracted_sequences/", gsub(" ",  "_", organism), "_db.fasta"))
-  for (header in names(focus_subset)){
-    # if not from riboSeed
-    if (!grepl("extracted", header)){
-      # if a wgs record, see above
-      isdraft <-  nchar(gsub("(\\D*).*", "\\1", header)) > 3
-      # skip if not wgs
-      if (! isdraft) {next}
-      id = gsub("(.*?)\\.(.*)", "\\1", header )
-      if (counter == 0){ {write("OLDIFS=\"$IFS\"; IFS=$\"\n\"", file=cmd_file, append=TRUE) }}
-      cmd = paste0("assembly=`esearch -db nuccore -query ",id, " | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ", id, " | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e \"${assembly}\t",   strsplit(header, split = " ")[[1]][1], "\t$line\"; done")
-      write(cmd, file=cmd_file, append=TRUE)
+get_links_for_accessions  <- function(cmd_file,  res_file, level="cg"){
+  try(file.remove(cmd_file))
+  #file.remove(res_file)
+  counter <- 0
+  for (organism in c("Bacteroides cellulosilyticus", "Bacteroides fragilis", "Bacteroides ovatus",
+                     "Bacteroides thetaiotaomicron", "Bacteroides vulgatus", 
+                     "Bacteroides uniformis", "Parabacteroides distasonis")){
+    focus_subset <- readDNAStringSet(paste0("./results/extracted_sequences/", gsub(" ",  "_", organism), "_db.fasta"))
+    for (header in names(focus_subset)){
+      # if not from riboSeed
+      if (!grepl("extracted", header)){
+        pre <- gsub("(\\D*).*", "\\1", header)
+        # if compeltte genome:
+         pre %in% genome_pres$Prefix
+        # if a wgs record, see above
+        iscg <-  pre %in% genome_pres$Prefix
+        iswgs <-  nchar(gsub("(\\D*).*", "\\1", header)) > 3
+        # skip if not wgs
+        if (! isdraft & level=="draft") {next}
+        if (! iscg & level=="cg") {next}
+        id = gsub("(.*?)\\.(.*)", "\\1", header )
+        if (counter == 0){ {write("OLDIFS=\"$IFS\"; IFS=$\"\n\"", file=cmd_file, append=TRUE) }}
+        cmd = paste0("assembly=`esearch -db nuccore -query ",id, " | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ", id, " | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e \"${assembly}\t",   strsplit(header, split = " ")[[1]][1], "\t$line\"; done")
+        write(cmd, file=cmd_file, append=TRUE)
+      }
     }
   }
+  write("IFS=$OLDIFS", file=cmd_file, append=TRUE)
 }
-write("IFS=$OLDIFS", file=cmd_file, append=TRUE)
+
+#  for draft genomes  
+cmd_file <-  file.path("docs/tmp_link_accessions")
+res_file <-  file.path("docs/accessions")
+get_links_for_accessions(cmd_file,  res_file, level="draft")
+# for complete genomes sequencing
+cmd_file <-  file.path("docs/cg_link_accessions")
+res_file <-  file.path("docs/cgaccessions")
+get_links_for_accessions(cmd_file,  res_file, level="cg")
+
 ```
+
 Then we can run those commands (from the terminal, doesn't tend to work from Rstudio):
 
 ```{bash, eval=FALSE}
 # note this doesn't work from Rstudio due to how Rstudio get the system path.
 bash docs/tmp_link_accessions > docs/accessions
+bash docs/cg_link_accessions > docs/cgaccessions
 ```
 
-Now, we have a list any available SRAs for the list of strains in the Silva database, with columns for the name/region (from silva), the assembly, the sample name, scientific name, tech, type, and SRA.  Note that the silva name referes to the sequence, not the assembly, so thats why we need  to fetch the column for the aassembly as well.
+Now, we have a list any available SRAs for the list of strains in the Silva database, with columns for the name/region (from silva), the assembly, the sample name, scientific name, tech, type, and SRA.  Note that the silva name refers to the sequence, not the assembly, so thats why we need  to fetch the column for the aassembly as well.
 
 Now, we can look at how many rDNAs are represented in the database.
 ```{r eval=FALSE}
@@ -479,34 +497,51 @@ silva_sras <- read.csv("./docs/accessions", sep="\t", header = F, col.names = na
     select(ScientificName, assembly, silva) %>% distinct() %>%  summarize(n=n()))
 # left_join(p_summary%>%filter(n!=1), silva_sras) %>% select(ScientificName, Run) %>% distinct() %>%View()
 # left_join(p_summary%>%filter(n==1), silva_sras) %>% select(ScientificName, Run)
-ovautus <- p_summary[grepl("ovatus", p_summary$ScientificName),  ]
+ovatus <- p_summary[grepl("ovatus", p_summary$ScientificName),  ]
+fragilis <- p_summary[grepl("fragilis", p_summary$ScientificName),  ]
 ```
 Here,  looking at _B. ovatus_, we can see  that GCF_000699725.1 has 4 , so we dont need to reassemble those: rrndb shows that we can expect around  5 rDNAs for B ovatus.  For starters though, lets assess how we assembledthe GCF_000699725.1
 
-```{r}
-ovatus_silva <- unique(silva_sras[grepl("GCF_000699725.1", silva_sras$assembly), "silva" ])
-# paste tofgether to make a query string with ors
-ovatus_silva_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("(.*?)\\..*", "\\1", ovatus_silva), collapse = "", sep="|"))
-ovatus_focus <- unique(silva_sras[grepl("GCF_000699725.1", silva_sras$assembly), "Run" ])
-ovatus_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",ovatus_focus), collapse = "", sep="|"))
+```{r eval=FALSE}
+build_aln_for_assembly <- function(assembly="GCF_000699725.1"){
+  this_silva <- unique(silva_sras[grepl(assembly, silva_sras$assembly), "silva" ])
+  # paste tofgether to make a query string with ors
+  this_silva_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("(.*?)\\..*", "\\1", this_silva), collapse = "", sep="|"))
+  this_focus <- unique(silva_sras[grepl("GCF_000699725.1", silva_sras$assembly), "Run" ])
+  this_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",this_focus), collapse = "", sep="|"))
+  
+  silva_subset_seqs <- silva[grepl(this_silva_query,  names(silva))]
+  focus_subset_seqs <- all_focus[grepl(this_focus_query, names(all_focus))]
+  
+  aln <- DECIPHER::AlignSeqs(
+    append(focus_subset_seqs,DNAStringSet(silva_subset_seqs))
+  )
+  return (aln)
+}
 
-silva_seqs <- silva[grepl(ovatus_silva_query,  names(silva))]
-focus_seqs <- all_focus[grepl(ovatus_focus_query, names(all_focus))]
-setdiff(focus_seqs, DNAStringSet(silva_seqs))
-pairwiseAlignment(pattern = DNAStringSet(silva_seqs), subject = focus_seqs)
-# keep in mind  comparing an RNAString object with a DNAString object,
-## U and T are considered equals:
-"GCF_000699725.1"
 ```
 
 The other three assemblies, we could re-assemble: GCF_000218325.1, GCF_000699665.1, and GCF_900107475.1 all only have a single rDNA.  Lets run the pipeline on the 4.
+```{r}
 
-Now we can compare.
+
+GCF_000699725 <- build_aln_for_assembly(assembly="GCF_000699725.1")
+GCF_000699665 <- build_aln_for_assembly(assembly="GCF_000699665.1")
+# BrowseSeqs(GCF_000699725)
+# BrowseSeqs(GCF_000699665)
+```
+Now we can compare.  
+
+```{r eval=FALSE}
+fragilis[1, "assembly"]
+GCA_001058745 <- build_aln_for_assembly(assembly=fragilis[1, "assembly"])
+BrowseSeqs(GCA_001058745)
+```
+
 
 ## Discussion
 ```{r calculate_needs_assembl}
 sraFind_data <- read.table("../16db/sraFind-All-biosample-with-SRA-hits.txt", header=T, sep="\t", stringsAsFactors = F)
-
 tbassembled <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(!is.na(study_acc)) %>% nrow()
 tbreleased  <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(is.na(study_acc)) %>% nrow()
 ```

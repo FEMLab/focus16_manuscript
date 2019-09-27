@@ -114,6 +114,7 @@ For those that didn't, we determined whether the rDNAs assembled with riboSeed m
 ### Species Assignment of DADA2's Extremes ASVs
 
 
+
 ## Discussion
 
 focusDB orchestrates the reassembly of whole-genome sequencing datasets in SRA to recover rDNA seqeunces that may not be missing from the existing databases. Using the _de fere novo_ assembly tool riboSeed, draft genomes that currently contribue a single (often collapsed rDNA) can be reassembled to resolve instances of the rDNA operon. We show that this increases the seqeunce diversity of the sequence databases. 

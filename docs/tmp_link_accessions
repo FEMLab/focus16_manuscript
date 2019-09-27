@@ -1,0 +1,1081 @@
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXG01000059 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXG01000059 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXG01000059.47244.48754	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXG01000031 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXG01000031 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXG01000031.165014.166524	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXG01000147 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXG01000147 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXG01000147.173444.174954	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ATFI01000022 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ATFI01000022 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ATFI01000022.12.1513	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ACCH01000108 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ACCH01000108 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ACCH01000108.3638.5148	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LMAC01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LMAC01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LMAC01000001.154074.155613	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LMAC01000012 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LMAC01000012 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LMAC01000012.173089.174629	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LMAC01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LMAC01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LMAC01000001.1072878.1074417	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LGTH01000002 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LGTH01000002 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LGTH01000002.1072788.1074327	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LMAC01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LMAC01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LMAC01000001.90166.91705	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LGTH01000002 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LGTH01000002 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LGTH01000002.153984.155523	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LMAC01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LMAC01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LMAC01000001.397745.399284	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LMAC01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LMAC01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LMAC01000001.1690831.1692370	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AKBY01000004 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AKBY01000004 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AKBY01000004.393347.394855	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LGTH01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LGTH01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LGTH01000001.1108853.1110393	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LGTH01000002 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LGTH01000002 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LGTH01000002.1690735.1692274	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LGTH01000002 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LGTH01000002 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LGTH01000002.90077.91616	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LGTH01000002 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LGTH01000002 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LGTH01000002.397657.399196	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AKBY01000002 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AKBY01000002 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AKBY01000002.406886.408394	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AKBY01000004 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AKBY01000004 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AKBY01000004.250567.252075	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ALOB01000008 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ALOB01000008 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ALOB01000008.640.2156	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JPHS01000172 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JPHS01000172 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JPHS01000172.225.1764	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JPGQ01000061 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JPGQ01000061 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JPGQ01000061.514.2053	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JPHP01000100 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JPHP01000100 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JPHP01000100.18.1557	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHH01000021 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHH01000021 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHH01000021.1763.3277	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHH01000025 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHH01000025 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHH01000025.120.1634	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHH01000030 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHH01000030 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHH01000030.731.2101	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHH01000029 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHH01000029 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHH01000029.1773.3143	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHH01000023 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHH01000023 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHH01000023.1763.3278	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ABZX01000086 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ABZX01000086 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ABZX01000086.3638.4947	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LIDS01000138 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LIDS01000138 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LIDS01000138.3572.5088	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LIDU01000040 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LIDU01000040 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LIDU01000040.1773.3294	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LIDV01000075 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LIDV01000075 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LIDV01000075.3577.5098	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDQM01000911 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDQM01000911 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDQM01000911.442.1950	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDQP01001253 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDQP01001253 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDQP01001253.198.1702	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCP01002529 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCP01002529 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCP01002529.152.1666	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEM01000079 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEM01000079 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEM01000079.89.1603	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEM01000083 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEM01000083 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEM01000083.89.1603	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEM01000085 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEM01000085 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEM01000085.89.1603	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEM01000071 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEM01000071 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEM01000071.89.1603	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCR01000270 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCR01000270 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCR01000270.5.1223	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDW01000100 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDW01000100 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDW01000100.549.2063	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEH01000048 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEH01000048 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEH01000048.107.1621	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCS01000275 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCS01000275 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCS01000275.341.1855	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDW01000079 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDW01000079 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDW01000079.45.1559	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEB01000028 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEB01000028 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEB01000028.111.1625	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEH01000053 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEH01000053 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEH01000053.107.1621	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVF01000042 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVF01000042 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVF01000042.469.1983	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEK01000066 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEK01000066 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEK01000066.547.2061	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEK01000074 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEK01000074 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEK01000074.2111.3625	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEE01000017 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEE01000017 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEE01000017.1.1346	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDP01000095 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDP01000095 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDP01000095.21.1535	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEP01000037 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEP01000037 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEP01000037.3632.5146	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDS01000074 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDS01000074 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDS01000074.360.1874	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEP01000090 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEP01000090 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEP01000090.35690.37204	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGET01000022 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGET01000022 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGET01000022.172990.174504	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDG01000521 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDG01000521 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDG01000521.1.1509	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVD01000092 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVD01000092 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVD01000092.422.1936	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEG01000088 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEG01000088 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEG01000088.1669.3183	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVG01000024 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVG01000024 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVG01000024.1.1415	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVC01000076 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVC01000076 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVC01000076.585870.587407	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDB01000276 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDB01000276 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDB01000276.1.1207	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDQ01000031 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDQ01000031 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDQ01000031.84.1598	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDU01000253 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDU01000253 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDU01000253.1.1409	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCS01000211 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCS01000211 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCS01000211.341.1855	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDE01000266 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDE01000266 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDE01000266.2977.4491	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEA01000035 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEA01000035 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEA01000035.105.1619	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDG01000519 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDG01000519 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDG01000519.1.1509	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEU01000037 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEU01000037 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEU01000037.1538.3052	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEU01000051 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEU01000051 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEU01000051.719.2233	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDQ01000029 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDQ01000029 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDQ01000029.84.1598	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDQ01000036 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDQ01000036 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDQ01000036.84.1598	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEB01000078 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEB01000078 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEB01000078.817.2331	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LIDT01000043 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LIDT01000043 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LIDT01000043.730.2251	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDF01000117 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDF01000117 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDF01000117.818.2332	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEG01000033 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEG01000033 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEG01000033.236.1752	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDS01000067 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDS01000067 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDS01000067.360.1874	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDB01000246 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDB01000246 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDB01000246.1.1207	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDB01000268 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDB01000268 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDB01000268.1.1207	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEI01000024 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEI01000024 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEI01000024.13.1527	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCW01000278 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCW01000278 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCW01000278.1.1386	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDJ01000250 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDJ01000250 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDJ01000250.1926.3440	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCW01000318 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCW01000318 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCW01000318.688.2202	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDD01000100 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDD01000100 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDD01000100.179306.180820	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEW01000031 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEW01000031 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEW01000031.432.1946	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDC01000397 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDC01000397 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDC01000397.346.1860	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDL01000054 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDL01000054 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDL01000054.109.1623	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDU01000264 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDU01000264 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDU01000264.1.1409	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEB01000087 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEB01000087 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEB01000087.469.1983	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVF01000081 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVF01000081 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVF01000081.469.1983	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVD01000065 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVD01000065 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVD01000065.693.2207	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEF01000044 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEF01000044 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEF01000044.1798.3312	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDS01000066 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDS01000066 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDS01000066.360.1874	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGER01000035 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGER01000035 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGER01000035.1071.2585	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDS01000068 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDS01000068 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDS01000068.360.1874	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEP01000066 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEP01000066 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEP01000066.254697.256211	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEI01000020 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEI01000020 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEI01000020.3463.4713	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGET01000029 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGET01000029 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGET01000029.3598.5112	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGET01000044 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGET01000044 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGET01000044.83963.85477	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDF01000145 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDF01000145 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDF01000145.13.1527	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEA01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEA01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEA01000001.105.1619	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEA01000026 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEA01000026 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEA01000026.1878.3392	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDC01000352 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDC01000352 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDC01000352.3601.5115	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDC01000399 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDC01000399 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDC01000399.346.1860	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEU01000058 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEU01000058 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEU01000058.236.1750	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDX01000071 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDX01000071 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDX01000071.1.1305	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEM01000060 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEM01000060 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEM01000060.89.1603	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEL01000054 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEL01000054 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEL01000054.746.2260	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVF01000076 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVF01000076 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVF01000076.812.2326	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCT01000171 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCT01000171 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCT01000171.1.1241	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEF01000074 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEF01000074 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEF01000074.1798.3312	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JMZX02000171 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JMZX02000171 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JMZX02000171.76.1615	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEO01000053 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEO01000053 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEO01000053.89.1603	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDZ01000068 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDZ01000068 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDZ01000068.179518.181032	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JMZZ02000202 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JMZZ02000202 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JMZZ02000202.12.1551	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCM01000117 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCM01000117 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCM01000117.105.1619	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCM01000160 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCM01000160 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCM01000160.36.1550	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDB01000245 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDB01000245 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDB01000245.1.1207	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDJ01000055 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDJ01000055 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDJ01000055.985.2501	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDE01000108 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDE01000108 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDE01000108.2977.4491	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDE01000135 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDE01000135 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDE01000135.2977.4491	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JMZY02000115 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JMZY02000115 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JMZY02000115.22.1561	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEC01000032 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEC01000032 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEC01000032.469.1983	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEF01000049 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEF01000049 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEF01000049.1798.3312	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEA01000031 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEA01000031 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEA01000031.1875.3389	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEE01000040 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEE01000040 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEE01000040.2.1347	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDP01000111 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDP01000111 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDP01000111.21.1535	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCM01000137 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCM01000137 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCM01000137.36.1550	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDB01000278 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDB01000278 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDB01000278.1.1207	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEN01000066 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEN01000066 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEN01000066.89.1603	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGET01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGET01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGET01000001.3598.5112	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDJ01000280 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDJ01000280 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDJ01000280.1926.3440	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGET01000023 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGET01000023 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGET01000023.3598.5112	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGET01000036 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGET01000036 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGET01000036.3598.5112	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDV01000050 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDV01000050 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDV01000050.13.1527	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDV01000058 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDV01000058 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDV01000058.1927.3335	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDV01000062 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDV01000062 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDV01000062.13.1527	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDE01000255 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDE01000255 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDE01000255.6874.8390	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEA01000060 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEA01000060 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEA01000060.105.1619	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVG01000010 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVG01000010 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVG01000010.1.1415	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDL01000039 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDL01000039 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDL01000039.580.2124	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDH01000069 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDH01000069 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDH01000069.85.1599	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDQ01000021 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDQ01000021 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDQ01000021.84.1598	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDN01000081 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDN01000081 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDN01000081.1995.3509	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEU01000049 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEU01000049 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEU01000049.236.1750	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDO01000051 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDO01000051 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDO01000051.3604.5118	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDF01000147 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDF01000147 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDF01000147.478.1992	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDC01000386 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDC01000386 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDC01000386.346.1860	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDC01000319 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDC01000319 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDC01000319.346.1860	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDY01000033 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDY01000033 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDY01000033.838.2352	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGED01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGED01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGED01000001.36.1550	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCW01000373 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCW01000373 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCW01000373.77.1591	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCR01000297 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCR01000297 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCR01000297.5.1223	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDW01000069 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDW01000069 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDW01000069.1.1245	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEH01000045 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEH01000045 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEH01000045.107.1621	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCU01000180 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCU01000180 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCU01000180.85.1599	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCR01000271 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCR01000271 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCR01000271.5.1223	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDW01000091 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDW01000091 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDW01000091.1.1245	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query MTGH01000017 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query MTGH01000017 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	MTGH01000017.370.1909	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEB01000010 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEB01000010 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEB01000010.1.1205	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEB01000096 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEB01000096 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEB01000096.111.1625	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEP01000035 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEP01000035 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEP01000035.3632.5146	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDS01000062 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDS01000062 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDS01000062.360.1874	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVC01000190 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVC01000190 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVC01000190.1926.3440	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEP01000085 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEP01000085 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEP01000085.70349.71863	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEN01000051 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEN01000051 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEN01000051.89.1603	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEN01000057 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEN01000057 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEN01000057.89.1603	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDJ01000279 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDJ01000279 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDJ01000279.2189.3703	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVF01000009 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVF01000009 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVF01000009.3604.5118	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCN01000091 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCN01000091 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCN01000091.1.1235	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCO01000350 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCO01000350 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCO01000350.3.1371	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEB01000106 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEB01000106 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEB01000106.111.1625	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVD01000075 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVD01000075 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVD01000075.511.2025	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGVE01000107 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGVE01000107 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGVE01000107.1926.3440	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEE01000037 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEE01000037 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEE01000037.2.1347	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDP01000112 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDP01000112 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDP01000112.21.1535	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDT01000081 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDT01000081 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDT01000081.1.1234	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCM01000154 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCM01000154 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCM01000154.36.1550	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCM01000163 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCM01000163 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCM01000163.36.1550	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEU01000038 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEU01000038 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEU01000038.236.1750	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEP01000086 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEP01000086 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEP01000086.57769.59283	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEN01000065 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEN01000065 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEN01000065.89.1603	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGET01000028 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGET01000028 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGET01000028.64380.65894	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGDG01000463 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGDG01000463 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGDG01000463.160.1674	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGCN01000101 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGCN01000101 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGCN01000101.1.1235	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGEQ01000076 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGEQ01000076 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGEQ01000076.255020.256534	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JGED01000020 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JGED01000020 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JGED01000020.36.1550	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXR01000005 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXR01000005 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXR01000005.772930.774446	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXR01000019 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXR01000019 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXR01000019.137417.138933	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXK01000026 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXK01000026 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXK01000026.136152.137489	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXN01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXN01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXN01000001.2057.3573	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXN01000021 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXN01000021 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXN01000021.416.1932	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXM01000020 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXM01000020 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXM01000020.38.1554	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXQ01000036 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXQ01000036 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXQ01000036.155358.156874	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXK01000022 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXK01000022 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXK01000022.3424.4940	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXK01000034 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXK01000034 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXK01000034.57615.59131	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXO01000016 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXO01000016 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXO01000016.694291.695807	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXL01000027 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXL01000027 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXL01000027.310968.312484	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXK01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXK01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXK01000001.3421.4937	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXO01000020 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXO01000020 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXO01000020.478.1994	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXR01000016 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXR01000016 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXR01000016.146445.147961	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXR01000028 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXR01000028 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXR01000028.452987.454503	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXQ01000026 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXQ01000026 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXQ01000026.91307.92823	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXN01000029 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXN01000029 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXN01000029.61924.63440	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXL01000021 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXL01000021 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXL01000021.136683.138199	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXQ01000010 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXQ01000010 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXQ01000010.543.2059	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXK01000021 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXK01000021 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXK01000021.270909.272209	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXN01000016 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXN01000016 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXN01000016.2119.3635	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXL01000010 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXL01000010 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXL01000010.83259.84775	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXM01000009 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXM01000009 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXM01000009.127333.128849	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXQ01000024 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXQ01000024 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXQ01000024.3654.5170	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXK01000030 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXK01000030 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXK01000030.1558.3074	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXK01000031 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXK01000031 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXK01000031.3421.4937	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXK01000032 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXK01000032 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXK01000032.80868.82384	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXO01000025 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXO01000025 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXO01000025.56559.58075	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXN01000030 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXN01000030 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXN01000030.2119.3635	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXR01000010 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXR01000010 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXR01000010.53918.55434	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXO01000023 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXO01000023 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXO01000023.253754.255270	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXL01000003 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXL01000003 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXL01000003.3425.4941	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXQ01000025 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXQ01000025 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXQ01000025.88.1604	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JHEF01000050 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JHEF01000050 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JHEF01000050.37729.39243	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JHEF01000052 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JHEF01000052 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JHEF01000052.3607.5121	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JVLR01000136 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JVLR01000136 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JVLR01000136.255.1763	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JVLP01000110 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JVLP01000110 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JVLP01000110.405.1913	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JVLQ01000051 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JVLQ01000051 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JVLQ01000051.441.1949	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query MKXL01000051 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query MKXL01000051 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	MKXL01000051.3571.5032	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query BAIY01000080 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query BAIY01000080 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	BAIY01000080.337.1845	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JUPK01003456 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JUPK01003456 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JUPK01003456.28.1536	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JUOZ01000109 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JUOZ01000109 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JUOZ01000109.30.1538	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JUPJ01000236 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JUPJ01000236 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JUPJ01000236.30.1538	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JUPK01002378 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JUPK01002378 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JUPK01002378.2.1415	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHF01000162 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHF01000162 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHF01000162.805.2319	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHF01000169 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHF01000169 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHF01000169.1.1513	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHG01000060 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHG01000060 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHG01000060.1.1235	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHF01000157 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHF01000157 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHF01000157.48052.49566	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHF01000164 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHF01000164 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHF01000164.1.1512	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXU01000026 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXU01000026 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXU01000026.3443.4959	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXU01000052 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXU01000052 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXU01000052.3443.4959	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXU01000010 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXU01000010 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXU01000010.481004.482520	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXT01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXT01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXT01000001.2.1241	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXT01000040 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXT01000040 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXT01000040.122912.124428	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXU01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXU01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXU01000001.3444.4960	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXU01000051 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXU01000051 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXU01000051.204757.206273	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXT01000041 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXT01000041 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXT01000041.79243.80759	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXT01000021 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXT01000021 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXT01000021.476267.477784	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ACWH01000036 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ACWH01000036 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ACWH01000036.138.1654	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query FNQD01000047 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query FNQD01000047 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	FNQD01000047.3707.5239	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LTDD01000045 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LTDD01000045 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LTDD01000045.3706.5222	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CYYB01000007 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CYYB01000007 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CYYB01000007.3714.5222	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query FOAL01000034 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query FOAL01000034 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	FOAL01000034.353.1766	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDQT01002034 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDQT01002034 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDQT01002034.3875.5383	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CZAE01000003 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CZAE01000003 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CZAE01000003.99809.101321	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CZBI01000009 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CZBI01000009 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CZBI01000009.155638.157044	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDQO01001406 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDQO01001406 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDQO01001406.1637.3145	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CZAP01000045 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CZAP01000045 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CZAP01000045.3714.5222	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CZBI01000005 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CZBI01000005 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CZBI01000005.3650.5158	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ASSM01000017 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ASSM01000017 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ASSM01000017.952.2468	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ASSM01000019 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ASSM01000019 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ASSM01000019.161439.162955	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query MKXM01000076 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query MKXM01000076 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	MKXM01000076.3433.4972	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CVOZ01000362 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CVOZ01000362 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CVOZ01000362.1.1219	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CVOZ01000137 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CVOZ01000137 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CVOZ01000137.1.1248	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CVOZ01000063 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CVOZ01000063 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CVOZ01000063.228971.230480	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query FNVL01000078 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query FNVL01000078 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	FNVL01000078.1.1335	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CVOZ01000133 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CVOZ01000133 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CVOZ01000133.202.1469	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CVOY01000011 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CVOY01000011 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CVOY01000011.1460.2968	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CYZI01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CYZI01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CYZI01000001.461783.463290	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHM01000017 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHM01000017 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHM01000017.43.1556	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHM01000010 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHM01000010 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHM01000010.2811.4324	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CZAN01000096 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CZAN01000096 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CZAN01000096.396.1903	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CZBK01000002 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CZBK01000002 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CZBK01000002.294010.295517	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ASSN01000029 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ASSN01000029 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ASSN01000029.139039.140554	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXZ01000030 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXZ01000030 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXZ01000030.21.1536	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ASSN01000008 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ASSN01000008 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ASSN01000008.242418.243933	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXZ01000010 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXZ01000010 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXZ01000010.2001.3516	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXZ01000020 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXZ01000020 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXZ01000020.342567.344082	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXZ01000031 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXZ01000031 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXZ01000031.168865.170380	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ASSN01000031 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ASSN01000031 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ASSN01000031.1609.3124	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query MKXP01000142 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query MKXP01000142 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	MKXP01000142.3282.4789	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ADKO01000087 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ADKO01000087 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ADKO01000087.185.1693	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CYZF01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CYZF01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CYZF01000001.433278.434784	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CYYO01000004 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CYYO01000004 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CYYO01000004.82756.84262	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query LTDC01000012 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query LTDC01000012 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	LTDC01000012.330.1844	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHO01000007 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHO01000007 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHO01000007.164303.165815	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHN01000180 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHN01000180 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHN01000180.20031.21416	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHO01000003 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHO01000003 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHO01000003.1169994.1171506	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHO01000005 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHO01000005 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHO01000005.3368.4880	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHN01000179 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHN01000179 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHN01000179.537048.538433	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHN01000181 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHN01000181 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHN01000181.3605.5117	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHO01000009 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHO01000009 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHO01000009.3368.4880	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHO01000010 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHO01000010 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHO01000010.3368.4880	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHO01000008 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHO01000008 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHO01000008.346334.347846	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHN01000174 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHN01000174 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHN01000174.120138.121650	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHN01000175 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHN01000175 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHN01000175.148172.149576	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CZAO01000004 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CZAO01000004 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CZAO01000004.122192.123698	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CZAF01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CZAF01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CZAF01000001.556013.557519	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CZBF01000007 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CZBF01000007 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CZBF01000007.244731.246209	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CZAD01000019 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CZAD01000019 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CZAD01000019.36461.37967	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ASSO01000008 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ASSO01000008 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ASSO01000008.242.1756	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXX01000013 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXX01000013 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXX01000013.47133.48647	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ASSO01000005 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ASSO01000005 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ASSO01000005.228475.229989	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query ASSO01000012 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query ASSO01000012 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	ASSO01000012.330141.331655	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXY01000011 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXY01000011 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXY01000011.2332.3846	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXY01000024 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXY01000024 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXY01000024.2457.3971	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXY01000040 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXY01000040 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXY01000040.119284.120798	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXX01000028 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXX01000028 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXX01000028.63843.65357	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXY01000036 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXY01000036 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXY01000036.100084.101598	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXY01000037 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXY01000037 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXY01000037.85.1599	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXX01000053 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXX01000053 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXX01000053.88318.89832	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGXX01000035 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGXX01000035 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGXX01000035.84693.86207	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CELQ01001252 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CELQ01001252 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CELQ01001252.285.1791	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CELS01000805 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CELS01000805 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CELS01000805.3695.5201	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CELT01001252 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CELT01001252 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CELT01001252.285.1791	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CELP01000805 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CELP01000805 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CELP01000805.3695.5201	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query FNPN01000038 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query FNPN01000038 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	FNPN01000038.3597.5127	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHU01000006 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHU01000006 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHU01000006.320240.321750	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHP01000007 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHP01000007 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHP01000007.52.1562	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHL01000160 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHL01000160 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHL01000160.816.2326	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000015 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000015 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000015.152778.154288	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000089 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000089 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000089.399404.400914	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000094 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000094 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000094.3300.4810	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000099 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000099 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000099.3300.4810	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CYYK01000013 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CYYK01000013 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CYYK01000013.155663.157167	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHU01000008 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHU01000008 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHU01000008.141990.143416	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000053 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000053 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000053.157601.159113	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000100 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000100 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000100.3323.4833	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000025 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000025 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000025.101.1613	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHP01000005 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHP01000005 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHP01000005.55.1565	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHU01000005 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHU01000005 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHU01000005.172039.173465	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHU01000009 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHU01000009 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHU01000009.3370.4880	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHU01000010 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHU01000010 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHU01000010.159459.160969	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHQ01000182 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHQ01000182 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHQ01000182.861.2371	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHQ01000184 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHQ01000184 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHQ01000184.8.1440	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000089 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000089 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000089.1227.2737	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHQ01000190 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHQ01000190 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHQ01000190.1.1357	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHU01000012 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHU01000012 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHU01000012.129017.130443	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHQ01000188 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHQ01000188 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHQ01000188.2.1367	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000090 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000090 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000090.3300.4810	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000091 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000091 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000091.3300.4810	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000092 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000092 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000092.437737.439247	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query JNHK01000093 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query JNHK01000093 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	JNHK01000093.65315.66825	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDRH01001209 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDRH01001209 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDRH01001209.86.1590	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDRG01001562 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDRG01001562 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDRG01001562.1580.3084	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDRG01001675 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDRG01001675 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDRG01001675.3566.4940	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDRH01001449 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDRH01001449 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDRH01001449.1041.2545	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CZAR01000037 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CZAR01000037 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CZAR01000037.27480.28953	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDRG01001560 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDRG01001560 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDRG01001560.3656.5160	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDRG01001561 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDRG01001561 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDRG01001561.820.2324	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDRH01001198 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDRH01001198 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDRH01001198.185.1689	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDRG01001720 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDRG01001720 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDRG01001720.594.1891	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query CDRH01001199 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query CDRH01001199 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	CDRH01001199.128.1633	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGZN01000017 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGZN01000017 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGZN01000017.129058.130570	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGZM01000019 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGZM01000019 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGZM01000019.163713.165225	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGZN01000022 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGZN01000022 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGZN01000022.25658.27170	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGZN01000045 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGZN01000045 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGZN01000045.112859.114371	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGZM01000021 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGZM01000021 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGZM01000021.370373.371885	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGZN01000030 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGZN01000030 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGZN01000030.290269.291781	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGZM01000010 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGZM01000010 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGZM01000010.326977.328489	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGZN01000024 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGZN01000024 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGZN01000024.143987.145499	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGZM01000011 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGZM01000011 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGZM01000011.2267.3779	$line"; done
+OLDIFS="$IFS"; IFS=$"
+"
+assembly=`esearch -db nuccore -query AGZM01000001 | elink -target biosample | elink -target assembly  | esummary | xtract -pattern DocumentSummary -element AssemblyAccession`; for line in `esearch -db nuccore -query AGZM01000001 | elink -target biosample | elink -target sra |  esummary -format runinfo -mode xml | xtract -pattern Row -element Run -element SampleName -element ScientificName -element LibraryStrategy -element LibrarySource`; do echo -e "${assembly}	AGZM01000001.709887.711399	$line"; done
+IFS=$OLDIFS

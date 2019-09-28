@@ -1,11 +1,13 @@
 ---
 title: 'FocusDB: mining underutilized SRAs to make a high-resolution 16S rRNA database'
 author: "Ben Nolan, Nicholas Waters"
-date: "9/18/2019"
-output: html_document
-bibliography: focusdb_references.bib
-editor_options: 
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  word_document: default
+  html_document: default
+editor_options:
   chunk_output_type: console
+bibliography: focusdb_references.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -100,24 +102,29 @@ knitr::include_graphics("figures/3-unique.png")
 ```
 
 
-### Comparing reassembled 16S to Draft 16S
+### Comparing reassembled 16S to Complete genome 16S
 
 As repeated rDNA operons are difficult to assembly, Draft genome rDNA can (and often do) contain a single rDNA.  This is problematic for species identification -- the rDNA recovered is not just one of /n/ rDNAs, but it can be a consensus "summary"/"collapsed" rDNA resulting from imperfect assembly of the repeated region. 
 
-riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. Here, we compare the 16s seqeunces from riboSeed reassembly of draft genomes to the initial (potentially collapsed) 16s seqeunces.
+riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. Here, we compare the 16s sequences from focusDB/riboSeed reassembly of genomes to those seqeunces from SILVA that originated from complete genomes. In our dataset, 4 strains met that criteria; 2 were assembled  from  PacBio (and were therefore not reassembled with focusCDB). Table 2 shows the results of comparing the reassembly to the complete genome; in both cases, all 5 16S rDNAs were 100% matches over their full length (after aligning and trimming alignment  bp at the 3' and 5'ends). This confirms that thhe best-case accuracy of riboSeed is comparable to long-read/hybrid assembly.
 
-| Bacteroides cellulosilyticus |GCF_001318345.1| 
-| Bacteroides ovatus           |GCF_001314995.1|
-| Bacteroides thetaiotaomicron |GCF_001314975.1|
-| Bacteroides vulgatus         |GCF_001412315.1|
+Table 2: reassembling complete genomes with riboSeed
+|  Organism                    | Assembly      | Technology| Identical |
+|------------------------------|---------------|-----------|-----------|
+| Bacteroides cellulosilyticus |GCF_001318345.1| PacBio    |    -      |
+| Bacteroides ovatus           |GCF_001314995.1| Illumina  |   5/5     |
+| Bacteroides thetaiotaomicron |GCF_001314975.1| PacBio    |   5/5     |
+| Bacteroides vulgatus         |GCF_001412315.1| PacBio    |    -      |
 
-For the 7 organisms, we identified which of SILVAs originated from which assemblies, and assessed their levels of completeness.  In some cases (such as XX and YY), we found that the the original draft genome contained all the rDNAs. 
+### Comparing reassembled 16S to Draft 16S
 
-For those that didn't, we determined whether the rDNAs assembled with riboSeed matched any of the rDNAs in the  database for that particular strain.
+For the 7 organisms, we identified which of SILVAs originated from which assemblies, and assessed their levels of completeness. We determined whether the rDNAs assembled with riboSeed matched any of the rDNAs in the  database for that particular strain. In some cases (such as _B. ovatus_ GCF_900107475.1), the single rDNA in SILVA was recovered with focusDB; in others (such as  _B. ovatus_ GCF_000699665.1) the identical sequence was not recovered, whether due to severrly truncated seqeunces in SILVA or SNPs. Alignments can all be found in the supplementary repository.
+
 
 
 ### Species Assignment of DADA2's Extremes ASVs
 
+Not sure if we actually care about this section.
 
 
 ## Discussion

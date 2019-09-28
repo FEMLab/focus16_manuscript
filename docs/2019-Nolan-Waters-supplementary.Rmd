@@ -1,9 +1,11 @@
 ---
 title: "Supplementary Materials"
 author: "Ben Nolan and  Nicholas Waters"
-date: "9/18/2019"
-output: html_document
-editor_options: 
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  word_document: default
+  html_document: default
+editor_options:
   chunk_output_type: console
 ---
 
@@ -312,7 +314,7 @@ p_summary_data <- merge(srac,  p_summary_data_pre, by.x="strain", by.y="org") %>
     scale_shape_manual(guide = "legend", values = c(21, 22, 23,24)) + 
     geom_point(size=5)  + coord_flip() + mytheme +
     labs("SRAs Proccessed by focusDB",
-         y="Number of SRAs", x="Organism", color="Run Status", fill="Run Status", shape="SRA status")  +
+         y="Number of SRAs", x="", color="Run Status", fill="Run Status", shape="SRA status")  +
     theme(axis.text=element_text(size=13))
 )  
 ggsave("docs/figures/2-success.png", p_outcomes, device = "png", dpi = 300, width = 11, height = 7)
@@ -362,7 +364,7 @@ p_uniqueness <- uniqueness %>%  gather(key="grp", value="val", -Organism, -DB ) 
     coord_flip() +
     scale_fill_manual(values = viridis::viridis(n=3)[c(2, 1)]) +
     scale_alpha_manual(values = c(.2, 1)) + mytheme +
-    labs(x="Number of Sequence", y="Organism", alpha="", fill="Database") +
+    labs(y="Number of Sequence", x="", alpha="", fill="Database") +
     theme(axis.text=element_text(size=13)) +
     geom_bar(stat="identity", position="stack") #+ facet_wrap(~grp) 
 )
@@ -377,7 +379,7 @@ B <- p_summary_data %>% select(strain, pmessage, state) %>% filter(!is.na(state)
 right_join(B, A, by=c("strain"="Organism")) %>% 
   mutate(Genus=gsub("(.*) (.*)", "\\1", strain),
          Species=gsub("(.*) (.*)", "\\2", strain)) %>%
-  select(Genus, Species, All_SRAs, Good_SRAs, focus, silv, combined) %>% View()
+  select(Genus, Species, All_SRAs, Good_SRAs, focus, silv, combined)
 ```
 
 ## Generating Multiple Sequence Alignments
@@ -489,42 +491,49 @@ bash docs/cg_link_accessions > docs/cgaccessions
 Now, we have a list any available SRAs for the list of strains in the Silva database, with columns for the name/region (from silva), the assembly, the sample name, scientific name, tech, type, and SRA.  Note that the silva name refers to the sequence, not the assembly, so thats why we need  to fetch the column for the aassembly as well.
 
 Now, we can look at how many rDNAs are represented in the database.
-```{r eval=FALSE}
+```{r eval=TRUE}
+# read in the draft linked accessions and the complete genome linked accessions
 names <- c("assembly", "silva", "Run", "SampleName", "ScientificName", "LibraryStrategy", "LibrarySource")
 draft_silva_sras <- read.csv("./docs/accessions", sep="\t", header = F, col.names = names,stringsAsFactors = F)
 cg_silva_sras <- read.csv("./docs/cgaccessions", sep="\t", header = F, col.names = names,stringsAsFactors = F)
-#(draft_silva_sras$org <- gsub("(\\W*)\\s(\\W)[$| ]*", "\\1", draft_silva_sras$ScientificName))
+
 (p_summary_draft <- draft_silva_sras  %>% group_by(ScientificName,  assembly) %>% 
     select(ScientificName, assembly, silva) %>% distinct() %>%  summarize(n=n()))
 (p_summary_cg    <-    cg_silva_sras  %>% group_by(ScientificName,  assembly) %>% 
     select(ScientificName, assembly, silva) %>% distinct() %>%  summarize(n=n()))
-# left_join(p_summary_draft%>%filter(n!=1), draft_silva_sras) %>% select(ScientificName, Run) %>% distinct() %>%View()
-# left_join(p_summary_draft%>%filter(n==1), draft_silva_sras) %>% select(ScientificName, Run)
-draft_ovatus <- p_summary_draft[grepl("ovatus", p_summary_draft$ScientificName),  ]
+
+
+# for example, 
 draft_fragilis <- p_summary_draft[grepl("fragilis", p_summary_draft$ScientificName),  ]
 ```
-Here,  looking at _B. ovatus_, we can see  that GCF_000699725.1 has 4 , so we dont need to reassemble those: rrndb shows that we can expect around  5 rDNAs for B ovatus.  For starters though, lets assess how we assembledthe GCF_000699725.1
 
-```{r eval=FALSE}
+
+```{r}
 build_aln_for_assembly <- function(db, assembly="GCF_000699725.1"){
+  # get matching assembly from entrez link results to get the complete genome/seqeunce accession
   this_silva <- unique(db[grepl(assembly, db$assembly), "silva" ])
-  # paste tofgether to make a query string with ors
+  # paste tofgether to make a query string with or's; this is because for assemblies, 
+  # # different contigs will have different sequence names, but a single assembly accession
   this_silva_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("(.*?)\\..*", "\\1", this_silva), collapse = "", sep="|"))
+  # get matching SRAs for assembly, so we can use them to search the focusdb results
   this_focus <- unique(db[grepl(assembly, db$assembly), "Run" ])
+  # build focusdb query string;  get rid of the *_\\d suffix we add to SRAs to keep themunique
   this_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",this_focus), collapse = "", sep="|"))
   
+  # identify all seqeunces associated with this assembly accesssion
   silva_subset_seqs <- silva[grepl(this_silva_query,  names(silva))]
+  # idenify the seqeunces from focusDB
   focus_subset_seqs <- all_focus[grepl(this_focus_query, names(all_focus))]
-  
+  # merge, align the seqeunces
+  # Silva by default is in RNA, so we type-cast to DNA
   aln <- DECIPHER::AlignSeqs(
-    append(focus_subset_seqs,DNAStringSet(silva_subset_seqs))
+    append(focus_subset_seqs, DNAStringSet(silva_subset_seqs))
   )
   return (aln)
 }
 
 ```
 
-The other three assemblies, we could re-assemble: GCF_000218325.1, GCF_000699665.1, and GCF_900107475.1 all only have a single rDNA.  Lets run the pipeline on the 4.
 ```{r}
 # cellulosilyticus, excluded as no whole genomes short read available; reference was PacBio
 GCF_001318345 <- build_aln_for_assembly(db=cg_silva_sras, assembly="GCF_001318345.1")
@@ -543,21 +552,26 @@ GCF_001412315 <- build_aln_for_assembly(db=cg_silva_sras, assembly="GCF_00141231
 BrowseSeqs(subseq(GCF_001412315, 5, -5))
 duplicated(subseq(GCF_001412315, 5, -5))
 
-
-GCF_000699725 <- build_aln_for_assembly(db=draft_silva_sras, assembly="GCF_000699725.1")
-GCF_000699665 <- build_aln_for_assembly(db=draft_silva_sras, assembly="GCF_000699665.1")
-
-# BrowseSeqs(GCF_000699725)
-# BrowseSeqs(GCF_000699665)
-```
-Now we can compare.  
-
-```{r eval=FALSE}
-fragilis[1, "assembly"]
-GCA_001058745 <- build_aln_for_assembly(assembly=fragilis[1, "assembly"])
-BrowseSeqs(GCA_001058745)
 ```
 
+# assessing draft genome reassembly
+Here,  looking at _B. ovatus_, we can see  that GCF_000699725.1 has 4 , so we dont need to reassemble those: rrndb shows that we can expect around  5 rDNAs for B ovatus.  For starters though, lets assess how we assembled the GCF_000699725.1.
+The other three assemblies, we could re-assemble: GCF_000218325.1, GCF_000699665.1, and GCF_900107475.1 all only have a single rDNA.  Lets run the pipeline on the 4.
+
+```{r}
+ovatus = list()
+draft_ovatus <- p_summary_draft[grepl("ovatus", p_summary_draft$ScientificName),  ]
+for (i in 1:nrow(draft_ovatus)){
+  try(ovatus[i] <- build_aln_for_assembly(db=draft_silva_sras, assembly=draft_ovatus$assembly[i]))
+  outpath <- file.path("docs", "figures", "alignments", paste0(draft_ovatus$assembly[i], ".html"))
+  try(BrowseSeqs(subseq(ovatus[[i]], 10, -10), highlight=0, threshold=0.5, htmlFile = outpath))
+  
+}
+names(ovatus) <- draft_ovatus$assembly
+for (s in ovatus)  try(print(duplicated(subseq(s, 10, -10))))
+
+
+```
 
 ## Discussion
 ```{r calculate_needs_assembl}

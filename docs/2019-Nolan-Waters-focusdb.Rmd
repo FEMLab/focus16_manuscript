@@ -76,6 +76,8 @@ Of the 27 organisms in the Extreme dataset, 16 had publicly available WGS data i
  ```{r srafig, echo=FALSE, fig.cap="Strains with whole genome seqeuncing SRAs available", out.width = '100%'}
 knitr::include_graphics("figures/2-success.png")
 ```
+Figure 2: Strains with whole genome sequencing SRAs available.  Shape indicates that status of the reassembly for a given SRA; color indicates the status of the focusDB run for a given organism.
+
 
 ### Assessing the database Diversity
 Ideally focusDB would be applied to every eligible SRA currently available; we do not have the resources to do this. In order to show what data yields could be expected, we assessed charactaristics of species-specific databases for the eligible organisms in the Extremes dataset.
@@ -109,6 +111,7 @@ As repeated rDNA operons are difficult to assembly, Draft genome rDNA can (and o
 riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. Here, we compare the 16s sequences from focusDB/riboSeed reassembly of genomes to those seqeunces from SILVA that originated from complete genomes. In our dataset, 4 strains met that criteria; 2 were assembled  from  PacBio (and were therefore not reassembled with focusCDB). Table 2 shows the results of comparing the reassembly to the complete genome; in both cases, all 5 16S rDNAs were 100% matches over their full length (after aligning and trimming alignment  bp at the 3' and 5'ends). This confirms that thhe best-case accuracy of riboSeed is comparable to long-read/hybrid assembly.
 
 Table 2: reassembling complete genomes with riboSeed
+
 |  Organism                    | Assembly      | Technology| Identical |
 |------------------------------|---------------|-----------|-----------|
 | Bacteroides cellulosilyticus |GCF_001318345.1| PacBio    |    -      |
@@ -136,6 +139,8 @@ There are three main limitations facing the lage-scale application of focusDB:  
 The third limitation is the availability of high-quality closed genomes to use as references. With the increased adoption of long read technologies, this limitation will decrease with time.
 
 Further limitations exist within focusDB and within riboSeed. The success of riboSeed's _de fere novo_ assembly hinges on thethe similarity of the reference to the sequenced isolate (and the differentiating power of the  rDNA flanking regions).  As mentioned above, as the difficulty of genome completion is decreases with the use of long read seqeuncing, this limitation will be decreased. The vast majority of short-read seqeuncing is performed with pair-end libraries; currently riboSeed does not support less popular strategies such as mate-paired libraries. Lastly, riboSeed is of limitted use for organisms lacking sufficiently unique flanking regions.
+
+Considering all these limitations, we hope that  focusDB will allow researchers to have more confidence in low-level taxonomic assignment, and that improving the databases such as SILVA will lend new insights into the inner workings of complex communities. 
 
 ## Author Contributions
 ## References

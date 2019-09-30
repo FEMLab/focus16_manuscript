@@ -306,6 +306,15 @@ p_summary_data <- merge(srac,  p_summary_data_pre, by.x="strain", by.y="org") %>
   group_by(strain) %>%
   mutate(thisid = row_number()) %>%
  transform(thisid = ifelse(is.na(messag), 0, thisid)) 
+p_summary_data$strain <- factor(p_summary_data$strain, levels=rev(levels(factor(p_summary_data$strain))))
+# for coloring x/y axis
+alpha_info <-  rev(ifelse(p_summary_data[!duplicated(p_summary_data$strain), "globalmessage"]=="Success", "gray90", "gray60"))
+alpha_data <- p_summary_data %>%
+  group_by(strain) %>% 
+  mutate(alpha = ifelse(globalmessage=="Success", "gray10", "gray70")) %>% 
+  select(strain, alpha) %>% distinct() %>% as.data.frame()
+
+alpha_v <- alpha_data[order(alpha_data$strain, alpha_data$alpha), "alpha"]
 #p_summary_data %>% group_by(strain) %>% summarize(n=n()) %>% View() 
 # put in original number of orrganisms, for plotting purposes()
 (p_outcomes <- ggplot(p_summary_data, 
@@ -314,10 +323,11 @@ p_summary_data <- merge(srac,  p_summary_data_pre, by.x="strain", by.y="org") %>
     scale_shape_manual(guide = "legend", values = c(21, 22, 23,24)) + 
     geom_point(size=5)  + coord_flip() + mytheme +
     labs("SRAs Proccessed by focusDB",
-         y="Number of SRAs", x="", color="Run Status", fill="Run Status", shape="SRA status")  +
-    theme(axis.text=element_text(size=13))
+         y="Number of SRAs", x="", color="focusDB Status", fill="focusDB Status", shape="Per SRA")  +
+    theme(axis.text=element_text(size=13),
+          axis.text.y = element_text(colour = alpha_v))
 )  
-ggsave("docs/figures/2-success.png", p_outcomes, device = "png", dpi = 300, width = 11, height = 7)
+ggsave("docs/figures/2-success.png", p_outcomes, device = "png", dpi = 300, width = 11, height = 6)
 
 ```
 

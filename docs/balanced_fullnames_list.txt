@@ -1,0 +1,59 @@
+Acidobacterium capsulatum ATCC 51196 
+Akkermansia muciniphila ATCC BAA-835 
+Anaerocellum thermophilum Z-1320, DSM 6725
+Bacteroides thetaiotaomicron VPI-5482 
+Bacteroides vulgatus ATCC 8482 
+Bordetella bronchiseptica RB50 
+Burkholderia xenovorans LB400 
+Caldicellulosiruptor saccharolyticus DSM 8903 
+Chlorobaculum tepidum TLS
+Chlorobium limicola DSM 245
+Chlorobium phaeobacteroides DSM 266 
+Chlorobium phaeovibrioides DSM 265 
+Chloroflexus aurantiacus J-10-fl 
+Clostridium thermocellum ATCC 27405 
+Deinococcus radiodurans R1 
+Desulfovibrio desulfuricans desulfuricans ATCC 27774 
+Desulfovibrio piger ATCC 29098 
+Dictyoglomus turgidum DSM 6724
+Erwinia chrysanthemi
+Enterococcus faecalis V583v 
+Fusobacterium nucleatum nucleatum ATCC 25586 
+Gemmatimonas aurantiaca T-27T 
+Herpetosiphon aurantiacus ATCC 23779 
+Hydrogenobaculum sp. Y04AAS1 
+Leptothrix cholodnii SP-6
+Nitrosomonas europaea ATCC 19718
+Nostoc sp. PCC 7120
+Pelodictyon phaeoclathratiforme BU-1 
+Persephonella marina EX-H1 
+Porphyromonas gingivalis ATCC 33277 
+Rhodopirellula baltica SH 1 
+Rhodospirillum rubrum ATCC 11170
+Ruegeria pomeroyi DSS-3
+Salinispora arenicola CNS-205 
+Salinispora tropica CNB-440 
+Shewanella baltica OS185
+Shewanella baltica OS223
+Sulfitobacter sp. EE-36
+Sulfitobacter sp. NAS-14.1 
+Sulfurihydrogenibium sp. YO3AOP1 
+Sulfurihydrogenibium yellowstonense SS-5 
+Thermoanaerobacter pseudethanolicus ATCC 33223 
+Thermotoga neapolitana DSM 4359 
+Thermotoga petrophila RKU-1 
+Thermotoga sp. RQ2
+Thermus thermophilus HB8
+Treponema denticola ATCC 35405 
+Treponema vincentii I
+Zymomonas mobilis mobilis ZM4
+Archaeoglobus fulgidus DSM 4304 
+Ignicoccus hospitalis KIN4/I 
+Methanocaldococcus jannaschii DSM 2661 
+Methanococcus maripaludis C5 
+Methanococcus maripaludis S2 
+Nanoarchaeum equitans Kin4-M 
+Pyrobaculum aerophilum IM2 
+Pyrobaculum calidifontis JCM 11548 
+Pyrococcus horikoshii OT3 
+Sulfolobus tokodaii 7(S311)

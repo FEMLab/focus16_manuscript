@@ -36,7 +36,7 @@ mytheme <- ggplot2::theme_minimal() +
 ```
 ##  Assessing SILVA's composition
 ```{bash, eval=FALSE}
-#cat ~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz |gunzip  | grep ">" > ./silva132ref_headers.txt
+if [ -f "SILVA_132_SSURef_tax_silva.fasta.gz" ] ; then echo "already downloaded" ; else wget    https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_tax_silva.fasta.gz  ; gunzip SILVA_132_SSURef_tax_silva.fasta.gz ; fi
 ```
 
 ```{r parse_headers, cache=TRUE}
@@ -327,11 +327,12 @@ scale_fill_brewer(palette = "Set1") +
   # scale_color_manual(values = viridis::viridis(n=10)[3:5]) +
     # scale_fill_manual(values = viridis::viridis(n=10)[3:5]) +
     labs("SRAs Proccessed by focusDB",
-         y="Number of SRAs", x="", color="focusDB Status", fill="focusDB Status", shape="Per SRA")  +
+         y="Number of whole-genome sequencing SRAs", x="", color="focusDB Status", fill="focusDB Status", shape="Per SRA")  +
     theme(axis.text=element_text(size=13),
+          axis.title.x =element_text(size=14),
           axis.text.y = element_text(colour = alpha_v))
 )  
-ggsave("docs/figures/2-success.png", p_outcomes, device = "png", dpi = 300, width = 11, height = 6)
+ggsave("docs/figures/2-success.png", p_outcomes, device = "png", dpi = 300, width = 12, height = 7)
 
 ```
 

@@ -96,7 +96,7 @@ KAAA-KZZZ	GenBank	Targeted Gene Projects
 AAAAA-AZZZZ	DDBJ	MGA", sep="\t", stringsAsFactors=F)
 
 silva_headers <- data.frame("V1"=names(silva), stringsAsFactors = F)
-silva_headers$pre <- gsub(">(\\D*).*", "\\1", silva_headers$V1)
+silva_headers$pre <- gsub("(\\D*).*", "\\1", silva_headers$V1)
 #silva_headers$name <- gsub(">(.*?)\\s.*", "\\1", silva_headers$V1)
 silva_headers$start <- as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\2", silva_headers$V1))
 silva_headers$stop <-  as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\3", silva_headers$V1))
@@ -290,14 +290,20 @@ cp ./*/*ribo16s.fasta ./2019-09-26-focusdb-results/
 ### Figure 2: sra successes
 ```{r plot_success}
 
-bal_data <- read.csv("results/2019-10-03-focusdb-balanced/summary_balanced_all.tab", sep="\t", header=F,
-                         col.names = c("org", "status", "state", "messag"), stringsAsFactors = F)
+bal_data <- read.csv(
+  "./results/2019-10-07-focusdb-balanced/balanced_summary_all",
+  sep="\t", header=F, col.names = c("org", "status", "state", "messag"),
+  stringsAsFactors = F)
 bal_data$mock <- "Balanced"
-hmp_data <- read.csv("results/2019-10-03-hmp-focusdb/summary_hmp_all.tab", sep="\t", header=F,
-                         col.names = c("org", "status", "state", "messag"), stringsAsFactors = F)
+hmp_data <- read.csv("results/2019-10-03-hmp-focusdb/summary_hmp_all.tab",
+                     sep="\t", header=F,
+                     col.names = c("org", "status", "state", "messag"), 
+                     stringsAsFactors = F)
 hmp_data$mock <- "HMP"
-ex_data <- read.csv("results/2019-09-26-focusdb-results/summary_extremes_all", sep="\t", header=F,
-                         col.names = c("org", "status", "state", "messag"), stringsAsFactors = F)
+ex_data <- read.csv("./results/2019-10-07-focusdb_extremes/Extremes_summary_all",
+                    sep="\t", header=F,
+                    col.names = c("org", "status", "state", "messag"), 
+                    stringsAsFactors = F)
 ex_data$mock <- "Extremes"
 summary_data <- rbind(bal_data,ex_data, hmp_data)
 globals <- summary_data %>% filter(state=="global") %>%
@@ -307,7 +313,6 @@ summary_data <- summary_data %>% filter(state!="global")
 # tidy things up;  this clarifies the immage a bit
 (globals$globalmessage <- gsub("No 16s sequences detected in re-assemblies", "Success", globals$globalmessage))
 # (globals$globalmessage <- gsub("No available.*", "No available references", globals$globalmessage))
-
 
 p_summary_data_pre <- full_join(
   summary_data , globals, by=c("org", "mock")) %>% 
@@ -319,6 +324,7 @@ p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org", "mock")) %>%
     pmessage = case_when(
       startsWith(messag, "Unknown error") ~ "QC Fail",
       is.na(messag) ~ "QC Fail",
+      startsWith(messag, "Library type Error") ~ "QC Fail",
       startsWith(messag, "Reads were") ~ "QC Fail",
       startsWith(messag, "Unable to process") ~ "QC Fail",
       messag=="" ~ "16S Recovered", 
@@ -339,9 +345,8 @@ plot_mock <- function(df){
   
   alpha_v <- alpha_data[order(alpha_data$strain, alpha_data$alpha), "alpha"]
   # put in original number of orrganisms, for plotting purposes()
-  (p <- ggplot(df, 
-                        aes(x=strain, y=thisid, shape=pmessage,
-                            color=pmessage, fill=pmessage)) + 
+  (p <- ggplot(df, aes(x=strain, y=thisid, shape=pmessage,
+                       color=pmessage, fill=pmessage)) + 
       scale_shape_manual(guide = "legend", values = c(21, 22, 23,24)) + 
       geom_point(size=5)  + coord_flip() + mytheme +
       scale_colour_brewer(palette = "Set2") +
@@ -357,11 +362,13 @@ plot_mock <- function(df){
   )
   return(p)
 }
-(p_hmp <- plot_mock(df=p_summary_data%>% filter(mock == "HMP")))
-(p_ex <- plot_mock(df=p_summary_data%>% filter(mock == "Extremes")))
-(p_bal <- plot_mock(df=p_summary_data%>% filter(mock == "Balanced")))
-
-   ###################
+mock_plots <- list()
+for (grp in  c("HMP", "Extremes",  "Balanced")){
+  thisgroup <- quo(grp)
+  (mock_plots[[grp]] <- plot_mock(df=p_summary_data%>% filter(mock == (!!thisgroup))))
+  ggsave(paste0("docs/figures/S2", grp, ".png"), mock_plots[[grp]], device = "png", dpi = 300, width = 12, height = 7)
+}
+###################
 alpha_data <- p_summary_data %>%
   group_by(strain) %>% 
   mutate(alpha = ifelse(globalmessage=="Success", "gray10", "gray70")) %>% 

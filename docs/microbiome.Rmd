@@ -1,0 +1,108 @@
+---
+title: "f"
+author: "Ben Nolan and  Nicholas Waters"
+date: "10/7/2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dada2); packageVersion("dada2")
+library(ShortRead); packageVersion("ShortRead")
+SPEED = TRUE  # use  pregenerated files, dont plot if you can avoid it
+```
+we makde a data
+```{bash}
+while read x; do fasterq-dump --split-files $x ; done < ~/Downloads/SRR_Acc_List-1.txt
+
+```
+
+```{r}
+dirpath <- "./docs/microbiome_data/"
+filtpath <- "./docs/microbiome_data/clean/"
+mb_meta <- read.csv2("./docs/microbiome_data/metadata.tsv", stringsAsFactors = F,sep="\t",comment.char = '#')
+sra_meta <- read.csv("./docs/microbiome_data/SraRunTable-PRJEB26800.txt", stringsAsFactors = F,sep=",")
+meta <- full_join(
+  mb_meta %>%select(sample_alias, sample_description),
+  sra_meta %>% select(Run, Sample.Name), by=c("sample_alias"="Sample.Name")
+)
+meta$site <- gsub("(.*?) .*", "\\1", meta$sample_description)
+meta$status <- gsub(".*\\((.*?)\\)$", "\\1", meta$sample_description)
+
+# Forward and reverse fastq filenames have format: SAMPLENAME_R1_001.fastq and SAMPLENAME_R2_001.fastq
+fnFs <- sort(list.files(dirpath, pattern="_1.fastq.gz", full.names = TRUE))
+fnRs <- sort(list.files(dirpath, pattern="_2.fastq.gz", full.names = TRUE))
+# Extract sample names, assuming filenames have format: SAMPLENAME_XXX.fastq
+sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
+
+
+if (!SPEED) ggsave(plotQualityProfile(fnFs), filename = file.path(dirpath, "F_q.png"),dpi = 300, width = 16, height = 10, units = "in")
+if (!SPEED)  ggsave(plotQualityProfile(fnRs), filename = file.path(dirpath, "R_q.png"),dpi = 300, width = 16, height = 10, units = "in")
+
+baddiesF <-c(sample.names[grep("009",sample.names)])
+baddiesR <-c(sample.names[grep("009",sample.names)])
+
+sample.names <- sample.names[!sample.names %in% unique(c(baddiesF, baddiesR))]
+for (baddie in c(baddiesF, baddiesR)){
+  fnFs <- fnFs[!grepl(baddie, fnFs)]
+  fnRs <- fnRs[!grepl(baddie, fnRs)]
+}
+# Place filtered files in filtered/ subdirectory
+filtFs <- file.path(dirpath, "filtered", paste0(sample.names, "_F_filt.fastq.gz"))
+filtRs <- file.path(dirpath, "filtered", paste0(sample.names, "_R_filt.fastq.gz"))
+names(filtFs) <- sample.names
+names(filtRs) <- sample.names
+
+if (!SPEED) {
+out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs,trimLeft=30, trimRight=40,
+              maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
+              compress=TRUE, multithread=TRUE)
+} else {
+  out <- list.files("./docs/microbiome_data/filtered")
+}
+head(out)
+
+
+errF <- learnErrors(filtFs, multithread=TRUE)
+errR <- learnErrors(filtRs, multithread=TRUE)
+if (!SPEED)  plotErrors(errF, nominalQ=TRUE)
+derepF <- derepFastq(filtFs, verbose=TRUE)
+derepR <- derepFastq(filtRs, verbose=TRUE)
+
+dadaFs <- dada(derepF, err=errF, multithread=TRUE)
+dadaRs <- dada(derepR, err=errR, multithread=TRUE)
+
+merger <- mergePairs(dadaFs, derepF, dadaRs, derepR, verbose=TRUE)
+seqtab <- makeSequenceTable(merger)
+summary((nchar(getSequences(seqtab))))
+hist(nchar(colnames(seqtab)))
+seqtab2 <- seqtab[,nchar(colnames(seqtab)) %in% 360:450]
+hist(nchar(colnames(seqtab2)))
+dim(seqtab2)
+
+seqtab.nochim <- removeBimeraDenovo(seqtab2, method="consensus", multithread=TRUE, verbose=TRUE)
+sum(seqtab.nochim)/sum(seqtab2)
+dim(seqtab.nochim)
+
+getN <- function(x) sum(getUniques(x))
+track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(merger, getN), rowSums(seqtab.nochim))
+# If processing a single sample, remove the sapply calls: e.g. replace sapply(dadaFs, getN) with getN(dadaFs)
+colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+rownames(track) <- sample.names
+head(track)
+
+taxa <- assignTaxonomy(seqtab.nochim, "~/Downloads/silva_nr_v132_train_set.fa.gz", multithread=TRUE)
+taxa <- assignSpecies(taxa, "~/Downloads/silva_species_assignment_v132.fa.gz")
+
+taxa.print <- taxa # Removing sequence rownames for display only
+taxa.print[is.na(taxa.print[,1])] <- ""
+taxa.print[is.na(taxa.print[,2])] <- ""
+thesenames <- gsub("^ $", "", paste(taxa.print[,1], taxa.print[,2] ))
+table(thesenames)
+
+write.table(sort(unique(thesenames)), file = "./docs/microbiome_data/endo_species.txt", row.names = F,  col.names = F, quote=F)
+```
+

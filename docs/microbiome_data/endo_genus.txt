@@ -15,7 +15,7 @@ Alistipes
 Alkanindiges
 Allisonella
 Alloprevotella
-Allorhizobium-Neorhizobium-Pararhizobium-Rhizobium
+Allorhizobium
 Alloscardovia
 Ammonia
 Anaerobacillus
@@ -30,7 +30,7 @@ Anaerotruncus
 Anaerovibrio
 Angelakisella
 Anoxybacillus
-Aphagea_fa
+Aphagea
 Arcanobacterium
 Asteroleplasma
 Atopobiaceae
@@ -51,11 +51,12 @@ Bradyrhizobium
 Brevibacterium
 Brevundimonas
 Brucella
-Burkholderia-Caballeronia-Paraburkholderia
+Burkholderia
 Burkholderiaceae
 Butyricicoccus
 Butyricimonas
 Butyrivibrio
+CAG
 Caldicoprobacter
 Campylobacter
 Candidatus
@@ -74,8 +75,8 @@ Chryseobacterium
 Citrobacter
 Cloacibacillus
 Cloacibacterium
-Clostridiaceae_1
-Clostridiales_vadinBB60_group
+Clostridiaceae
+Clostridiales
 Clostridium
 Collinsella
 Comamonas
@@ -83,7 +84,7 @@ Coprobacillus
 Coprobacter
 Coprococcus
 Coriobacteriaceae
-Coriobacteriales_Incertae_Sedis
+Coriobacteriales
 Corynebacterium
 Cuneatibacter
 Curvibacter
@@ -119,8 +120,6 @@ Faecalibacterium
 Faecalicoccus
 Faecalitalea
 Family
-Family_XI
-Family_XIII
 Fastidiosipila
 Finegoldia
 Flavonifractor
@@ -129,12 +128,13 @@ Frigoribacterium
 Fusicatenibacter
 Fusobacterium
 Gardnerella
+GCA
 Gemella
 Geobacter
 Gordonibacter
 Granulicatella
 Haemophilus
-Hafnia-Obesumbacterium
+Hafnia
 Halanaerobium
 Halolamina
 Halomonas
@@ -149,7 +149,7 @@ Hungatella
 Hydrogenoanaerobacterium
 Intestinibacter
 Intestinimonas
-JG30-KF-CM45
+JG30
 Johnsonella
 Jonquetella
 Klebsiella

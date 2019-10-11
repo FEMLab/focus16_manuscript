@@ -107,9 +107,10 @@ table(thesenames)
 write.table(sort(unique(thesenames)), file = "./docs/microbiome_data/endo_species.txt", row.names = F,  col.names = F, quote=F)
 fg <-  data.frame(taxa[,c(5,6)], stringsAsFactors = F)
 rownames(fg) <- NULL
-fg$cleangenus <- gsub("_(.*)", "", fg$Genus)
-fg$cleangenus <- ifelse(grepl("\\d", fg$cleangenus),fg$Family, fg$cleangenus)
-fg$cleangenus <- ifelse(is.na(fg$cleangenus),fg$Family, fg$cleangenus)
+fg$cleangenus <- gsub("[-_](.*)", "", fg$Genus)
+fg$cleanfamily <- gsub("[-_](.*)", "", fg$Family)
+fg$cleangenus <- ifelse(grepl("\\d", fg$cleangenus),fg$cleanfamily, fg$cleangenus)
+fg$cleangenus <- ifelse(is.na(fg$cleangenus),fg$cleanfamily, fg$cleangenus)
 write.table(sort(unique(fg$cleangenus)), file = "./docs/microbiome_data/endo_genus.txt", row.names = F,  col.names = F, quote=F)
 ```
 

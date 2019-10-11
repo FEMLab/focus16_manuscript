@@ -95,14 +95,189 @@ rownames(track) <- sample.names
 head(track)
 
 taxa <- assignTaxonomy(seqtab.nochim, "~/Downloads/silva_nr_v132_train_set.fa.gz", multithread=TRUE)
-taxa <- assignSpecies(taxa, "~/Downloads/silva_species_assignment_v132.fa.gz")
+taxa_silva <- assignSpecies(taxa, "~/Downloads/silva_species_assignment_v132.fa.gz")
 
-taxa.print <- taxa # Removing sequence rownames for display only
+taxa.print <- taxa_silva # Removing sequence rownames for display only
+
 taxa.print[is.na(taxa.print[,1])] <- ""
 taxa.print[is.na(taxa.print[,2])] <- ""
 thesenames <- gsub("^ $", "", paste(taxa.print[,1], taxa.print[,2] ))
 table(thesenames)
 
 write.table(sort(unique(thesenames)), file = "./docs/microbiome_data/endo_species.txt", row.names = F,  col.names = F, quote=F)
+fg <-  data.frame(taxa[,c(5,6)], stringsAsFactors = F)
+rownames(fg) <- NULL
+fg$cleangenus <- gsub("_(.*)", "", fg$Genus)
+fg$cleangenus <- ifelse(grepl("\\d", fg$cleangenus),fg$Family, fg$cleangenus)
+fg$cleangenus <- ifelse(is.na(fg$cleangenus),fg$Family, fg$cleangenus)
+write.table(sort(unique(fg$cleangenus)), file = "./docs/microbiome_data/endo_genus.txt", row.names = F,  col.names = F, quote=F)
 ```
+
+
+## Running FocusDB
+
+Now that we know what genomes to be expecting, we can 
+
+```{bash}
+while read genus species; do 16db  -o ${genus}_${species} -g ${genus}_${species}_genomes -n "$genus $species" --cores 32 --memory 80 --n_references 50 --n_SRAs 20 --subassembler spades --threads 2  --maxdist .1  ; done < ./docs/microbiome_data/endo_species.txt
+cat ./*/SUMMARY  > 2019-10-08-endo-results/endo_summay_all
+cp ./*/*ribo16s.fasta ./2019-10-08-endo-results/
+```
+
+```{r}
+endo_data <- read.csv(
+  "./results/2019-10-08-endo-results/endo_summary_all.tab",
+  sep="\t", header=F, col.names = c("org", "status", "state", "messag"),
+  stringsAsFactors = F)
+endo_data$mock <- "endo"
+summary_data <- endo_data
+
+globals <- summary_data %>% filter(state=="global") %>%
+  select(mock, org, messag) %>% dplyr::rename(globalmessage=messag)
+summary_data <- summary_data %>% filter(state!="global")
+(globals$globalmessage <- ifelse(globals$globalmessage == "", "Success", globals$globalmessage))
+# tidy things up;  this clarifies the immage a bit
+(globals$globalmessage <- gsub("No 16s sequences detected in re-assemblies", "Success", globals$globalmessage))
+# (globals$globalmessage <- gsub("No available.*", "No available references", globals$globalmessage))
+
+p_summary_data_pre <- full_join(
+  summary_data , globals, by=c("org", "mock")) %>% 
+  select(mock, org, globalmessage, messag, state ) %>%  distinct()
+
+p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org", "mock")) %>% 
+  mutate(
+    strain=org, 
+    pmessage = case_when(
+      startsWith(messag, "Unknown error") ~ "QC Fail",
+      is.na(messag) ~ "QC Fail",
+      startsWith(messag, "Library type Error") ~ "QC Fail",
+      startsWith(messag, "Reads were") ~ "QC Fail",
+      startsWith(messag, "Unable to process") ~ "QC Fail",
+      messag=="" ~ "16S Recovered", 
+      messag=="riboSeed unsuccessful" ~ "No 16S Recovered")) 
+
+plot_mock <- function(df){
+  df <- df  %>%  arrange(pmessage) %>%
+    group_by(strain) %>%
+    mutate(thisid = row_number()) %>%
+    transform(thisid = ifelse(is.na(messag), 0, thisid)) 
+  df$strain <- factor(df$strain, levels=rev(levels(factor(df$strain))))
+
+  # for coloring x/y axis
+  alpha_info <-  rev(ifelse(df[!duplicated(df$strain), "globalmessage"]=="Success", "gray90", "gray60"))
+  alpha_data <- df %>%
+    group_by(strain) %>% 
+    mutate(alpha = ifelse(globalmessage=="Success", "gray10", "gray70")) %>% 
+    select(strain, alpha) %>% distinct() %>% as.data.frame()
+  
+  alpha_v <- alpha_data[order(alpha_data$strain, alpha_data$alpha), "alpha"]
+  # put in original number of orrganisms, for plotting purposes()
+  (p <- ggplot(df, aes(x=strain, y=thisid, shape=pmessage,
+                       color=pmessage, fill=pmessage)) + 
+      scale_shape_manual(guide = "legend", values = c(21, 22, 23,24)) + 
+      geom_point(size=5)  + coord_flip() + mytheme +
+      scale_colour_brewer(palette = "Set2") +
+      scale_fill_brewer(palette = "Set2") +
+      # unfortuantely facet wrapping throws off our beautiful alpha'd out names
+      # due to those repeated
+      facet_wrap(~mock) +
+    labs("SRAs Proccessed by focusDB",
+         y="Number of whole-genome sequencing SRAs", x="", color="Per SRA", fill="Per SRA", shape="Per SRA")  +
+      theme(axis.text=element_text(size=10),
+            axis.title.x =element_text(size=14),
+            axis.text.y = element_text(colour = alpha_v))
+  )
+  return(p)
+}
+mock_plots <- list()
+for (grp in  c("HMP", "Extremes",  "Balanced")){
+  thisgroup <- quo(grp)
+  (mock_plots[[grp]] <- plot_mock(df=p_summary_data%>% filter(mock == (!!thisgroup))))
+  ggsave(paste0("docs/figures/S2", grp, ".png"), mock_plots[[grp]], device = "png", dpi = 300, width = 12, height = 7)
+}
+```
+
+```{r plot_uniqueness, cache=TRUE}
+all_focus <- DNAStringSet() 
+uniqueness <- data.frame("Organism"=NA, "Unique"=NA,  "Duplicated"=NA, "DB"=NA, stringsAsFactors = F)
+uniqueness <- uniqueness[!is.na(uniqueness),]
+for (path in Sys.glob("./results/2019-10-08-endo-results/*_ribo16s.fasta")){
+  organism <- gsub("_", " ", gsub(".*\\/(.*)_ribo16s.fasta", "\\1", path))
+  print(paste("processing", organism))
+  silva_subset <-silva[grepl(organism, names(silva))]
+  nsilv <- length(silva_subset)
+  nsilvdup = sum(duplicated(silva_subset), na.rm = TRUE)
+  uniqueness <- rbind(
+    uniqueness, 
+    data.frame("Organism"=organism, "Unique"=nsilv-nsilvdup,  "Duplicated"=nsilvdup, "DB"="silv"))
+  focus_subset <- readDNAStringSet(path)
+  nfoc <- length(focus_subset)
+  nfocdup = sum(duplicated(focus_subset), na.rm = TRUE)
+  uniqueness <- rbind(
+    uniqueness, 
+    data.frame("Organism"=organism, "Unique"=nfoc-nfocdup,  "Duplicated"=nfocdup, "DB"="focus"))
+  both_subsets  <- append(DNAStringSet(silva_subset), focus_subset)
+  nboth <- length(both_subsets)
+  nbothdup = sum(duplicated(both_subsets), na.rm = TRUE)
+  uniqueness <- rbind(
+    uniqueness, 
+    data.frame("Organism"=organism, "Unique"=nboth-nbothdup,  "Duplicated"=nboth, "DB"="combined"))
+  all_focus <- append(all_focus, both_subsets)
+}
+popular <- uniqueness %>% filter(DB=='silv') %>% filter(Unique >400 | Duplicated>400)
+p_uniqueness <- uniqueness %>% distinct() %>% gather(key="grp", value="val", -Organism, -DB ) %>%
+  spread(key=DB, value=val) %>% 
+  mutate(SILVA=combined-focus, focusDB=combined-silv) %>% 
+  select(-silv, -combined, -focus)  %>%
+  gather(key="DB", value="val", -Organism, -grp ) %>%
+  # reverse levels for plottting
+  mutate(Organism = factor(Organism), 
+         Organism = factor(Organism, levels = rev(levels(Organism))))
+(p_unique <- ggplot(
+  p_uniqueness %>% mutate(fac = ifelse(Organism %in% popular$Organism, "Over-represented", "Under-represented")),
+  aes(x=Organism, y=val, alpha=grp, group=grp, fill=DB)) +
+    coord_flip() +
+    facet_wrap(~fac, scales="free") +
+    scale_fill_manual(values = viridis::viridis(n=3)[c(2, 1)]) +
+    scale_alpha_manual(values = c(.2, 1)) + mytheme +
+    labs(y="Number of Sequence", x="", alpha="", fill="Database") +
+    theme(axis.text=element_text(size=13)) +
+    geom_bar(stat="identity", position="stack") #+ facet_wrap(~grp) 
+)
+
+
+```
+
+
+## Combining the DB:
+
+
+```{bash}
+ cat ./results/2019-10-08-endo-results/*.fasta > ./docs/microbiome_data/combined.fasta
+ cat ~/Downloads/silva_species_assignment_v132.fa >> ./docs/microbiome_data/combined.fasta
+```
+
+
+```{r}
+
+gg <- read.table("./docs/microbiome_data/endo_species.txt")
+
+
+taxa_silva_both <- assignSpecies(taxa, "./docs/microbiome_data/combined.fasta")
+
+taxa_silva_both_noname <- taxa_silva_both
+rownames(taxa_silva_both_noname) <- NULL
+taxa_silva_noname <- taxa_silva
+rownames(taxa_silva_noname) <- NULL
+
+taxa_silva_noname[is.na(taxa_silva_noname)] <- ""
+taxa_silva_both_noname[is.na(taxa_silva_both_noname)] <- ""
+
+table(taxa_silva_both_noname[,1] == taxa_silva_noname[, 1], useNA="always")
+table(taxa_silva_both_noname[,2] == taxa_silva_noname[, 2], useNA="always")
+
+```
+
+
+
 

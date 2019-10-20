@@ -112,7 +112,7 @@ Enterorhabdus
 Eremococcus
 Erysipelatoclostridium
 Erysipelotrichaceae
-Escherichia/Shigella
+Escherichia
 Eubacterium
 Ezakiella
 Facklamia

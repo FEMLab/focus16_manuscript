@@ -1,0 +1,113 @@
+---
+title: "Resampling and Assigning"
+author: "Ben Nolan and  Nicholas Waters"
+date: "10/4/2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("dada2")
+library(dada2); packageVersion("dada2")
+```
+
+First, we download the Extremes dataset
+```{bash}
+fasterq-dump  SRR2990088 --split-files
+```
+
+Lets take it through the pipeline exactly as they did here: < https://exhibits.stanford.edu/data/catalog/mh194vj6733>
+
+Load the dada2 library and extras:
+```{r, message=FALSE, warning=FALSE}
+library(dada2); packageVersion("dada2")
+library(ShortRead); packageVersion("ShortRead")
+library(ggplot2); packageVersion("ggplot2")
+setwd("./") # CHANGE ME to location of file
+fnF <- "SRR2990088_1.fastq"
+fnR <- "SRR2990088_2.fastq"
+```
+
+## Quality Filter and Trim
+
+```{r}
+plotQualityProfile(fnF)
+```
+
+Forward reads are reasonably high quality. Trimming the first 20 nts, and last 10 (truncate at 240).
+
+```{r}
+plotQualityProfile(fnR)
+```
+
+Reverse read quality drops off substantially. Trimming the first 20 nts, and last 50 (truncate at 200).
+
+```{r}
+filtF <- "ExtremeF_EE2.fastq.gz"
+filtFO <- "ExtremeFO_EE2.fastq.gz"
+filtR <- "ExtremeR_EE2.fastq.gz"
+fastqPairedFilter(c(fnF, fnR), c(filtF, filtR), maxN=0, maxEE=2, truncQ=2, truncLen=c(240,200), trimLeft=c(20,20), compress=TRUE, verbose=TRUE)
+fastqFilter(fnF, filtFO, maxN=0, maxEE=2, truncQ=2, truncLen=240, trimLeft=20, compress=TRUE, verbose=TRUE)
+```
+
+Kept about 60 percent of the paired reads and 70 percent of the forward-only reads.
+
+## Run DADA2 Pipeline
+
+Dereplicate:
+```{r}
+derepF <- derepFastq(filtF, verbose=TRUE)
+derepFO <- derepFastq(filtFO, verbose=TRUE)
+derepR <- derepFastq(filtR, verbose=TRUE)
+```
+
+Run dada algorithm:
+```{r}
+dadaF <- dada(derepF, err=inflateErr(tperr1, 3), selfConsist = TRUE, OMEGA_A=1e-40)
+dadaFO <- dada(derepFO, err=inflateErr(tperr1, 3), selfConsist = TRUE, OMEGA_A=1e-40)
+dadaR <- dada(derepR, err=inflateErr(tperr1, 3), selfConsist = TRUE, OMEGA_A=1e-40)
+```
+
+Identify chimeras:
+```{r}
+bimF <- isBimeraDenovo(dadaF, allowOneOff=TRUE, verbose=TRUE)
+bimFO <- isBimeraDenovo(dadaFO, allowOneOff=TRUE, verbose=TRUE)
+bimR <- isBimeraDenovo(dadaR, allowOneOff=TRUE, verbose=TRUE)
+```
+
+Merge paired reads:
+```{r}
+merger <- mergePairs(dadaF, derepF, dadaR, derepR, verbose=TRUE)
+```
+
+Remove chimeras:
+```{r}
+cFO <- dadaFO$clustering[!bimFO,]
+merger <- merger[!bimF[merger$forward] & !bimR[merger$reverse],]
+```
+
+This portion on from the tutorial
+# assign tax
+
+```{r}
+
+seqtab <- makeSequenceTable(merger)
+dim(seqtab)
+# Inspect distribution of sequence lengths
+table(nchar(getSequences(seqtab)))
+
+
+# remove chimareas
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+dim(seqtab.nochim)
+
+
+taxa <- assignTaxonomy(seqtab.nochim, "~/Downloads/silva_nr_v132_train_set.fa.gz", multithread=TRUE)
+taxa_default <- addSpecies(taxa, "~/Downloads/silva_species_assignment_v132.fa.gz")
+taxa_default <- addSpecies(taxa, "~/Downloads/silva_species_assignment_v132.fa.gz")
+```
+

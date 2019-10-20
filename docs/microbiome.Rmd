@@ -13,6 +13,7 @@ library(tidyverse)
 library(dada2); packageVersion("dada2")
 library(ShortRead); packageVersion("ShortRead")
 SPEED = TRUE  # use  pregenerated files, dont plot if you can avoid it
+if ( SPEED ){ load("./microbiome.RData")}
 ```
 we makde a data
 ```{bash}
@@ -280,5 +281,12 @@ table(taxa_silva_both_noname[,2] == taxa_silva_noname[, 2], useNA="always")
 ```
 
 
+
+
+# save for rerunning:
+
+```{r}
+save.image("./microbiome.RData")
+```
 
 

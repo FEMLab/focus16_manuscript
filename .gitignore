@@ -9,3 +9,4 @@ results/extracted_sequences/
 docs/2019-Nolan-Waters-supplementary_cache/
 docs/2019-Nolan-Waters-supplementary_files/
 *.fastq.gz
+sraFind.tab

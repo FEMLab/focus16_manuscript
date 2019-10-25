@@ -96,7 +96,7 @@ rownames(track) <- sample.names
 head(track)
 
 taxa <- assignTaxonomy(seqtab.nochim, "~/Downloads/silva_nr_v132_train_set.fa.gz", multithread=TRUE)
-taxa_silva <- assignSpecies(taxa, "~/Downloads/silva_species_assignment_v132.fa.gz")
+taxa_silva <- assignSpecies(taxa, "~/Downloads/silva_species_assignment_v132.fa.gz", allowMultiple = T)
 
 taxa.print <- taxa_silva # Removing sequence rownames for display only
 
@@ -304,4 +304,20 @@ table(taxa_silva_both_noname[,2] == taxa_silva_noname[, 2], useNA="always")
 save.image("./microbiome.RData")
 ```
 
+Here, we can double check the read lengths of those we reejected for being to short
+x <- p_summary_data %>% filter(grepl("short", messag)) %>% select(state)
+cat(paste(unlist(x)))
+```{bash eval=FALSE}
+for i in SRR3924065 SRR3924066 SRR3924070 SRR3924069 SRR005679 SRR3924088 SRR3924090 SRR3926452 SRR4240105 SRR4240096 SRR4240104 SRR4240099 SRR4240101 SRR4240297 SRR4240295 SRR4240296 SRR2482990 SRR3926142 SRR5323657 SRR3926150 SRR3926138 SRR5323654 SRR3926531 SRR3926532 SRR005656 SRR3923709 DRR030207 DRR030209 DRR030208 DRR030206 DRR030211 DRR030210 SRR005676 SRR3926186 SRR3926185 SRR4239826 SRR3926134 SRR3926509 SRR3926450 SRR3926506 SRR4239827
+SRR3926132 SRR3926152 SRR3926449 SRR3926133 SRR3926447 SRR3926153 SRR3926448 SRR3926508 SRR4239825 SRR4239974 SRR4239964 SRR4239962 SRR4239973 SRR4239968 SRR4239970 SRR4239969 SRR4239965 SRR4239967 SRR4239961 SRR4239963 SRR4239972 SRR4239971 SRR4239966 SRR3924296 SRR3924298 SRR3926755 SRR3926319 SRR3926324 SRR3926322 SRR3926323 SRR072399 SRR5320242 SRR3923869 SRR3923865 SRR3923868 SRR3923866 SRR5275895 SRR2102984 SRR060972 SRR3923850 SRR3923849 SRR3926776 SRR8448542 SRR3926775 SRR3923757 SRR3923756 SRR3925598 SRR3925597 SRR4240119 SRR4240118 SRR4240120 SRR3923884 SRR3923885 SRR4239979 SRR4239983 SRR4239982 SRR4239981 SRR4239980 SRR4239978 SRR4239985 SRR4239987 SRR4239986 SRR4239984 SRR3927509 SRR029223 SRR029225 SRR3927350; do awk '{if(NR%4==2) {count++; bases += length} } END{print bases/count}' ../.focusDB/$i/${i}_1.fastq >> shorties ; done
+```
 
+
+## Long length read data
+
+With short read data, we do not identify more sequences, but we 
+
+```{bash, eval=FALSE} 
+fastq-dump --split-files ERR1447466 -O ./pacbio/
+```
+I ended up downloading with the ENA tools, and I ended up with funny errirs 

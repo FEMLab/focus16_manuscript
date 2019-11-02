@@ -14,9 +14,13 @@ knitr::opts_chunk$set(echo = TRUE, cache.lazy = FALSE)
 library(tidyverse); packageVersion("tidyverse")
 library(diagram); packageVersion("diagram")
 library(Biostrings); packageVersion("Biostrings")
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
 #BiocManager::install("DECIPHER")
 library(DECIPHER)
 source("docs/shared.R")
+extremes_dir <- "./results/2019-11-01-extremes/"
+microbiome_dir <- "./results/2019-11-01-extremes/"
 ```
 ##  Assessing SILVA's composition
 ```{bash, eval=FALSE}
@@ -30,13 +34,14 @@ silva <- readRNAStringSet("~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz")
 # codes_from_ncbi read in shared.R
 
 silva_headers <- data.frame("V1"=names(silva), stringsAsFactors = F)
+#silva_headers <- head(silva_headers, n=1000)
 silva_headers$pre <- gsub("(\\D*).*", "\\1", silva_headers$V1)
 
 #
 silva_headers$id <- gsub("(.*?)\\.(.*)", "\\1", silva_headers$V1)
 silva_headers$strain <- gsub("(.*?)\\.(.*?)\\.(.*)\\s.*;(.*)", "\\4", silva_headers$V1)
-silva_headers$genus <- gsub("(.*?)\\s(.*?)\\s.*", "\\1", silva_headers$strain)
-silva_headers$species <- gsub("(.*?)\\s(.*?)\\s.*", "\\2", silva_headers$strain)
+silva_headers$genus <- gsub("(.*?)\\s(.*?)[\\s.]*", "\\2", silva_headers$strain)
+silva_headers$species <- gsub("(.*?)\\s(.*?)[\\s.*]", "\\2", silva_headers$strain)
 
 #silva_headers$name <- gsub(">(.*?)\\s.*", "\\1", silva_headers$V1)
 silva_headers$start <- as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\2", silva_headers$V1))
@@ -72,33 +77,55 @@ silva_headers$matcher <- ifelse(silva_headers$cg, silva_headers$id,
 ```
 
 ## Assembling candidate taxa from Extreme dataset
-- command used for each of the organisms
-- explanation of where some failed (which organisms didn't have usable references, which didn't have SRAs, etc)
-- Where in the repo the resulting assembly is stored
+Here is the script used to run the Extremes dataset
+```{bash  eval=FALSE}
+#!/bin/bash
+#$ -t 1-12
+#$ -tc 4
+#$ -cwd
+#$ -j yes
+#$ -N ex_genus_jobs
+#$ -pe mpi 4
+#$ -l h_vmem=20G
 
-27 strains from 26 species were in the extreme dataset from DADA2.
+counter=1
 
-###### 17 strains have SRAs. Only 7 were completed with focusdb (two of which are 1 species. 6 species in total)
+cd $SCRATCH/2019-10-07-focusdb_extremes//
+cat ~/GitHub/focusdb_manuscript/docs/datasets/extreme_species_list.txt | cut -f 1 -d " " |sort | uniq > genuses.txt
+while read genus species
+do
+    if [ "$counter" -eq "$SGE_TASK_ID" ]
+    then
+	conda activate 16db
+	focusDB  -o geuns_only_${genus} --organism_name "${genus}" --njobs 12 --threads 2 --cores 4 --memory 20 --n_references 200 --n_SRAs 100 --maxdist .1 --focusDB_data /mnt/shared/scratch/nw42839//.focusDB/ -v 1 --timeout 1500 --fastqtool fastq-dump --process_partial --use_available --sge --sge_env 16db
+    fi
+    counter=$((counter + 1))
+done < genuses.txt
+
+
+
+cat ./*/SUMMARY  > <date>-focusdb-results/summary_extremes_all
+cp ./*/*ribo16s.fasta <date>-focusdb-results/
+
+```
 
 ## Running FocusDB on the Extremes Dataset.
 DADA2's Extremes dataset is comprised of the strains shown here in table 1. Note that we included Anaerocolumna xylanovorans, a more recent name for Clostridium xylanovorans.
-
-
-## Running focusDB on the Extremes dataset
 
 ### Suppl Figure 1: Number of SRAs available for each species
 
 A python script `sralist.py` was used to generate a list of the number of SRAs for a given species, based on parsing the results from sraFind.
 ```{bash eval=FALSE}
-python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.tx -l ./docs/datasets/extreme_species_list.txt -o results/Extremes_sra_count
+python scripts/sralist.py -s  ~/.focusDB/sraFind.tab -l ./docs/datasets/extreme_species_list.txt -o results/Extremes_sra_count
 python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.txt -l ./docs/datasets/balanced_species_list.txt -o results/Balanced_sra_count
 python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.txt -l ./docs/datasets/HMP_species_list.txt -o results/HMP_sra_count
+python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.txt -l ./docs/microbiome_data/endo_species.txt -o results/endo_sra_count
 ```
 ```{r plot_sras}
 srac <- data.frame("org"=NA, "count"=NA, stringsAsFactors = F)
 srac <- srac[!is.na(srac),]
 ###
-for (d in c("Extremes", "HMP", "Balanced")){
+for (d in c("Extremes", "HMP", "Balanced", "endo")){
   thispath = file.path("results", paste0(d, "_sra_count"), "sralist.txt")
   tmp <- read.csv2(thispath, sep=":", col.names = c("org", "count"), stringsAsFactors = F, header=F)
   tmp$mock <- d
@@ -108,16 +135,18 @@ for (d in c("Extremes", "HMP", "Balanced")){
 srac$genus <- gsub("(.*) .*","\\1", srac$org)
 srac$species <- gsub("(.*) (.*)","\\2", srac$org)
 srac$has <- ifelse(srac$count == 0, "None Available", "SRAs Available")
-(psrastrains <- ggplot(srac %>% filter(count > 0), aes(reorder(org,count), y=count, fill=genus, color=genus)) + 
+(psrastrains <- ggplot(srac %>% filter(mock != "endo") %>% filter(count > 0), aes(reorder(org,count), y=count, fill=genus, color=genus)) + 
     geom_bar(stat="identity") +
     coord_flip() + 
     scale_color_discrete(guide=F) +
     scale_fill_discrete(guide=F) +
     facet_wrap(~mock, scales = "free") +
-    labs(title=paste0(nrow(srac %>% filter(count > 0)), " of ", nrow(srac), " strains have availabe SRA data "),
-         fill="Genus",
-         color="Genus",
-         y= "Number of WGS SRAs", x="Strain") + 
+    labs(
+      title="Distribution of Data Availability for 3 Mock Communities", 
+      subtitle=paste0(nrow(srac %>% filter(count > 0)), " of ", nrow(srac), " strains have availabe SRA data "),
+      fill="Genus",
+     color="Genus",
+     y= "Number of WGS SRAs", x="Strain") + 
     mytheme +
     theme(legend.position = c(.8, .3), 
           text = element_text(size=8))
@@ -125,17 +154,30 @@ srac$has <- ifelse(srac$count == 0, "None Available", "SRAs Available")
 ggsave("docs/figures/S1-sras.png", psrastrains, device = "png", dpi = 300, width = 8, height = 7)
 ```
 
+### Dataset  overlap
 
+```{r}
+species_names <- data.frame(genus=character(), species=character(), dataset=character(), stringsAsFactors = F)
+for (f in c(Sys.glob("./docs/datasets/*species*"), "./docs/microbiome_data/endo_species.txt")){
+  species_names <- rbind(
+    species_names, 
+    cbind(read.csv(f, sep=" ", stringsAsFactors = F, header=F, col.names = c("genus", "species")), dataset=f)
+  )
+  print(f)
+}
+n_unique_genuses <- unique(srac[srac$count > 0, "genus"])
 
-###### Commands used for each of the 6 species with SRAs and reference genomes
-```{bash eval=FALSE}
-# executed on gruffalo at $SCRATCH/2019-09-19-16db/
-# tried running with parallel, but in cases like this, its 
-# not as efficient, as we wend up waiting for the organisms with more SRAs to finish
-# cat extremes_orgs.txt | parallel -j 16 --colsep ' ' 16db  -o {1}_{2} -g {1}_{2}_genomes -n \""{1} {2}"\" --cores 2 --memory 80 --n_references 50 --n_SRAs 20
-while read genus species; do 16db  -o ${genus}_${species} -g ${genus}_${species}_genomes -n "$genus $species" --cores 32 --memory 80 --n_references 50 --n_SRAs 20 --subassembler spades --threads 2  -v 1  ; done < extremes_orgs.txt
-cat ./*/SUMMARY  > 2019-09-26-focusdb-results/summary_extremes_all
-cp ./*/*ribo16s.fasta ./2019-09-26-focusdb-results/
+# install.packages("ggupset")
+library(ggupset)
+species_names %>%
+  group_by(genus) %>%
+  summarize(ds = list(dataset)) %>%
+  ggplot(aes(x = ds)) +
+    geom_bar() +
+    scale_x_upset()
+species_names %>% ggplot(aes(x=dataset, y=genus)) + geom_tile()
+
+write.table(n_unique_genuses, col.names = F, row.names = F, file = "./docs/datasets/combined_genuses.txt", quote=F)
 
 ```
 
@@ -151,7 +193,7 @@ hmp_data <- read.csv("./results/2019-10-03-HMP-results/HMP_summary_all.tab",
                      col.names = c("org", "status", "state", "messag"), 
                      stringsAsFactors = F)
 hmp_data$mock <- "HMP"
-ex_data <- read.csv("./results/2019-10-07-focusdb_extremes/Extremes_summary_all",
+ex_data <- read.csv("./results/2019-10-12-focusdb-extremes/Extremes_summary_all.tab",
                     sep="\t", header=F,
                     col.names = c("org", "status", "state", "messag"), 
                     stringsAsFactors = F)
@@ -221,25 +263,50 @@ ggsave("docs/figures/2-success.png", p_outcomesB, device = "png", dpi = 300, wid
 ```
 
 ## Assessing uniqueness:
-First, for simplicity, we read in 
+First, for simplicity, we combine all the sequences for all the runs.  We have the logs to relate the seqeunces to why they were selected, but as we are talking about improving the database as a whole, combining them all simplifices aspects of interpretation.
+```{bash, eval=FASLE}
+cat ./results/*/*_ribo16s.fasta > ./results/all_focusDB_ribo16s.fasta
+
+```
+
+
 ```{r plot_uniqueness, cache=TRUE}
  
-all_focus <- DNAStringSet() 
 uniqueness <- data.frame("Organism"=NA, "Unique"=NA,  "Duplicated"=NA, "DB"=NA, stringsAsFactors = F)
 uniqueness <- uniqueness[!is.na(uniqueness),]
 # note that we only get the species level resultts here, later we address the genus level
+
+#seq_paths <-  Sys.glob("./results/*/*_*_ribo16s.fasta")
+
+all_focus <- readDNAStringSet("./results/all_focusDB_ribo16s.fasta")
+all_focus <- all_focus[!duplicated(all_focus), ]
+raw_len <- length(all_focus)
+all_focus <- all_focus[lapply(vmatchPattern("N", all_focus)@ends, length) == 0]
+all_focus <- all_focus[lengths(all_focus) > 1200]
+no_n_len <-  length(all_focus)
+if (no_n_len != raw_len) warning(paste("removed",raw_len-no_n_len, "sequences with ambiguous nucleotides"))
+
+
+focusdb_headers <- data.frame(raw=names(all_focus), stringsAsFactors = F)
+focusdb_headers$id <- gsub("(.*?)\\.(.*)", "\\1", focusdb_headers$raw)
+focusdb_headers$organism <- gsub("(.*?)\\.(.*?)\\.(.*)\\s(.*? .*?)", "\\4", focusdb_headers$raw)
+# focus_seqs_names$genus <- gsub("(.*?)\\s(.*)[\\s.]*", "\\1", focus_seqs_names$strain)
+# focus_seqs_names$species <- gsub("(.*?)\\s(.*)[\\s.]*", "\\2", focus_seqs_names$strain)
+focusdb_headers$start <- as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\2", focusdb_headers$raw))
+focusdb_headers$stop <-  as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\3", focusdb_headers$raw))
+
 counter <- 1
-seq_paths <-  Sys.glob("./results/*/*_*_ribo16s.fasta"))
-for (path in seq_paths){
-  organism <- gsub("_", " ", gsub(".*\\/(.*)_ribo16s.fasta", "\\1", path))
-  print(paste("processing", organism, counter, "of", length(seq_paths)))
+for (organism in unique(focusdb_headers$organism)){
+  #rganism <- gsub("_", " ", gsub(".*\\/(.*)_ribo16s.fasta", "\\1", path))
+  print(paste("processing", organism, counter, "of", length(unique(focusdb_headers$organism))))
   silva_subset <-silva[grepl(organism, names(silva))]
   nsilv <- length(silva_subset)
   nsilvdup = sum(duplicated(silva_subset), na.rm = TRUE)
   uniqueness <- rbind(
     uniqueness, 
     data.frame("Organism"=organism, "Unique"=nsilv-nsilvdup,  "Duplicated"=nsilvdup, "DB"="silv"))
-  focus_subset <- readDNAStringSet(path)
+  # focus_subset <- readDNAStringSet("./results/2019-10-12-focusdb-extremes/Bacteroides_fragilis_ribo16s.fasta")
+  focus_subset <- all_focus[grepl(organism, names(all_focus))] 
   nfoc <- length(focus_subset)
   nfocdup = sum(duplicated(focus_subset), na.rm = TRUE)
   uniqueness <- rbind(
@@ -251,7 +318,7 @@ for (path in seq_paths){
   uniqueness <- rbind(
     uniqueness, 
     data.frame("Organism"=organism, "Unique"=nboth-nbothdup,  "Duplicated"=nboth, "DB"="combined"))
-  all_focus <- append(all_focus, both_subsets)
+  counter <- counter + 1
 }
 # set an arbtrary cutoff for popularity, just for plotting purposes
 popthresh = 400; popular <- uniqueness %>% filter(DB=='silv') %>% filter(Unique > popthresh | Duplicated > popthresh)
@@ -395,12 +462,14 @@ First, we read in the silva headers for the strains. The header for the silva da
 # 
 srafind <- read.csv("sraFind.tab", sep="\t", stringsAsFactors = F)
 #  make a boolean mask for all the silva seqs we might care about
-this_mask <- rep(FALSE, length(silva))
-these_orgs <- srac[srac$count > 0, "org"] 
-for (org in these_orgs){
-  this_mask <- this_mask | grepl(org, names(silva))
+ngs_silva <- silva_headers[!is.na(silva_headers$matcher), ]
+this_mask <- rep(FALSE, nrow(ngs_silva))
+these_orgs <- focusdb_headers$organism
+for (org in unique(these_orgs)){
+  this_mask <- this_mask | grepl(org, ngs_silva$V1, fixed=T)
 }
-silv_sub <- silva_headers[this_mask,]
+table(this_mask)
+silv_sub <- ngs_silva[this_mask,]
 # silv_sub_names <- data.frame(raw=names(silv_sub))
 # silv_sub_names$pre <- gsub("(\\D*).*", "\\1", silv_sub_names$raw)
 # silv_sub_names$id <- gsub("(.*?)\\.(.*)", "\\1", silv_sub_names$raw)
@@ -414,8 +483,8 @@ silv_sub <- silva_headers[this_mask,]
 # 
 # 
 # Here, we constructt the column that is used to match with silva.  
-# We take any NZ_ prefix off the complete genome recods.  If you know what this stands for and/or
-# why silva doesnt use it, raise an issue on github, using the codeword "vermillion"
+# We take any NZ_ prefix off the complete genome recods.  If you know why silva uses genbank,
+# raise an issue on github, using the codeword "vermillion"
 srafind$matcher <- ifelse(endsWith(srafind$WGS, "01"), srafind$WGS, 
                           gsub("NZ_", "", gsub("(.*?)\\.(.*)", "\\1", srafind$nuccore_first_chrom), fixed = T))
 #View(srafind[grepl(".*_,*",  srafind$nuccore_first_chrom), ])
@@ -437,8 +506,8 @@ assembly_summary <- inner_join(
 (p_summary_cg    <-    assembly_summary  %>% filter(cg) %>% group_by(strain,  Assembly.Accession) %>% 
      select(strain, Assembly.Accession, id, start, stop) %>% distinct() %>%  summarize(n=n()))
 p_summary_n16s <- assembly_summary %>% select(V1, strain, Assembly.Accession,category) %>%distinct() %>% group_by(strain,  Assembly.Accession) %>%  mutate(n=n()) %>%  select(-V1) %>% distinct()
-(n16s <-  ggplot(p_summary_n16s, aes(x=n,  fill=category)) + geom_density(adjust=5, alpha=.6) + 
-    labs(x="Number of 16S  in assembly", y="Relative Distriubtion", fill="") 
+(n16s <-  ggplot(p_summary_n16s, aes(x=n,  fill=category)) + geom_density(adjust=4, alpha=.6) + 
+    labs(x="Number of 16S  in assembly", y="Relative Distriubtion", fill="", title="Distribution of rDNA counts by assembly level") 
 )
 ggsave("docs/figures/S4-n16S.png", n16s, device = "png", dpi = 300, width = 6, height = 5)
 
@@ -451,12 +520,12 @@ table(p_summary_n16s[p_summary_n16s$category!="Complete Genome", "n"])
 
 
 ```{r}
-build_aln_for_assembly <- function(db, assembly="GCA_000699725.1"){
+build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, trimr=10){
   # get matching assembly from sraFind to get the complete genome/seqeunce accession
   this_silva <- unique(db[grepl(assembly, db$Assembly.Accession), "V1" ])
   if (length(this_silva) == 0) {
-    warning("No matches for this assembly;  could be long reads?")
-    return (NA)
+    warning(paste("No matches ", assembly, ";  could be long reads?"))
+    return (list(NA, NA, NA, NA, NA, NA))
   }
   # paste tofgether to make a query string with or's; this is because for assemblies, 
   # # different contigs will have different sequence names, but a single assembly accession
@@ -469,20 +538,43 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1"){
   # identify all seqeunces associated with this assembly accesssion
   silva_subset_seqs <- silva[grepl(this_silva_query,  names(silva))]
   # idenify the seqeunces from focusDB
-  focus_subset_seqs <- unique(all_focus[grepl(this_focus_query, names(all_focus))])
+  focus_subset_seqs <- all_focus[grepl(this_focus_query, names(all_focus))]
+  unique_focus_subset_seqs <- unique(focus_subset_seqs)
+  if (length(unique_focus_subset_seqs) == 0) {
+    warning(paste("No matches for ",this_focus_query,"(", assembly, ")  in focusDB results"))
+    return (list(NA, NA, NA, NA, NA, NA))
+  }
   # merge, align the seqeunces
   # Silva by default is in RNA, so we type-cast to DNA
   # We add the silva seqs fist so we can check uniqueness by the presense of SRA seqs in the unique'd alignment
   aln <- DECIPHER::AlignSeqs(
-    append(DNAStringSet(silva_subset_seqs), focus_subset_seqs)
+    append(DNAStringSet(silva_subset_seqs), unique_focus_subset_seqs), 
   )
-  uniques <- aln[!duplicated(subseq(aln, 5, -5))]
+  trimmed <- subseq(aln,trimf, -trimr)
+  uniques <- trimmed[!duplicated(trimmed)]
   
   # identity <- data.frame(name=names(focus_subset_seqs), stringsAsFactors = F, unique=F )
   # for (seq in identity$name){
   #   focus_subset_seqs[seq, "unique"] <- mapply(function(x, y ) sum(x!=y), strsplit(silva_subset_seqs,""), strsplit(focus_subset_seqs[seq],""))
   # }
-  return (list("alignment"=aln, "unique_from_focusDB"=sum(names(focus_subset_seqs) %in% names(uniques)), "total"=length(aln)))
+  # 
+  #BrowseSeqs(uniques, highlight=0)
+  dists <- stringDist(uniques, method="hamming")
+  min_snps <- list()
+  for (i in names(uniques)){
+    if (i %in% names(unique_focus_subset_seqs)){
+      these_snps <- as.matrix(dists)[grepl(i, labels(dists))]
+      min_snps[i] <-  min(these_snps[these_snps > 0])
+    }
+  }
+  return (list("alignment"=aln, 
+               "unique_from_focusDB"=sum(names(unique_focus_subset_seqs) %in% names(uniques)), 
+               "total"=length(focus_subset_seqs),
+               "focusDB"=length(unique_focus_subset_seqs),
+               "silva"=length(silva_subset_seqs),
+               "min_snps"=min_snps
+               )
+  )
 }
 
 ```
@@ -491,73 +583,110 @@ Next we  subsetted the dataframe to include only those that had sras from this s
 ```{r}
 only_illumina_assembly_summary <- assembly_summary # [assembly_summary$platform == "ILLUMINA", ]
 only_illumina_assembly_summary$processed_in_this_study <- FALSE
-
-for (sra in summary_data[summary_data$status=="PASS", "state"]){
+these_sras <- unique(gsub("(.*)_(.*)", "\\1", focusdb_headers$id))
+for (sra in these_sras){
   only_illumina_assembly_summary$processed_in_this_study <- grepl(
     sra, only_illumina_assembly_summary$run_SRAs,  fixed = T)  |  only_illumina_assembly_summary$processed_in_this_study
 }
 table(only_illumina_assembly_summary$processed_in_this_study )
-only_illumina_assembly_summary <- only_illumina_assembly_summary%>% filter(processed_in_this_study)
+only_illumina_assembly_summary <- only_illumina_assembly_summary%>% filter(processed_in_this_study) #%>% select(14:ncol(.)) %>% distinct()
 
-# cellulosilyticus, excluded as no whole genomes short read available; reference was PacBio
-GCF_001318345 <- build_aln_for_assembly(db=only_illumina_assembly_summary, assembly="GCA_001318345.1")
-#BrowseSeqs(GCF_001318345[[1]])
+# # cellulosilyticus, excluded as no whole genomes short read available; reference was PacBio
+# GCF_001318345 <- build_aln_for_assembly(db=only_illumina_assembly_summary, assembly="GCA_001318345.1")
+# #BrowseSeqs(GCF_001318345[[1]])
+# 
+# #ovatus
+# GCF_001314995 <- build_aln_for_assembly(db=only_illumina_assembly_summary, assembly="GCA_001314995.1")
+# BrowseSeqs(GCF_001314995)
+# duplicated(subseq(GCF_001314995, 5, -5))
+# 
+# # thetaiotaomicron
+# GCF_001314975 <- build_aln_for_assembly(db=only_illumina_assembly_summary, assembly="GCA_001314975.1")
+# BrowseSeqs(GCF_001314975[[1]])
+# duplicated(subseq(GCF_001314975, 5, -5))
+# 
+# # vulgatus# also pac bio
+# GCF_001412315 <- build_aln_for_assembly(db=only_illumina_assembly_summary, assembly="GCA_001412315.1")
+# BrowseSeqs(subseq(GCF_001412315, 5, -5))
+# duplicated(subseq(GCF_001412315, 5, -5))
 
-#ovatus
-GCF_001314995 <- build_aln_for_assembly(db=only_illumina_assembly_summary, assembly="GCA_001314995.1")
-BrowseSeqs(GCF_001314995)
-duplicated(subseq(GCF_001314995, 5, -5))
-
-# thetaiotaomicron
-GCF_001314975 <- build_aln_for_assembly(db=only_illumina_assembly_summary, assembly="GCA_001314975.1")
-BrowseSeqs(GCF_001314975[[1]])
-duplicated(subseq(GCF_001314975, 5, -5))
-
-# vulgatus# also pac bio
-GCF_001412315 <- build_aln_for_assembly(db=only_illumina_assembly_summary, assembly="GCA_001412315.1")
-BrowseSeqs(subseq(GCF_001412315, 5, -5))
-duplicated(subseq(GCF_001412315, 5, -5))
-
-uniqueness_results = data.frame(assembly=NA, aln=NA, unique_focusdb=NA, total=NA, category=NA, stringsAsFactors = F)
-uniqueness_results <-  uniqueness_results[!is.na(uniqueness_results), ]
-nassemb <- nrow(only_illumina_assembly_summary)
-for (i in 1:nassemb){
-  print(paste(i, "of", nassemb ))
+# structure for results --  a pretty dataframe and a list of of the alignments
+reassembly_results <- data.frame(assembly=NA, unique_focusdb=NA, total=NA, focusdb=NA, silva=NA, category=NA, min_snps=NA,  stringsAsFactors = F)
+reassembly_results <-  reassembly_results[!is.na(reassembly_results), ]
+alignments <- list()
+min_snps <- list()
+counter = 0
+nassemb <- length(unique(only_illumina_assembly_summary$Assembly.Accession))
+# going row by row reprocesses assemblies, so we skip if we have already processed it. because we 
+# are subsetting from the same dataset in the function, this allows us to keep everything in order (as opposed to having 
+# a separate list of unique assemblies, then subsetting both in the function and in the results assignment)
+for (i in 1:nrow(only_illumina_assembly_summary)){
   assembly <- only_illumina_assembly_summary$Assembly.Accession[i]
-  res <- build_aln_for_assembly(
-    db=only_illumina_assembly_summary, 
-    assembly=assembly
-  )
-  uniqueness_results <- rbind(
-    uniqueness_results, 
-    data.frame(assembly=assembly, aln=res[[1]], unique_focusdb=res[[2]], total=res[[3]], 
-               category=only_illumina_assembly_summary$category[i])
-  )
+  if (assembly %in% reassembly_results$assembly){
+    next
+  } else{
+    print(paste(counter, "of", nassemb ))
+    res <- build_aln_for_assembly(
+      db=only_illumina_assembly_summary, 
+      assembly=assembly, trimf=10, trimr=10
+    )
+    alignments[[assembly]] <-  res[[1]]
+    min_snps[[assembly]] <- res[[6]]
+    reassembly_results <- rbind(
+      reassembly_results, 
+      data.frame(assembly=assembly,unique_focusdb=res[[2]], total=res[[3]], 
+                 category=only_illumina_assembly_summary$category[i], 
+                 focusdb=res[[4]], silva=res[[5]], stringsAsFactors = F)
+    )
+    counter <- counter + 1
+  }
 }
+table("status"=reassembly_results$category, "New Seqs Introducted"=reassembly_results$unique_focusdb ==0)
+ggplot(reassembly_results, aes(x=unique_focusdb, fill=category)) + geom_density(alpha=.5)
+
+snps <- sapply(min_snps, function(x){return(sum(unlist(x)))})
+snpdf <- data.frame(snps=snps, assembly=names(snps))
+reassembly_results_df <- merge(reassembly_results, snpdf, by="assembly")
+ggplot(reassembly_results_df %>% filter(category == "Complete Genome") %>% filter(snps < 500), aes(x=snps)) + geom_histogram()
+
+(snps_cg_kbp <- ggplot(
+  reassembly_results_df %>% filter(category == "Complete Genome") %>% 
+    filter(snps < 500) %>% mutate(pkbp=(snps * 1000)/(focusdb * 1500)), 
+  aes(x=pkbp)) + geom_histogram() + labs(
+    x="SNPs per Kbp", y="Number of Assemblies",
+    title="Comparing riboSeed-assembled 16S to Complete Genome's 16S"
+  )
+)
+(snps_cg_raw <- ggplot(
+  reassembly_results_df %>% filter(category == "Complete Genome") %>% 
+    filter(snps < 500) %>% mutate(per=(snps )/(focusdb)), 
+  aes(x=per)) + geom_histogram() + labs(
+    x="mean SNPs", y="Number of Assemblies",
+    title="Comparing riboSeed-assembled 16S to Complete Genome's 16S"
+  )
+)
+
+
+reassembly_results[reassembly_results$assembly > 0, ]
+# GCA_000767745.1 GCA_000832805.1
+for (not_great in reassembly_results[reassembly_results$category=="Complete Genome" & reassembly_results$unique_focusdb != 0, "assembly"]){
+  BrowseSeqs(subseq(alignments[[not_great]][!duplicated(alignments[[not_great]])], 10, -20), highlight=0)
+  invisible(readline(prompt="Press [enter] to continue"))
+  #distmat <- DECIPHER::DistanceMatrix(subseq(alignments$GCA_000832805.1, 10, -20)) #%>% as.data.frame() %>%
+  #rownames_to_column("strainA") %>% gather(key="strainB", value="dist", -strainA)
+  snp_mat <- stringDist(subseq(alignments[[not_great]], 10, -20), method="hamming")
+  gplots::heatmap.2(as.matrix(snp_mat))
+  #heatmap(as.matrix(snp_mat ))
+}
+View(merge(reassembly_results, srafind, by.x="assembly", by.y="Assembly.Accession"))
+
 ```
 
-# assessing draft genome reassembly
-Here,  looking at _B. ovatus_, we can see  that GCF_000699725.1 has 4 , so we dont need to reassemble those: rrndb shows that we can expect around  5 rDNAs for B ovatus.  For starters though, lets assess how we assembled the GCF_000699725.1.
-The other three assemblies, we could re-assemble: GCF_000218325.1, GCF_000699665.1, and GCF_900107475.1 all only have a single rDNA.  Lets run the pipeline on the 4.
 
-```{r}
-ovatus = list()
-draft_ovatus <- p_summary_draft[grepl("ovatus", p_summary_draft$ScientificName),  ]
-for (i in 1:nrow(draft_ovatus)){
-  try(ovatus[i] <- build_aln_for_assembly(db=draft_silva_sras, assembly=draft_ovatus$assembly[i]))
-  outpath <- file.path("docs", "figures", "alignments", paste0(draft_ovatus$assembly[i], ".html"))
-  try(BrowseSeqs(subseq(ovatus[[i]], 10, -10), highlight=0, threshold=0.5, htmlFile = outpath))
-  
-}
-names(ovatus) <- draft_ovatus$assembly
-for (s in ovatus)  try(print(duplicated(subseq(s, 10, -10))))
-
-
-```
 
 ## Discussion
 ```{r calculate_needs_assembl}
-sraFind_data <- read.table("../16db/sraFind-All-biosample-with-SRA-hits.txt", header=T, sep="\t", stringsAsFactors = F)
+sraFind_data <- read.table("~/.focusDB/sraFind-All-biosample-with-SRA-hits.txt", header=T, sep="\t", stringsAsFactors = F)
 tbassembled <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(!is.na(study_acc)) %>% nrow()
 tbreleased  <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(is.na(study_acc)) %>% nrow()
 ```

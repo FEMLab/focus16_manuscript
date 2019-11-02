@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(dada2); packageVersion("dada2")
 library(ShortRead); packageVersion("ShortRead")
+library(Biostrings); packageVersion("Biostrings")
 SPEED = TRUE  # use  pregenerated files, dont plot if you can avoid it
 if ( SPEED ){ load("./microbiome.RData")}
 ```
@@ -167,7 +168,7 @@ plot_mock <- function(df){
     group_by(strain) %>%
     mutate(thisid = row_number()) %>%
     transform(thisid = ifelse(is.na(messag), 0, thisid)) 
-  df$strain <- factor(df$strain, levels=rev(levels(factor(df$strain))))
+77  df$strain <- factor(df$strain, levels=rev(levels(factor(df$strain))))
 
   # for coloring x/y axis
   alpha_info <-  rev(ifelse(df[!duplicated(df$strain), "globalmessage"]=="Success", "gray90", "gray60"))
@@ -315,9 +316,151 @@ SRR3926132 SRR3926152 SRR3926449 SRR3926133 SRR3926447 SRR3926153 SRR3926448 SRR
 
 ## Long length read data
 
-With short read data, we do not identify more sequences, but we 
+With short read data, we do not identify more sequences, but we wantred to see how it would perfom on full-length 16s from the same physilogical location. We identified a  dattaset from wagner 2016: <https://bmcmicrobiol.biomedcentral.com/articles/10.1186/s12866-016-0891-4>.  We downloaded those reads from ENA, and converted to fastq with PacBio's <https://github.com/PacificBiosciences/pbh5tools>.
 
 ```{bash, eval=FALSE} 
-fastq-dump --split-files ERR1447466 -O ./pacbio/
+conda create -n pacdada pbh5tools bax2bam lima ; conda activate pacdada
+
+bax2bam -o microbiome ./m150128_105130_00127_c100679732550000001823135702221544_s1_p0.bas.h5
+
+
+bash5tools.py  --outFilePref myreads --outType fastq  --minLength 1400 ./m150128_105130_00127_c100679732550000001823135702221544_s1_p0.bas.h5
+conda deactivate 
+conda create -n demul && conda activate demul && pip install demultiplex biopython==1.72
+
 ```
-I ended up downloading with the ENA tools, and I ended up with funny errirs 
+
+These were then taken through the dada2 pipeline, following practices laid out here: <https://benjjneb.github.io/LRASManuscript/LRASms_Zymo.html>, using primer seqeunces from the supplementary information:
+
+```{r}
+primers <-  read.csv2(text="PRIMER_NAME BARCODE PRIMER
+BACT16s_v1_0001_Forward TCAGACGATGCGTCAT AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0002_Forward CTATACATGACTCTGC AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0003_Forward TACTAGAGTAGCACTC AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0004_Forward TGTGTATCAGTACATG AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0005_Forward ACACGCATGACACACT AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0006_Forward GATCTCTACTATATGC AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0007_Forward ACAGTCTATACTGCTG AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0008_Forward ATGATGTGCTACATCT AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0009_Forward CTGCGTGCTCTACGAC AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0010_Forward GCGCGATACGATGACT AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0011_Forward CGCGCTCAGCTGATCG AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0012_Forward GCGCACGCACTACAGA AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0013_Forward ACACTGACGTCGCGAC AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0014_Forward CGTCTATATACGTATA AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0015_Forward ATAGAGACTCAGAGCT AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0016_Forward TAGATGCGAGAGTAGA AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0017_Forward CATAGCGACTATCGTG AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0018_Forward CATCACTACGCTAGAT AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0019_Forward CGCATCTGTGCATGCA AGMGTTYGATYMTGGCTCAG
+BACT16s_v1_0020_Forward TATGTGATCGTCTCTC AGMGTTYGATYMTGGCTCAG
+BACT16s_v9_0001_Reverse ATGACGCATCGTCTGA ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0002_Reverse GCAGAGTCATGTATAG ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0003_Reverse GAGTGCTACTCTAGTA ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0004_Reverse CATGTACTGATACACA ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0005_Reverse AGTGTGTCATGCGTGT ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0006_Reverse GCATATAGTAGAGATC ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0007_Reverse CAGCAGTATAGACTGT ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0008_Reverse AGATGTAGCACATCAT ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0009_Reverse GTCGTAGAGCACGCAG ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0010_Reverse AGTCATCGTATCGCGC ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0011_Reverse CGATCAGCTGAGCGCG ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0012_Reverse TCTGTAGTGCGTGCGC ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0013_Reverse GTCGCGACGTCAGTGT ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0014_Reverse TATACGTATATAGACG ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0015_Reverse AGCTCTGAGTCTCTAT ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0016_Reverse TCTACTCTCGCATCTA ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0017_Reverse CACGATAGTCGCTATG ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0018_Reverse ATCTAGCGTAGTGATG ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0019_Reverse TGCATGCACAGATGCG ACGGYTACCTTGTTACGACTT
+BACT16s_v9_0020_Reverse GAGAGACGATCACATA ACGGYTACCTTGTTACGACTT
+", sep=" ", stringsAsFactors=F)
+write.table(primers, file = "microbiome_primers.tab", sep = "\t", quotes=F, row.names = F)
+```
+
+As the forward barcode is the same as the reverese, we reformed the primers into a fasta file required by lima <https://github.com/PacificBiosciences/barcoding>.  We then brought the strains through a bax2bam  -> lima  -> bam2fastq pipeline
+
+```{bash eval=FALSE}
+conda install  pbccs==3.4 bax2bam bam2fastx lima
+for i in ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR144/ERR1447466/m150128_105130_00127_c100679732550000001823135702221544_s1_p0.2.bax.h5 ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR144/ERR1447466/m150128_105130_00127_c100679732550000001823135702221544_s1_p0.3.bax.h5 ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR144/ERR1447466/m150128_105130_00127_c100679732550000001823135702221544_s1_p0.bas.h5 ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR144/ERR1447466/m150128_105130_00127_c100679732550000001823135702221544_s1_p0.metadata.xml ; do wget $i ; done
+
+bax2bam -o microbiome ./m150128_105130_00127_c100679732550000001823135702221544_s1_p0.bas.h5
+ccs ./microbiome.subreads.bam microbiome.ccs.bam
+lima --log-level TRACE --same -ccs  ./microbiome.ccs.bam ./primers.fasta ./demuxed_same_ccs.bam
+bam2fastq --split-barcodes -o ERS1190962_ccs  ./demuxed_same_ccs.bam
+mkdir ERS1190962_ccs/
+mv ERS1190962_ccs*.fastq.gz ./ERS1190962_ccs/
+tar czf ERS1190962_css.tar.gz ERS1190962_ccs/
+
+# download to local computer from $SCRATCH/pacbio
+
+```
+
+
+Then, we follow the tutorial:
+
+```{r}
+dpath <- "~/Downloads/ERS1190962_ccs_limits/" # CHANGE ME to location of the fastq file
+Fprimer <- "AGMGTTYGATYMTGGCTCAG"
+Rprimer <- "ACGGYTACCTTGTTACGACTT"
+
+#rc <- dada2:::rc
+# theme_set(theme_bw())
+# genusPalette <- c(Bacillus="#e41a1c", Enterococcus="#377eb8", Escherichia="#4daf4a", Lactobacillus="#984ea3",
+#                   Listeria="#ff7f00", Pseudomonas="#ffff33", Salmonella="#a65628", Staphylococcus="#f781bf")
+pacF <- sort(list.files(dpath, pattern=".fastq.gz", full.names = TRUE))
+sample.names <- sapply(strsplit(basename(pacF), "_"), `[`, 3)
+
+nop <- sort(file.path(dpath, "noprimers", basename(pacF)))
+prim <- removePrimers(pacF, nop, primer.fwd=Fprimer, primer.rev=dada2:::rc(Rprimer), orient=TRUE, verbose=TRUE)
+hist(nchar(dada2::getSequences(prim)), 100)
+
+dir.create(file.path(dpath, "noprimers", "filtered"))
+filt <- sort(file.path(dpath, "noprimers", "filtered", basename(pacF)))
+for (i in 1:length(filt)){
+track <- fastqFilter(fn = nop[i], fout = filt[i], minQ=3, minLen=1000, maxLen=1600, maxN=0, rm.phix=FALSE, maxEE=2, verbose=TRUE)
+}
+drp <- derepFastq(filt, verbose=TRUE)
+
+err <- learnErrors(drp, BAND_SIZE=32, multithread=TRUE, errorEstimationFunction=dada2:::PacBioErrfun) # 10s of seconds
+dd <- dada(drp, err=err, BAND_SIZE=32, multithread=TRUE) # seconds
+
+seqtab <- makeSequenceTable(dd)
+summary((nchar(getSequences(seqtab))))
+hist(nchar(colnames(seqtab)))
+
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+sum(seqtab.nochim)/sum(seqtab)
+dim(seqtab.nochim)
+
+
+taxa <- assignTaxonomy(seqtab.nochim, "~/Downloads/silva_nr_v132_train_set.fa.gz", multithread=TRUE,)
+taxa_silva <- assignSpecies(taxa, "~/Downloads/silva_species_assignment_v132.fa.gz", allowMultiple = T)
+taxa_silva_both <- assignSpecies(taxa, "./docs/microbiome_data/combined.fasta", allowMultiple = T)
+
+
+together <- merge(by="seq", all=TRUE,
+                  data.frame(focus_genus=as.character(taxa_silva_both[,1]),
+                             focus_species=as.character(taxa_silva_both[,2]),
+                             seq = row.names(taxa_silva_both),
+                             stringsAsFactors=FALSE),
+                  data.frame(genus=as.character(taxa_silva[,1]),
+                             species=as.character(taxa_silva[,2]),
+                             seq = row.names(taxa_silva),
+                             stringsAsFactors=FALSE)
+)
+                  
+taxa_silva_both_noname <- taxa_silva_both
+rownames(taxa_silva_both_noname) <- NULL
+taxa_silva_noname <- taxa_silva
+rownames(taxa_silva_noname) <- NULL
+
+taxa_silva_noname[is.na(taxa_silva_noname)] <- ""
+taxa_silva_both_noname[is.na(taxa_silva_both_noname)] <- ""
+
+table(taxa_silva_both_noname[,1] == taxa_silva_noname[, 1], useNA="always")
+table(taxa_silva_both_noname[,2] == taxa_silva_noname[, 2], useNA="always")
+
+
+
+```

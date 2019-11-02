@@ -27,14 +27,14 @@ def makeSRAlist(output, sraFind):
     with open(sraFind, "r") as infile:
         for i,line in enumerate(infile):
             split_line = [x.replace('"', '').replace("'", "").replace("\s"," ") for x in line.strip().split("\t")]
-            gs = " ".join(split_line[11].split(" ")[0:2])
-            g = " ".join(split_line[11].split(" ")[0:1])
-            if split_line[8].startswith("ILLUMINA"):
+            gs = " ".join(split_line[12].split(" ")[0:2])
+            g = " ".join(split_line[12].split(" ")[0:1])
+            if split_line[9].startswith("ILLUMINA"):
                 if gs in org_dictgs.keys():
                     org_dictgs[gs] += 1
                 else:
                     org_dictgs[gs] = 1
-            if split_line[8].startswith("ILLUMINA"):
+            if split_line[9].startswith("ILLUMINA"):
                 if g in org_dictg.keys():
                     org_dictg[g] += 1
                 else:

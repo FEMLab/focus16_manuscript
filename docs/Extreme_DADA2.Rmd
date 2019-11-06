@@ -83,14 +83,16 @@ taxa_silva <- assignSpecies(taxa, "~/Downloads/silva_species_assignment_v132.fa.
 
 
 ```{bash}
- cat ./results/2019-10-18-extremes-genus-focusdb/*.fasta > ./docs/extremes_combined.fasta
- cat ~/Downloads/silva_species_assignment_v132.fa >> ./docs/extremes_combined.fasta
+cat ./results/2019-10-18-extremes-genus-focusdb/*.fasta > ./docs/extremes_combined.fasta
+cat ~/Downloads/silva_species_assignment_v132.fa >> ./docs/extremes_combined.fasta
 ```
 
 ```{r}
 taxa_both <- assignSpecies(taxa, "./docs/extremes_combined.fasta", allowMultiple = T)
+together <- merge(taxa_silva, taxa_both, by=0, all=TRUE)
 rownames(taxa_both) <- NULL
 rownames(taxa_silva) <- NULL
+
 table(is.na(taxa_silva[,1]))
 table(is.na(taxa_both[,1]))
 View(taxa_both)

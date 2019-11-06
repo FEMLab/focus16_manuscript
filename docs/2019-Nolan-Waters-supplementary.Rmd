@@ -12,7 +12,7 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache.lazy = FALSE)
 library(tidyverse); packageVersion("tidyverse")
-library(diagram); packageVersion("diagram")
+#library(diagram); packageVersion("diagram")
 library(Biostrings); packageVersion("Biostrings")
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #    install.packages("BiocManager")
@@ -125,7 +125,7 @@ python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.txt -l 
 srac <- data.frame("org"=NA, "count"=NA, stringsAsFactors = F)
 srac <- srac[!is.na(srac),]
 ###
-for (d in c("Extremes", "HMP", "Balanced", "endo")){
+for (d in c("Extremes", "HMP", "Balanced")){
   thispath = file.path("results", paste0(d, "_sra_count"), "sralist.txt")
   tmp <- read.csv2(thispath, sep=":", col.names = c("org", "count"), stringsAsFactors = F, header=F)
   tmp$mock <- d
@@ -134,7 +134,8 @@ for (d in c("Extremes", "HMP", "Balanced", "endo")){
 
 srac$genus <- gsub("(.*) .*","\\1", srac$org)
 srac$species <- gsub("(.*) (.*)","\\2", srac$org)
-srac$has <- ifelse(srac$count == 0, "None Available", "SRAs Available")
+nunique_strains <- length(unique(srac[, "org"]))
+nwith_sras <- length(unique(srac[srac$count > 0, "org"]))
 (psrastrains <- ggplot(srac %>% filter(mock != "endo") %>% filter(count > 0), aes(reorder(org,count), y=count, fill=genus, color=genus)) + 
     geom_bar(stat="identity") +
     coord_flip() + 
@@ -143,7 +144,7 @@ srac$has <- ifelse(srac$count == 0, "None Available", "SRAs Available")
     facet_wrap(~mock, scales = "free") +
     labs(
       title="Distribution of Data Availability for 3 Mock Communities", 
-      subtitle=paste0(nrow(srac %>% filter(count > 0)), " of ", nrow(srac), " strains have availabe SRA data "),
+      subtitle=paste0(nrow(srac %>% filter(count > 0)), " of ", nunique_strains, " organisms have availabe SRA data "),
       fill="Genus",
      color="Genus",
      y= "Number of WGS SRAs", x="Strain") + 
@@ -151,7 +152,15 @@ srac$has <- ifelse(srac$count == 0, "None Available", "SRAs Available")
     theme(legend.position = c(.8, .3), 
           text = element_text(size=8))
 )
-ggsave("docs/figures/S1-sras.png", psrastrains, device = "png", dpi = 300, width = 8, height = 7)
+ggsave("docs/figures/S1-sras.png", psrastrains, device = "png", dpi = 300, width = 8, height = 5)
+## add endo data
+thispath = file.path("results", paste0("endo", "_sra_count"), "sralist.txt")
+tmp <- read.csv2(thispath, sep=":", col.names = c("org", "count"), stringsAsFactors = F, header=F)
+tmp$genus <- gsub("(.*) .*","\\1", tmp$org)
+tmp$species <- gsub("(.*) (.*)","\\2", tmp$org)
+tmp$mock <- "endo"
+srac <- rbind(srac, tmp)
+
 ```
 
 ### Dataset  overlap
@@ -165,20 +174,52 @@ for (f in c(Sys.glob("./docs/datasets/*species*"), "./docs/microbiome_data/endo_
   )
   print(f)
 }
-n_unique_genuses <- unique(srac[srac$count > 0, "genus"])
-
-# install.packages("ggupset")
+unique_genuses <- unique(srac[, "genus"])
+unique_genuses_with_sras <- unique(srac[srac$count > 0, "genus"])
 library(ggupset)
-species_names %>%
-  group_by(genus) %>%
-  summarize(ds = list(dataset)) %>%
-  ggplot(aes(x = ds)) +
-    geom_bar() +
+
+proks <- read.csv2("~/.focusDB/prokaryotes.txt", sep="\t", header = T, stringsAsFactors = F)
+proks$genus <- gsub("(.*?) .*", "\\1", proks$X.Organism.Name)
+theseproks <- left_join(
+  species_names, 
+  proks %>% 
+    filter(Status %in% c("Chromosome", "Complete Genome")) %>% 
+    mutate(ref=T) %>%
+    select(genus, ref) %>% distinct()
+)  %>%
+  transform(ref=ifelse(is.na(ref), F, ref)) %>%
+  select(-species) %>%
+  distinct() %>%
+  mutate(sras = genus%in% unique_genuses_with_sras) %>%
+  transform(dataset = case_when(
+    grepl("balanced", dataset) ~ "Balanced",
+    grepl("HMP", dataset) ~ "HMP",
+    grepl("extreme", dataset) ~ "Extremes",
+    grepl("endo", dataset) ~ "Endobiota"
+  )) %>% 
+  mutate(exclusion=case_when(
+    !sras & !ref ~ "No SRAs or Reference",
+    !sras  ~ "No SRAs",
+    !ref ~ "No Reference",
+    sras & ref ~ "Eligible"
+  )
+  )
+
+(p_dataset_overlap <-  theseproks %>%   group_by(genus, exclusion) %>%
+    summarize(ds = list(dataset)) %>% 
+    ggplot(aes(x = ds, fill=exclusion)) +
+    geom_bar(position=position_stack(reverse = TRUE)) + 
+    labs(title="Genus-level overlap of datasets", 
+         x="Dataset", y="Count", fill="") +
     scale_x_upset()
-species_names %>% ggplot(aes(x=dataset, y=genus)) + geom_tile()
+)
 
-write.table(n_unique_genuses, col.names = F, row.names = F, file = "./docs/datasets/combined_genuses.txt", quote=F)
+#species_names %>% ggplot(aes(x=dataset, y=genus)) + geom_tile()
+unique_and_valid <- theseproks %>% select(genus, ref, sras) %>% distinct() %>%
+  filter(sras) %>% filter(ref)
+write.table(sort(unique_and_valid$genus), col.names = F, row.names = F, file = "./docs/datasets/combined_genuses.txt", quote=F)
 
+ggsave("docs/figures/S6-datasets.png", p_dataset_overlap, device = "png", dpi = 300, width = 6, height = 6)
 ```
 
 ### Figure 2: sra successes
@@ -188,17 +229,22 @@ bal_data <- read.csv("./results/2019-10-07-focusdb-balanced/balanced_summary_all
                      sep="\t", header=F, col.names = c("org", "status", "state", "messag"),
                      stringsAsFactors = F)
 bal_data$mock <- "Balanced"
-hmp_data <- read.csv("./results/2019-10-03-HMP-results/HMP_summary_all.tab",
-                     sep="\t", header=F,
-                     col.names = c("org", "status", "state", "messag"), 
-                     stringsAsFactors = F)
-hmp_data$mock <- "HMP"
-ex_data <- read.csv("./results/2019-10-12-focusdb-extremes/Extremes_summary_all.tab",
+# hmp_data <- read.csv("./results/2019-10-03-HMP-results/HMP_summary_all.tab",
+#                      sep="\t", header=F,
+#                      col.names = c("org", "status", "state", "messag"), 
+#                      stringsAsFactors = F)
+# hmp_data$mock <- "HMP"
+ex_data <- read.csv("./results/2019-10-18-extremes-genus-focusdb/extremes_summary_all",
                     sep="\t", header=F,
                     col.names = c("org", "status", "state", "messag"), 
                     stringsAsFactors = F)
 ex_data$mock <- "Extremes"
-summary_data <- rbind(bal_data,ex_data, hmp_data)
+endo_data <- read.csv("./results/2019-10-20-endo-genus-results/summary_all_endo_genus.tab",
+                    sep="\t", header=F,
+                    col.names = c("org", "status", "state", "messag"), 
+                    stringsAsFactors = F)
+endo_data$mock <- "Endobiota"
+summary_data <- rbind(bal_data,ex_data, hmp_data, endo_data)
 globals <- summary_data %>% filter(state=="global") %>%
   select(mock, org, messag) %>% dplyr::rename(globalmessage=messag)
 summary_data <- summary_data %>% filter(state!="global")
@@ -225,7 +271,7 @@ p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org", "mock")) %>%
 
 #  plot mock also in shared methods
 mock_plots <- list()
-for (grp in  c("HMP", "Extremes",  "Balanced")){
+for (grp in  c("Extremes",  "Balanced", "Endobiota")){
   thisgroup <- quo(grp)
   (mock_plots[[grp]] <- plot_mock(df=p_summary_data%>% filter(mock == (!!thisgroup))))
   ggsave(paste0("docs/figures/S2", grp, ".png"), mock_plots[[grp]], device = "png", dpi = 300, width = 12, height = 7)
@@ -242,9 +288,10 @@ p_summary_data_B <- p_summary_data  %>%  arrange(pmessage) %>%
 p_summary_data_B$strain <- factor(p_summary_data_B$strain, levels=rev(levels(factor(p_summary_data_B$strain))))
 
 alpha_v <- alpha_data[order(alpha_data$strain, alpha_data$alpha), "alpha"]
-(p_outcomesB <- ggplot(p_summary_data_B, 
-                      aes(x=strain, y=thisid, shape=pmessage,
-                          color=pmessage, fill=pmessage)) + 
+(p_outcomesB <- ggplot(
+  p_summary_data_B, 
+  aes(x=strain, y=thisid, shape=pmessage,
+      color=pmessage, fill=pmessage)) + 
     scale_shape_manual(guide = "legend", values = c(21, 22, 23,24)) + 
     geom_point(size=5)  + coord_flip() + mytheme +
     scale_colour_brewer(palette = "Set2") +
@@ -289,16 +336,17 @@ if (no_n_len != raw_len) warning(paste("removed",raw_len-no_n_len, "sequences wi
 
 focusdb_headers <- data.frame(raw=names(all_focus), stringsAsFactors = F)
 focusdb_headers$id <- gsub("(.*?)\\.(.*)", "\\1", focusdb_headers$raw)
-focusdb_headers$organism <- gsub("(.*?)\\.(.*?)\\.(.*)\\s(.*? .*?)", "\\4", focusdb_headers$raw)
+focusdb_headers$organism <- gsub("(.*?)\\.(.*?)\\.(.*)\\s(.*?)", "\\4", focusdb_headers$raw)
+focusdb_headers$genus <- gsub("(.*?) (.*)", "\\1", focusdb_headers$organism)
 # focus_seqs_names$genus <- gsub("(.*?)\\s(.*)[\\s.]*", "\\1", focus_seqs_names$strain)
 # focus_seqs_names$species <- gsub("(.*?)\\s(.*)[\\s.]*", "\\2", focus_seqs_names$strain)
 focusdb_headers$start <- as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\2", focusdb_headers$raw))
 focusdb_headers$stop <-  as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\3", focusdb_headers$raw))
 
 counter <- 1
-for (organism in unique(focusdb_headers$organism)){
+for (organism in unique(focusdb_headers$genus)){
   #rganism <- gsub("_", " ", gsub(".*\\/(.*)_ribo16s.fasta", "\\1", path))
-  print(paste("processing", organism, counter, "of", length(unique(focusdb_headers$organism))))
+  print(paste("processing", organism, counter, "of", length(unique(focusdb_headers$genus))))
   silva_subset <-silva[grepl(organism, names(silva))]
   nsilv <- length(silva_subset)
   nsilvdup = sum(duplicated(silva_subset), na.rm = TRUE)
@@ -320,8 +368,9 @@ for (organism in unique(focusdb_headers$organism)){
     data.frame("Organism"=organism, "Unique"=nboth-nbothdup,  "Duplicated"=nboth, "DB"="combined"))
   counter <- counter + 1
 }
+#uniqueness <- uniqueness[1105:nrow(uniqueness), ]
 # set an arbtrary cutoff for popularity, just for plotting purposes
-popthresh = 400; popular <- uniqueness %>% filter(DB=='silv') %>% filter(Unique > popthresh | Duplicated > popthresh)
+popthresh = 4000; popular <- uniqueness %>% filter(DB=='silv') %>% filter(Unique > popthresh | Duplicated > popthresh)
 p_uniqueness <- uniqueness %>% distinct() %>% gather(key="grp", value="val", -Organism, -DB ) %>%
   spread(key=DB, value=val) %>% 
   mutate(SILVA=combined-focus, focusDB=combined-silv) %>% 
@@ -354,16 +403,16 @@ p_uniqueness <- uniqueness %>% distinct() %>% gather(key="grp", value="val", -Or
 )
 p_unique_perc <-  right_join(
   p_uniqueness %>% spread(grp, val) %>%
-    dplyr::rename(org=Organism) %>%
+    dplyr::rename(genus=Organism) %>%
     select(-Duplicated) %>% spread(DB, Unique) %>% 
     mutate(
       perc_inc=round((focusDB/SILVA) *100, 1 ),
       perc_of_tot=round(focusDB/((SILVA + focusDB)) *100, 1 ),
     ),
-  srac %>% select(org, mock))%>% 
+  srac %>% select(genus, mock))%>% 
   filter(!is.na(perc_inc))
 (p_unique_heat <- ggplot(p_unique_perc,
-  aes(x=org, y=mock, fill=mock)) +
+  aes(x=genus, y=mock, fill=mock)) +
     coord_flip() +
     scale_fill_discrete(guide="none")+
     theme(rect = element_blank(),
@@ -375,7 +424,7 @@ p_unique_perc <-  right_join(
       )+
   geom_tile())
 (p_uniqueV <- ggplot(p_unique_perc %>% select(-mock) %>% distinct(),
-  aes(x=org, y=perc_inc)) +
+  aes(x=genus, y=perc_inc)) +
     coord_flip() +
     scale_fill_manual(values = viridis::viridis(n=3)) +
     mytheme +
@@ -641,20 +690,28 @@ for (i in 1:nrow(only_illumina_assembly_summary)){
     counter <- counter + 1
   }
 }
-table("status"=reassembly_results$category, "New Seqs Introducted"=reassembly_results$unique_focusdb ==0)
+table("status"=reassembly_results$category, "New Seqs Introduced"=reassembly_results$unique_focusdb !=0)
 ggplot(reassembly_results, aes(x=unique_focusdb, fill=category)) + geom_density(alpha=.5)
 
 snps <- sapply(min_snps, function(x){return(sum(unlist(x)))})
 snpdf <- data.frame(snps=snps, assembly=names(snps))
 reassembly_results_df <- merge(reassembly_results, snpdf, by="assembly")
-ggplot(reassembly_results_df %>% filter(category == "Complete Genome") %>% filter(snps < 500), aes(x=snps)) + geom_histogram()
+reassembly_results_df <- reassembly_results_df[!is.na(reassembly_results_df$total),]
+
+total_cg_seqs  <-sum(
+  reassembly_results_df[reassembly_results_df$category == "Complete Genome", "silva"])
+total_focus_seqs  <-sum(
+  reassembly_results_df[reassembly_results_df$category == "Complete Genome", "focusdb"])
+ggplot(reassembly_results_df %>% filter(category == "Complete Genome"), aes(x=snps)) + geom_histogram()
 
 (snps_cg_kbp <- ggplot(
   reassembly_results_df %>% filter(category == "Complete Genome") %>% 
-    filter(snps < 500) %>% mutate(pkbp=(snps * 1000)/(focusdb * 1500)), 
+    #filter(snps < 500) %>% 
+    mutate(pkbp=(snps * 1000)/(focusdb * 1500)), 
   aes(x=pkbp)) + geom_histogram() + labs(
-    x="SNPs per Kbp", y="Number of Assemblies",
-    title="Comparing riboSeed-assembled 16S to Complete Genome's 16S"
+    x="SNPs/Kbp (per genome)", y="Number of Assemblies",
+    title="Comparing riboSeed-assembled 16S to Complete Genome's 16S",
+    subtitle=paste("In the genera considered, sequences for complete genomes were present in SILVA.\nriboSeed recovered 182 of 253 sequences.\nIn 14 genomes,16S alleles were identical between riboSeed and complete genome")
   )
 )
 (snps_cg_raw <- ggplot(
@@ -666,6 +723,10 @@ ggplot(reassembly_results_df %>% filter(category == "Complete Genome") %>% filte
   )
 )
 
+
+
+ggsave("docs/figures/X-snps.png", snps_cg_kbp, device = "png", 
+       dpi = 300, width = 7, height = 5)
 
 reassembly_results[reassembly_results$assembly > 0, ]
 # GCA_000767745.1 GCA_000832805.1
@@ -686,7 +747,7 @@ View(merge(reassembly_results, srafind, by.x="assembly", by.y="Assembly.Accessio
 
 ## Discussion
 ```{r calculate_needs_assembl}
-sraFind_data <- read.table("~/.focusDB/sraFind-All-biosample-with-SRA-hits.txt", header=T, sep="\t", stringsAsFactors = F)
+sraFind_data <- read.table("~/.focusDB/sraFind.tab", header=T, sep="\t", stringsAsFactors = F)
 tbassembled <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(!is.na(study_acc)) %>% nrow()
 tbreleased  <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(is.na(study_acc)) %>% nrow()
 ```
@@ -696,7 +757,7 @@ tbreleased  <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(is.n
 
 ```{r}
 library(lubridate)
-alog <- readLines("./results/2019-10-03-hmp-focusdb/combined_log.txt")
+alog <- readLines("./docs/timing_results/HMP-combined_log.txt")
 alog <- alog[1:length(alog)]
 lo <- data.frame(dt=gsub("(.*?),.* - .*? - (.*)","\\1", alog), stringsAsFactors = F)
 lo$message  <-  gsub("(.*?) - .*? - (.*)","\\2", alog)
@@ -748,7 +809,7 @@ tlot  <- lot %>% select(bug, sra, Download_SRA, Trim, Assemble, Download_refs, F
 
 (p_timing <- ggplot(tlot, aes(x=step, y=s, color= bug)) + 
     geom_boxplot(color="black", fill=NA) +
-    geom_jitter(width = .2) + 
+    geom_jitter(width = .2, alpha=.4) + 
     scale_y_continuous() +
     scale_color_discrete(guide="none") +
     coord_flip() + 
@@ -758,4 +819,13 @@ tlot  <- lot %>% select(bug, sra, Download_SRA, Trim, Assemble, Download_refs, F
 ggsave("docs/figures/S3-time.png", p_timing, device = "png", 
        dpi = 300, width = 11, height = 7)
 
+```
+
+
+# very rough timing estimates, for fast mode
+
+```{r}
+time_means <- tlot %>% group_by(step) %>% summarise(mean_sec=mean(s))
+98329 * sum(time_means$mean_sec)
+as.numeric(98329 * sum(time_means$mean_sec), units="days") 
 ```

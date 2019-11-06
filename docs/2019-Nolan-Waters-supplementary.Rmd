@@ -17,10 +17,11 @@ library(Biostrings); packageVersion("Biostrings")
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #    install.packages("BiocManager")
 #BiocManager::install("DECIPHER")
+library(ggupset)
+
 library(DECIPHER)
 source("docs/shared.R")
-extremes_dir <- "./results/2019-11-01-extremes/"
-microbiome_dir <- "./results/2019-11-01-extremes/"
+results_dir <- "./results/2019-11-06-results/"
 ```
 ##  Assessing SILVA's composition
 ```{bash, eval=FALSE}
@@ -30,22 +31,17 @@ if [ -f "~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz" ] ; then echo "already
 First, we read in the silva db, and parse the headers for alter comparison. One thing we do it get the codes of what the prefixes from NCBI mean, and use that to determine with source of the sequences.
 ```{r parse_headers, cache=TRUE}
 silva <- readRNAStringSet("~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz")
-
 # codes_from_ncbi read in shared.R
-
-silva_headers <- data.frame("V1"=names(silva), stringsAsFactors = F)
-#silva_headers <- head(silva_headers, n=1000)
-silva_headers$pre <- gsub("(\\D*).*", "\\1", silva_headers$V1)
-
-#
-silva_headers$id <- gsub("(.*?)\\.(.*)", "\\1", silva_headers$V1)
-silva_headers$strain <- gsub("(.*?)\\.(.*?)\\.(.*)\\s.*;(.*)", "\\4", silva_headers$V1)
+silva_headers <- data.frame("raw"=names(silva), stringsAsFactors = F)
+silva_headers$pre <- gsub("(\\D*).*", "\\1", silva_headers$raw)
+silva_headers$id <- gsub("(.*?)\\.(.*)", "\\1", silva_headers$raw)
+silva_headers$strain <- gsub("(.*?)\\.(.*?)\\.(.*)\\s.*;(.*)", "\\4", silva_headers$raw)
 silva_headers$genus <- gsub("(.*?)\\s(.*?)[\\s.]*", "\\2", silva_headers$strain)
 silva_headers$species <- gsub("(.*?)\\s(.*?)[\\s.*]", "\\2", silva_headers$strain)
 
-#silva_headers$name <- gsub(">(.*?)\\s.*", "\\1", silva_headers$V1)
-silva_headers$start <- as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\2", silva_headers$V1))
-silva_headers$stop <-  as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\3", silva_headers$V1))
+#silva_headers$name <- gsub(">(.*?)\\s.*", "\\1", silva_headers$raw)
+silva_headers$start <- as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\2", silva_headers$raw))
+silva_headers$stop <-  as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\3", silva_headers$raw))
 silva_headers$wgs <- nchar(silva_headers$pre) > 3 # see table
 
 silva_headers$amplicon <- silva_headers$start < 10
@@ -72,45 +68,52 @@ silva_headers$category <- case_when(
   silva_headers$cg ~ "Complete Genome",
   silva_headers$amplicon ~  "Amplicon")
 round(table(silva_headers$category, useNA = "always") / nrow(silva_headers) * 100, 2)
-silva_headers$matcher <- ifelse(silva_headers$cg, silva_headers$id,
-                                ifelse(silva_headers$wgs, substr(silva_headers$id, start = 1, stop =( nchar(silva_headers$pre) + 2)), NA))
+silva_headers$matcher <- ifelse(
+  silva_headers$cg, 
+  silva_headers$id,
+  ifelse(silva_headers$wgs, 
+         substr(silva_headers$id, start = 1, stop =( nchar(silva_headers$pre) + 2)),
+         NA)
+)
 ```
 
-## Assembling candidate taxa from Extreme dataset
-Here is the script used to run the Extremes dataset
+## Assembling candidate taxa 
+Here is the script used to run the whole batch:
 ```{bash  eval=FALSE}
 #!/bin/bash
-#$ -t 1-12
-#$ -tc 4
+#$ -t 1-109
+#$ -tc 15
 #$ -cwd
 #$ -j yes
-#$ -N ex_genus_jobs
+#$ -N comb_genus
 #$ -pe mpi 4
 #$ -l h_vmem=20G
-
+set -e
 counter=1
 
-cd $SCRATCH/2019-10-07-focusdb_extremes//
-cat ~/GitHub/focusdb_manuscript/docs/datasets/extreme_species_list.txt | cut -f 1 -d " " |sort | uniq > genuses.txt
+cd /mnt/shared/scratch/synology/nw42839/2019-11-02-focusdb/
 while read genus species
 do
     if [ "$counter" -eq "$SGE_TASK_ID" ]
     then
-	conda activate 16db
-	focusDB  -o geuns_only_${genus} --organism_name "${genus}" --njobs 12 --threads 2 --cores 4 --memory 20 --n_references 200 --n_SRAs 100 --maxdist .1 --focusDB_data /mnt/shared/scratch/nw42839//.focusDB/ -v 1 --timeout 1500 --fastqtool fastq-dump --process_partial --use_available --sge --sge_env 16db
+        conda activate 16db
+        focusDB  -o ${genus}_genus --organism_name "${genus}" --njobs 6 --threads 2 --cores 6 --memory 20 --n_references 200 --n_SRAs 50 --maxdist .1 --focusDB_data /mnt/shared/scratch/nw42839/.focusDB/ -v 1 --timeout 1500 --fastqtool fastq-dump --process_partial --use_available --sge --sge_env 16db
+        echo "moving results off synology"
+        mv ${genus}_genus /mnt/shared/scratch/nw42839/2019-11-04-focusdb/
     fi
     counter=$((counter + 1))
-done < genuses.txt
+done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
+```
+Afterwards, the results were aggregated as follows:
 
-
-
-cat ./*/SUMMARY  > <date>-focusdb-results/summary_extremes_all
-cp ./*/*ribo16s.fasta <date>-focusdb-results/
+```{bash eval=FALSE}
+mkdir 2019-11-04-focusdb
+while read genus; do echo $genus; cp ./${genus}_genus/${genus}_ribo16s.fasta ./2019-11-06-results/ ; cp ./${genus}_genus/focusDB.log ./2019-11-06-results/${genus}.log ; cp ./${genus}_genus/sequence_summary.tab  ./2019-11-06-results/${genus}_seq_summary.tab; done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
+cat ./*_genus/SUMMARY > 2019-11-06-results/summary_all
+tar czf 2019-11-06-results.tar.gz 2019-11-06-results/
 
 ```
 
-## Running FocusDB on the Extremes Dataset.
-DADA2's Extremes dataset is comprised of the strains shown here in table 1. Note that we included Anaerocolumna xylanovorans, a more recent name for Clostridium xylanovorans.
 
 ### Suppl Figure 1: Number of SRAs available for each species
 
@@ -121,6 +124,7 @@ python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.txt -l 
 python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.txt -l ./docs/datasets/HMP_species_list.txt -o results/HMP_sra_count
 python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.txt -l ./docs/microbiome_data/endo_species.txt -o results/endo_sra_count
 ```
+
 ```{r plot_sras}
 srac <- data.frame("org"=NA, "count"=NA, stringsAsFactors = F)
 srac <- srac[!is.na(srac),]
@@ -176,7 +180,6 @@ for (f in c(Sys.glob("./docs/datasets/*species*"), "./docs/microbiome_data/endo_
 }
 unique_genuses <- unique(srac[, "genus"])
 unique_genuses_with_sras <- unique(srac[srac$count > 0, "genus"])
-library(ggupset)
 
 proks <- read.csv2("~/.focusDB/prokaryotes.txt", sep="\t", header = T, stringsAsFactors = F)
 proks$genus <- gsub("(.*?) .*", "\\1", proks$X.Organism.Name)
@@ -211,7 +214,14 @@ theseproks <- left_join(
     geom_bar(position=position_stack(reverse = TRUE)) + 
     labs(title="Genus-level overlap of datasets", 
          x="Dataset", y="Count", fill="") +
-    scale_x_upset()
+    scale_fill_manual(values=wesanderson::wes_palette("IsleofDogs2")[4:1]) +
+    mytheme +
+    scale_x_upset() +
+    theme(
+      legend.position=c(.6,.5),
+      legend.background = element_blank(),
+      legend.direction='vertical') +
+    guides(fill = guide_legend(reverse = TRUE))
 )
 
 #species_names %>% ggplot(aes(x=dataset, y=genus)) + geom_tile()
@@ -219,34 +229,39 @@ unique_and_valid <- theseproks %>% select(genus, ref, sras) %>% distinct() %>%
   filter(sras) %>% filter(ref)
 write.table(sort(unique_and_valid$genus), col.names = F, row.names = F, file = "./docs/datasets/combined_genuses.txt", quote=F)
 
-ggsave("docs/figures/S6-datasets.png", p_dataset_overlap, device = "png", dpi = 300, width = 6, height = 6)
+ggsave("docs/figures/S6-datasets.png", p_dataset_overlap, device = "png", dpi = 300, width = 4, height = 4)
 ```
 
 ### Figure 2: sra successes
 ```{r plot_success}
-
-bal_data <- read.csv("./results/2019-10-07-focusdb-balanced/balanced_summary_all",
-                     sep="\t", header=F, col.names = c("org", "status", "state", "messag"),
-                     stringsAsFactors = F)
-bal_data$mock <- "Balanced"
-# hmp_data <- read.csv("./results/2019-10-03-HMP-results/HMP_summary_all.tab",
-#                      sep="\t", header=F,
-#                      col.names = c("org", "status", "state", "messag"), 
+# 
+# bal_data <- read.csv("./results/2019-10-07-focusdb-balanced/balanced_summary_all",
+#                      sep="\t", header=F, col.names = c("org", "status", "state", "messag"),
 #                      stringsAsFactors = F)
-# hmp_data$mock <- "HMP"
-ex_data <- read.csv("./results/2019-10-18-extremes-genus-focusdb/extremes_summary_all",
+# bal_data$mock <- "Balanced"
+# # hmp_data <- read.csv("./results/2019-10-03-HMP-results/HMP_summary_all.tab",
+# #                      sep="\t", header=F,
+# #                      col.names = c("org", "status", "state", "messag"), 
+# #                      stringsAsFactors = F)
+# # hmp_data$mock <- "HMP"
+# ex_data <- read.csv("./results/2019-10-18-extremes-genus-focusdb/extremes_summary_all",
+#                     sep="\t", header=F,
+#                     col.names = c("org", "status", "state", "messag"), 
+#                     stringsAsFactors = F)
+# ex_data$mock <- "Extremes"
+# endo_data <- read.csv("./results/2019-10-20-endo-genus-results/summary_all_endo_genus.tab",
+#                     sep="\t", header=F,
+#                     col.names = c("org", "status", "state", "messag"), 
+#                     stringsAsFactors = F)
+# endo_data$mock <- "Endobiota"
+summary_data <- read.csv(file.path(results_dir, "summary_all"),
                     sep="\t", header=F,
                     col.names = c("org", "status", "state", "messag"), 
                     stringsAsFactors = F)
-ex_data$mock <- "Extremes"
-endo_data <- read.csv("./results/2019-10-20-endo-genus-results/summary_all_endo_genus.tab",
-                    sep="\t", header=F,
-                    col.names = c("org", "status", "state", "messag"), 
-                    stringsAsFactors = F)
-endo_data$mock <- "Endobiota"
-summary_data <- rbind(bal_data,ex_data, hmp_data, endo_data)
+# here we get rid of those withougt references by matching up with unique_and_valid
+summary_data <- summary_data %>% filter(org %in% unique_and_valid$genus)
 globals <- summary_data %>% filter(state=="global") %>%
-  select(mock, org, messag) %>% dplyr::rename(globalmessage=messag)
+  select(org, messag) %>% dplyr::rename(globalmessage=messag)
 summary_data <- summary_data %>% filter(state!="global")
 (globals$globalmessage <- ifelse(globals$globalmessage == "", "Success", globals$globalmessage))
 # tidy things up;  this clarifies the immage a bit
@@ -254,10 +269,10 @@ summary_data <- summary_data %>% filter(state!="global")
 # (globals$globalmessage <- gsub("No available.*", "No available references", globals$globalmessage))
 
 p_summary_data_pre <- full_join(
-  summary_data , globals, by=c("org", "mock")) %>% 
-  select(mock, org, globalmessage, messag, state ) %>%  distinct()
+  summary_data , globals, by=c("org")) %>% 
+  select(org, globalmessage, messag, state ) %>%  distinct()
 
-p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org", "mock")) %>% 
+p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org")) %>% 
   mutate(
     strain=org, 
     pmessage = case_when(
@@ -269,13 +284,14 @@ p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org", "mock")) %>%
       messag=="" ~ "16S Recovered", 
       messag=="riboSeed unsuccessful" ~ "No 16S Recovered")) 
 
-#  plot mock also in shared methods
-mock_plots <- list()
-for (grp in  c("Extremes",  "Balanced", "Endobiota")){
-  thisgroup <- quo(grp)
-  (mock_plots[[grp]] <- plot_mock(df=p_summary_data%>% filter(mock == (!!thisgroup))))
-  ggsave(paste0("docs/figures/S2", grp, ".png"), mock_plots[[grp]], device = "png", dpi = 300, width = 12, height = 7)
-}
+# #  plot mock also in shared methods
+# for (grp in  c("Extremes",  "Balanced", "Endobiota")){
+#   thisgroup <- quo(grp)
+#   (mock_plots[[grp]] <- plot_mock(df=p_summary_data%>% filter(mock == (!!thisgroup))))
+#   ggsave(paste0("docs/figures/S2", grp, ".png"), mock_plots[[grp]], device = "png", dpi = 300, width = 12, height = 7)
+# }
+(mock_plots<- plot_mock(df=p_summary_data))
+ggsave(paste0("docs/figures/S2_rest.png"), mock_plots, device = "png", dpi = 300, width = 12,  height = 7)
 ###################
 alpha_data <- p_summary_data %>%
   group_by(strain) %>% 
@@ -310,12 +326,11 @@ ggsave("docs/figures/2-success.png", p_outcomesB, device = "png", dpi = 300, wid
 ```
 
 ## Assessing uniqueness:
-First, for simplicity, we combine all the sequences for all the runs.  We have the logs to relate the seqeunces to why they were selected, but as we are talking about improving the database as a whole, combining them all simplifices aspects of interpretation.
+First, for simplicity, we combine all the sequences for all the runs.  We have the logs to relate the seqeunces to why they were selected, but as we are talking about improving the database as a whole, combining them all simplifies aspects of interpretation.
 ```{bash, eval=FASLE}
 cat ./results/*/*_ribo16s.fasta > ./results/all_focusDB_ribo16s.fasta
 
 ```
-
 
 ```{r plot_uniqueness, cache=TRUE}
  
@@ -325,7 +340,7 @@ uniqueness <- uniqueness[!is.na(uniqueness),]
 
 #seq_paths <-  Sys.glob("./results/*/*_*_ribo16s.fasta")
 
-all_focus <- readDNAStringSet("./results/all_focusDB_ribo16s.fasta")
+all_focus <- readRNAStringSet("./results/all_focusDB_ribo16s.fasta")
 all_focus <- all_focus[!duplicated(all_focus), ]
 raw_len <- length(all_focus)
 all_focus <- all_focus[lapply(vmatchPattern("N", all_focus)@ends, length) == 0]
@@ -335,6 +350,18 @@ if (no_n_len != raw_len) warning(paste("removed",raw_len-no_n_len, "sequences wi
 
 
 focusdb_headers <- data.frame(raw=names(all_focus), stringsAsFactors = F)
+###
+focusdb_headers$pre <- gsub("(\\D*).*", "\\1", focusdb_headers$raw)
+silva_headers$id <- gsub("(.*?)\\.(.*)", "\\1", silva_headers$raw)
+silva_headers$strain <- gsub("(.*?)\\.(.*?)\\.(.*)\\s.*;(.*)", "\\4", silva_headers$raw)
+silva_headers$genus <- gsub("(.*?)\\s(.*?)[\\s.]*", "\\2", silva_headers$strain)
+silva_headers$species <- gsub("(.*?)\\s(.*?)[\\s.*]", "\\2", silva_headers$strain)
+
+#silva_headers$name <- gsub(">(.*?)\\s.*", "\\1", silva_headers$raw)
+silva_headers$start <- as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\2", silva_headers$raw))
+silva_headers$stop <-  as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\3", silva_headers$raw))
+s
+###
 focusdb_headers$id <- gsub("(.*?)\\.(.*)", "\\1", focusdb_headers$raw)
 focusdb_headers$organism <- gsub("(.*?)\\.(.*?)\\.(.*)\\s(.*?)", "\\4", focusdb_headers$raw)
 focusdb_headers$genus <- gsub("(.*?) (.*)", "\\1", focusdb_headers$organism)
@@ -515,7 +542,7 @@ ngs_silva <- silva_headers[!is.na(silva_headers$matcher), ]
 this_mask <- rep(FALSE, nrow(ngs_silva))
 these_orgs <- focusdb_headers$organism
 for (org in unique(these_orgs)){
-  this_mask <- this_mask | grepl(org, ngs_silva$V1, fixed=T)
+  this_mask <- this_mask | grepl(org, ngs_silva$raw, fixed=T)
 }
 table(this_mask)
 silv_sub <- ngs_silva[this_mask,]
@@ -554,7 +581,7 @@ assembly_summary <- inner_join(
      select(strain, Assembly.Accession, id, start, stop) %>% distinct() %>%  summarize(n=n()))
 (p_summary_cg    <-    assembly_summary  %>% filter(cg) %>% group_by(strain,  Assembly.Accession) %>% 
      select(strain, Assembly.Accession, id, start, stop) %>% distinct() %>%  summarize(n=n()))
-p_summary_n16s <- assembly_summary %>% select(V1, strain, Assembly.Accession,category) %>%distinct() %>% group_by(strain,  Assembly.Accession) %>%  mutate(n=n()) %>%  select(-V1) %>% distinct()
+p_summary_n16s <- assembly_summary %>% select(raw, strain, Assembly.Accession,category) %>%distinct() %>% group_by(strain,  Assembly.Accession) %>%  mutate(n=n()) %>%  select(-raw) %>% distinct()
 (n16s <-  ggplot(p_summary_n16s, aes(x=n,  fill=category)) + geom_density(adjust=4, alpha=.6) + 
     labs(x="Number of 16S  in assembly", y="Relative Distriubtion", fill="", title="Distribution of rDNA counts by assembly level") 
 )
@@ -571,7 +598,7 @@ table(p_summary_n16s[p_summary_n16s$category!="Complete Genome", "n"])
 ```{r}
 build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, trimr=10){
   # get matching assembly from sraFind to get the complete genome/seqeunce accession
-  this_silva <- unique(db[grepl(assembly, db$Assembly.Accession), "V1" ])
+  this_silva <- unique(db[grepl(assembly, db$Assembly.Accession), "raw" ])
   if (length(this_silva) == 0) {
     warning(paste("No matches ", assembly, ";  could be long reads?"))
     return (list(NA, NA, NA, NA, NA, NA))

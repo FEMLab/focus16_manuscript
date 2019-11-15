@@ -86,6 +86,7 @@ for (d in c("Extremes", "HMP", "Balanced")){
 
 srac$genus <- gsub("(.*) .*","\\1", srac$org)
 srac$species <- gsub("(.*) (.*)","\\2", srac$org)
+srac$binom <- paste(srac$genus, srac$species)
 nunique_strains <- length(unique(srac[, "org"]))
 nwith_sras <- length(unique(srac[srac$count > 0, "org"]))
 (psrastrains <- ggplot(srac %>% filter(mock != "endo") %>% filter(count > 0), aes(reorder(org,count), y=count, fill=genus, color=genus)) + 
@@ -110,6 +111,7 @@ thispath = file.path("results", paste0("endo", "_sra_count"), "sralist.txt")
 tmp <- read.csv2(thispath, sep=":", col.names = c("org", "count"), stringsAsFactors = F, header=F)
 tmp$genus <- gsub("(.*) .*","\\1", tmp$org)
 tmp$species <- gsub("(.*) (.*)","\\2", tmp$org)
+tmp$binom <-paste(tmp$genus, tmp$species)
 tmp$mock <- "endo"
 srac <- rbind(srac, tmp)
 
@@ -298,6 +300,7 @@ process_db <- function(xset){
   headers$strain <- gsub("(.*?)\\.(.*?)\\.(.*)\\s.*;(.*)", "\\4", headers$raw)
   headers$genus <- gsub("(.*?)\\s(.*)", "\\1", headers$strain)
   headers$species <- gsub("(.*?) (.*)", "\\1", gsub("(.*?)\\s(.*)", "\\2", headers$strain))
+  headers$binom <- paste(headers$genus, headers$species)
   #headers$name <- gsub(">(.*?)\\s.*", "\\1", headers$raw)
   headers$start <- as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\2", headers$raw))
   headers$stop <-  as.numeric(gsub("(.*)\\.(.+)\\.(.*?)\\s.*", "\\3", headers$raw))
@@ -368,24 +371,24 @@ for (i in c("silva", "full", "fast")){
   thisset <- set[["set"]][lapply(vmatchPattern("N", set[["set"]])@ends, length) == 0]
   thisset <- thisset[lengths(thisset) > 1200]
   no_n_len <- length(thisset)
-  if (no_n_len != raw_len) warning(paste0("removed ",raw_len-no_n_len, " sequences with ambiguous nucleotides from the '", i, "' dataset"))
+  if (no_n_len != raw_len) warning(paste0(" ",raw_len-no_n_len, " sequences with ambiguous nucleotides from the '", i, "' dataset"))
 }
 
 ```
 
 ```{r}
 counter <- 1
-for (organism in unique(focusdb_headers$genus)){
+for (organism in unique(datasets[["fast"]][["metadata"]]$binom)){
   #rganism <- gsub("_", " ", gsub(".*\\/(.*)_ribo16s.fasta", "\\1", path))
-  print(paste("processing", organism, counter, "of", length(unique(focusdb_headers$genus))))
-  silva_subset <-silva[grepl(organism, names(silva))]
+  print(paste("processing", organism, counter, "of", length(unique(datasets[["fast"]][["metadata"]]$binom))))
+  silva_subset <-silva[grepl(organism, names(datasets[["silva"]][["set"]]))]
   nsilv <- length(silva_subset)
   nsilvdup = sum(duplicated(silva_subset), na.rm = TRUE)
   uniqueness <- rbind(
     uniqueness, 
     data.frame("Organism"=organism, "Unique"=nsilv-nsilvdup,  "Duplicated"=nsilvdup, "DB"="silv"))
   # focus_subset <- readDNAStringSet("./results/2019-10-12-focusdb-extremes/Bacteroides_fragilis_ribo16s.fasta")
-  focus_subset <- all_focus[grepl(organism, names(all_focus))] 
+  focus_subset <- datasets[["fast"]][["set"]][grepl(organism, names(datasets[["fast"]][["set"]]))] 
   nfoc <- length(focus_subset)
   nfocdup = sum(duplicated(focus_subset), na.rm = TRUE)
   uniqueness <- rbind(
@@ -401,7 +404,7 @@ for (organism in unique(focusdb_headers$genus)){
 }
 #uniqueness <- uniqueness[1105:nrow(uniqueness), ]
 # set an arbtrary cutoff for popularity, just for plotting purposes
-popthresh = 4000; popular <- uniqueness %>% filter(DB=='silv') %>% filter(Unique > popthresh | Duplicated > popthresh)
+popthresh = 1000; popular <- uniqueness %>% filter(DB=='silv') %>% filter(Unique > popthresh | Duplicated > popthresh)
 p_uniqueness <- uniqueness %>% distinct() %>% gather(key="grp", value="val", -Organism, -DB ) %>%
   spread(key=DB, value=val) %>% 
   mutate(SILVA=combined-focus, focusDB=combined-silv) %>% 
@@ -434,16 +437,16 @@ p_uniqueness <- uniqueness %>% distinct() %>% gather(key="grp", value="val", -Or
 )
 p_unique_perc <-  right_join(
   p_uniqueness %>% spread(grp, val) %>%
-    dplyr::rename(genus=Organism) %>%
+    dplyr::rename(binom=Organism) %>%
     select(-Duplicated) %>% spread(DB, Unique) %>% 
     mutate(
       perc_inc=round((focusDB/SILVA) *100, 1 ),
       perc_of_tot=round(focusDB/((SILVA + focusDB)) *100, 1 ),
     ),
-  srac %>% select(genus, mock))%>% 
+  srac %>% select(binom, mock))%>% 
   filter(!is.na(perc_inc))
 (p_unique_heat <- ggplot(p_unique_perc,
-  aes(x=genus, y=mock, fill=mock)) +
+  aes(x=binom, y=mock, fill=mock)) +
     coord_flip() +
     scale_fill_discrete(guide="none")+
     theme(rect = element_blank(),
@@ -455,7 +458,7 @@ p_unique_perc <-  right_join(
       )+
   geom_tile())
 (p_uniqueV <- ggplot(p_unique_perc %>% select(-mock) %>% distinct(),
-  aes(x=genus, y=perc_inc)) +
+  aes(x=binom, y=perc_inc)) +
     coord_flip() +
     scale_fill_manual(values = viridis::viridis(n=3)) +
     mytheme +
@@ -464,9 +467,9 @@ p_unique_perc <-  right_join(
     geom_bar(stat="identity") #+ facet_wrap(~grp) 
 )
 (figure <- ggpubr::ggarrange(p_unique_heat, p_uniqueV, widths=c(1, 3)))
-ggsave("docs/figures/3-unique.png", p_unique, device = "png", dpi = 300, width = 12, height = 7)
-ggsave("docs/figures/3-unique_alt2.png", p_unique_alt, device = "png", dpi = 300, width = 12, height = 7)
-ggsave("docs/figures/3-unique_alt.png", figure, device = "png", dpi = 300, width = 12, height = 7)
+ggsave("docs/figures/3-unique.png", p_unique, device = "png", dpi = 300, width = 12, height = 10) 
+ggsave("docs/figures/3-unique_alt2.png", p_unique_alt, device = "png", dpi = 300, width = 12, height = 10)
+ggsave("docs/figures/3-unique_alt.png", figure, device = "png", dpi = 300, width = 12, height = 10)
 
 ```
 
@@ -499,9 +502,10 @@ while read genus species; do if [ -f "./results/2019-09-26-focusdb-results/${gen
 ```
 
 
-## Calcualting Alpha Diversity
 
 ```{r plot_shannon, eval=FALSE}
+## Calcualting Alpha Diversity
+
 shannon <- read.csv(
   "./tmpalign.mafft.shannon", sep="\t", header = F, 
   col.names = c("pos", "region", "entropy", "entropy_subset"), 
@@ -578,65 +582,6 @@ table(p_summary_n16s[p_summary_n16s$category!="Complete Genome", "n"])
 ```
 
 
-```{r}
-compare_full_v_fast <- function(db, f1, f2, assembly="GCA_000699725.1", trimf=10, trimr=10){
-  # get matching assembly from sraFind to get the complete genome/seqeunce accession
-  this_silva <- unique(db[grepl(assembly, db$Assembly.Accession), "raw" ])
-  if (length(this_silva) == 0) {
-    warning(paste("No matches ", assembly, ";  could be long reads?"))
-    return (list(NA, NA, NA, NA, NA, NA))
-  }
-  # paste tofgether to make a query string with or's; this is because for assemblies, 
-  # # different contigs will have different sequence names, but a single assembly accession
-  this_silva_query <- gsub("(.*)\\|$", "\\1", paste0(unique(gsub("(.*?)\\..*", "\\1", this_silva)), collapse = "", sep="|"))
-  # get matching SRAs for assembly, so we can use them to search the focusdb results
-  this_focus <- unique(unlist(strsplit(db[grepl(assembly,  db$Assembly.Accession), "run_SRAs" ],",")))
-  # build focusdb query string;  get rid of the *_\\d suffix we add to SRAs to keep themunique
-  this_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",this_focus), collapse = "", sep="|"))
-  
-  # identify all seqeunces associated with this assembly accesssion
-  silva_subset_seqs <- silva[grepl(this_silva_query,  names(silva))]
-  # idenify the seqeunces from focusDB
-  focus_subset_seqs <- f1[grepl(this_focus_query, names(f1))]
-  unique_focus_subset_seqs <- unique(focus_subset_seqs)
-  if (length(unique_focus_subset_seqs) == 0) {
-    warning(paste("No matches for ",this_focus_query,"(", assembly, ")  in focusDB results"))
-    return (list(NA, NA, NA, NA, NA, NA))
-  }
-  # merge, align the seqeunces
-  # Silva by default is in RNA, so we type-cast to DNA
-  # We add the silva seqs fist so we can check uniqueness by the presense of SRA seqs in the unique'd alignment
-  aln <- DECIPHER::AlignSeqs(
-    append(DNAStringSet(silva_subset_seqs), unique_focus_subset_seqs), 
-  )
-  trimmed <- subseq(aln,trimf, -trimr)
-  uniques <- trimmed[!duplicated(trimmed)]
-  
-  # identity <- data.frame(name=names(focus_subset_seqs), stringsAsFactors = F, unique=F )
-  # for (seq in identity$name){
-  #   focus_subset_seqs[seq, "unique"] <- mapply(function(x, y ) sum(x!=y), strsplit(silva_subset_seqs,""), strsplit(focus_subset_seqs[seq],""))
-  # }
-  # 
-  #BrowseSeqs(uniques, highlight=0)
-  dists <- stringDist(uniques, method="hamming")
-  min_snps <- list()
-  for (i in names(uniques)){
-    if (i %in% names(unique_focus_subset_seqs)){
-      these_snps <- as.matrix(dists)[grepl(i, labels(dists))]
-      min_snps[i] <-  min(these_snps[these_snps > 0])
-    }
-  }
-  return (list("alignment"=aln, 
-               "unique_from_focusDB"=sum(names(unique_focus_subset_seqs) %in% names(uniques)), 
-               "total"=length(focus_subset_seqs),
-               "focusDB"=length(unique_focus_subset_seqs),
-               "silva"=length(silva_subset_seqs),
-               "min_snps"=min_snps
-               )
-  )
-}
-
-```
 
 
 
@@ -763,7 +708,7 @@ build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
         maxlen = min(length(focus_subset_seqs[[i]]), length(silva_subset_seqs[[j]]))
         if (length(silva_subset_seqs[[j]]) < 1400) next
         # say 1500 is max, score is 1490.  thats 10 SNPs, or 6.6 SNPs per kbp
-        if  (best_score >=  overall_best_score){
+        if  (best_score >  overall_best_score){
           this_row <-  data.frame(
             "set"=thisset,
             "focusDB"=names(focus_subset_seqs[i]),
@@ -802,7 +747,7 @@ only_illumina_assembly_summary <- only_illumina_assembly_summary%>% filter(proce
 
 Alright, so now we know which SRAs relate to which assemblies, and which we have analyzed. The first order of business is to compare the accuracy of fast mode (using riboSeed's `--just_seed` parameter) to 16S's from full assemblies.  However, for a full analysis, we also need to compare to the de novo assembly.
 
-```{bash}
+```{bash, eval=FALSE}
 for i in results/2019-11-11-results/*_genus/*/
 do 
 echo $i
@@ -847,7 +792,7 @@ for (i in 1:nrow(only_illumina_assembly_summary)){
     geom_bar(aes(y=..count../10), fill="grey80")+ 
     geom_label(stat='count', aes(y=(..count../10) +20, label=paste(..count.., "\nsequences")))+ 
     geom_boxplot(aes(y=pkb, color=set), color="grey30", outlier.shape = NA, outlier.colour = "grey") + 
-    geom_jitter(aes(y=pkb, color=set), alpha=.3, width = .3, height = .02) +  
+    geom_jitter(aes(y=pkb, color=set), alpha=.3, width = .2, height = .02) +  
     labs(title="Subassembled rDNAs are more accurate than rDNAs from final assemblies", 
          subtitle="gray bars show the relative number of sequences recovered",
          x= "focusDB  Mode",
@@ -868,51 +813,73 @@ Now, we build a interactive graph.
 ```{r}
 # install.packages("visNetwork")
 library(visNetwork)
-graph_res <- snp_results %>% filter(assembly %in% c(snp_results$assembly[1:2000]))
+graph_res <- snp_results %>% filter(assembly %in% c(snp_results$assembly[1:1000]))
 tres <- graph_res %>% select(-focusDB, -silva) %>%
   gather(key="x", value="node", -pkb, -assembly, -set) 
 nodes <- data.frame(
   id = tres$node, 
   #roup=interaction(tres$assembly, tres$set),
-  group= tres$set,
+  group=ifelse(tres$node %in% graph_res$target, "Ref", "Assembly"),
   label=gsub("(.*?) (.*)", "\\1", tres$node),
-  shape=ifelse(tres$node %in% graph_res$target, "square", "triangle"),
+  shape= ifelse(
+    tres$node %in% graph_res$target, 
+    "pentagon", 
+    case_when(
+      tres$set == "full" ~ "square",
+      tres$set == "fast" ~ "triangle",
+      tres$set == "denovo" ~ "diamond")),
   size=10
   )
 #nodes <- nodes %>% distinct() %>% as.data.frame()
 nodes <- nodes[!duplicated(nodes$id),]
-edges <- data.frame(from = graph_res$source, to = graph_res$target, length=graph_res$pkb, weights=graph_res$pkb)
-visNetwork(nodes, edges, width = "100%", ) %>% visLegend() %>%  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)
+edges <- data.frame(from = graph_res$source, to = graph_res$target, length=graph_res$pkb^2, weights=graph_res$pkb, label=graph_res$pkb)
+visNetwork(nodes, edges, width = "100%", ) %>% 
+  visLegend() %>%  
+  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>%   
+  visInteraction(hover = T) %>%
+  visEvents(hoverEdge = "function(e){
+    this.body.data.edges.update({id: e.edge, font: {size : 14}});
+  }") %>%
+  visEvents(blurEdge = "function(e){
+    this.body.data.edges.update({id: e.edge, font: {size : 0}});
+  }")
 
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 # install.packages("networdD3")
 library(networkD3)
-data(MisLinks)
+data(MisLinks)    
 data(MisNodes)
-graph_res <- results %>% filter(assembly %in% c(results$assembly[99:125]))
-tres <- graph_res %>% gather(key="x", value="node", -pkb, -assembly) 
+graph_res <- snp_results %>% filter(assembly %in% c(results$assembly[1:105]))
+tres <- graph_res %>% select(-focusDB, -silva) %>%
+  gather(key="x", value="node", -pkb, -assembly, -set) 
 nodes <- data.frame(
-  id = tres$node, 
-  group=tres$assembly,
+  NodeID = tres$node, 
+  Group=tres$assembly,
   label=gsub("(.*?) (.*)", "\\1", tres$node)
-  )
-#nodes <- nodes %>% distinct() %>% as.data.frame()
-nodes <- nodes[!duplicated(nodes$id),]
-edges <- data.frame(from = graph_res$focusDB, to = graph_res$silva, length=graph_res$pkb, weights=graph_res$pkb)
-
-forceNetwork(Links = graph_res, Nodes = tres,
-            Source = "focusDB", Target = "silva",
-            Value = "pkb", NodeID = "x",
-            Group = "assembly", opacity = 0.8)
+)
+nodes <- nodes[!duplicated(nodes$NodeID),]
+edges <- data.frame(Source = graph_res$source, target = graph_res$target, Value=graph_res$pkb)
+# MisLinks$source <- as.character(MisLinks$source)
+# forceNetwork(Links = MisLinks, Nodes = MisNodes,
+#             Source = "source", Target = "target",
+#             Value = "value", NodeID = "name",
+#             Group = "group", opacity = 0.8)
+forceNetwork(Links = edges, Nodes = nodes,
+            #Source = "source", target = "target",
+            #Value = "Value",
+            NodeID = "NodeID",
+            Group = "Group", 
+            #opacity = 0.8
+            )
 ```
 
 
 
 
-```{r}
+```{r eval=FALSE}
 # going row by row reprocesses assemblies, so we skip if we have already processed it. because we 
 # are subsetting from the same dataset in the function, this allows us to keep everything in order (as opposed to having 
 # a separate list of unique assemblies, then subsetting both in the function and in the results assignment)

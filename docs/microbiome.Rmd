@@ -119,13 +119,22 @@ write.table(sort(unique(fg$cleangenus)), file = "./docs/microbiome_data/endo_gen
 
 ## Running FocusDB
 
-Now that we know what genomes to be expecting, we can 
+Now that we know what genomes to be expecting, we ran focusDB on the genera found, and combined the results into a new database:
 
 ```{bash}
-while read genus species; do 16db  -o ${genus}_${species} -g ${genus}_${species}_genomes -n "$genus $species" --cores 32 --memory 80 --n_references 200 --n_SRAs 50 --subassembler spades --threads 2  --maxdist .1  ; done < ./docs/microbiome_data/endo_species.txt
-cat ./*/SUMMARY  > 2019-10-20-endo-results/endo_summay_all
-cp ./*/*ribo16s.fasta ./2019-10-20-endo-results/
+
+cat ./results/2019-11-11-results/*fast_ribo16s.fasta > results/combined_focusDB_seqs.fasta
+
 ```
+```{r}
+silva_orig <- readFasta("~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz")
+focusDB_seqs <- readFasta("path/to/silva_file_rna.fasta")
+seqs.dna <- as(sread(foo), "DNAStringSet") # Translates from RNA code w/ Us to DNA code w/ Ts
+writeFasta(ShortRead(seqs.dna, id(foo)), "path/to/silva_file_dna.fasta", width=20000L)
+
+```
+
+
 
 ```{r}
 endo_data <- read.csv(

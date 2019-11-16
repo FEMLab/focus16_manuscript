@@ -16,12 +16,14 @@ library(Biostrings); packageVersion("Biostrings")
 SPEED = TRUE  # use  pregenerated files, dont plot if you can avoid it
 if ( SPEED ){ load("./microbiome.RData")}
 ```
-we makde a data
+Here, we download the data from the Endobiota study.
+
 ```{bash}
 while read x; do fasterq-dump --split-files $x ; done < ~/Downloads/SRR_Acc_List-1.txt
 
 ```
 
+We follow a very generic DADA2 workflow:
 ```{r}
 dirpath <- "./docs/microbiome_data/"
 filtpath <- "./docs/microbiome_data/clean/"
@@ -59,9 +61,9 @@ names(filtFs) <- sample.names
 names(filtRs) <- sample.names
 
 if (!SPEED) {
-out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs,trimLeft=30, trimRight=40,
-              maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
-              compress=TRUE, multithread=TRUE)
+  out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs,trimLeft=30, trimRight=40,
+                       maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
+                       compress=TRUE, multithread=TRUE)
 } else {
   out <- list.files("./docs/microbiome_data/filtered")
 }
@@ -95,10 +97,44 @@ track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(merger, g
 colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
 rownames(track) <- sample.names
 head(track)
+```
+Now, we need to reformat the SILVA database for use with dada2. We could use the prebuild one, but as we have to build 2 (the normal SILVA 132 and our augmented one), we outline the steps here.
 
-taxa <- assignTaxonomy(seqtab.nochim, "~/Downloads/silva_nr_v132_train_set.fa.gz", multithread=TRUE)
-taxa_silva <- assignSpecies(taxa, "~/Downloads/silva_species_assignment_v132.fa.gz", allowMultiple = T)
+```{bash}
+mkdir ~/Downloads/dada2_dbs/
 
+zcat < ~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz | sed 's/>/> /g' | cut -f 1,3 -d " " | sed 's/ //g'  | awk '/^>/ {$0=$0 ";"}1' |gzip -c > ~/Downloads/dada2_dbs/silva.132.formated.fasta.gz
+zcat < ~/Downloads/dada2_dbs/silva.132.formated.fasta.gz | awk 'BEGIN{RS=">";FS="\n"}NR>1{printf ">%s\n",$1;for (i=2;i<=NF;i++) {gsub(/U/,"T",$i); printf "%s\n",$i}}' |gzip -c > ~/Downloads/dada2_dbs/silva.132.dna.formated.fasta.gz
+
+cp  ~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz  ~/Downloads/SILVA_132_SSURef_tax_silva_plus.fasta.gz
+cat ./results/fast_focusDB_ribo16s.fasta |gzip -c  >>  ~/Downloads/SILVA_132_SSURef_tax_silva_plus.fasta.gz
+zcat < ~/Downloads/SILVA_132_SSURef_tax_silva_plus.fasta.gz | sed 's/>/> /g' | cut -f 1,3 -d " " | sed 's/ //g'  | awk '/^>/ {$0=$0 ";"}1'  | gzip -c > ~/Downloads/dada2_dbs/silva.132.plus.formated.fasta.gz
+zcat < ~/Downloads/dada2_dbs/silva.132.plus.formated.fasta.gz | awk 'BEGIN{RS=">";FS="\n"}NR>1{printf ">%s\n",$1;for (i=2;i<=NF;i++) {gsub(/U/,"T",$i); printf "%s\n",$i}}' |gzip -c > ~/Downloads/dada2_dbs/silva.132.plus.formated.dna.fasta.gz
+```
+
+
+Now, we can use DADA2's built-in command to create a species level dbs for both:
+```{r, eval=FALSE}
+dada2:::makeSpeciesFasta_Silva("~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz", "~/Downloads/dada2_dbs/silva_species_assignment_v132.fa.gz")
+dada2:::makeSpeciesFasta_Silva("~/Downloads/SILVA_132_SSURef_tax_silva_plus.fasta.gz", "~/Downloads/dada2_dbs/silva_plus_species_assignment_v132.fa.gz")
+#313502 sequences with genus/species binomial annotation output.
+#319084 sequences with genus/species binomial annotation output.
+```
+
+
+That aside,we can assign taxanomic levels to each
+```{r, cache=TRUE}
+
+taxa_silva  <- assignTaxonomy(seqtab.nochim, "~/Downloads/dada2_dbs/silva.132.dna.formated.fasta.gz", multithread=TRUE)
+taxa_silva_species <- assignSpecies(taxa_silva, "~/Downloads/silva_species_assignment_v132.fa.gz", allowMultiple = T)
+
+taxa_silva_plus  <- assignTaxonomy(seqtab.nochim, "~/Downloads/dada2_dbs/silva.132.plus.formated.dna.fasta.gz", multithread=TRUE)
+taxa_silva_plus_species <- assignSpecies(taxa_silva_plus, "~/Downloads/dada2_dbs/silva_plus_species_assignment_v132.fa.gz", allowMultiple = T)
+
+```
+
+The first time we ran the analysis (before having the focusDB results), here is what we did to ggenerate the species files, etc:
+```{r, eval=FALSE}
 taxa.print <- taxa_silva # Removing sequence rownames for display only
 
 taxa.print[is.na(taxa.print[,1])] <- ""
@@ -119,176 +155,25 @@ write.table(sort(unique(fg$cleangenus)), file = "./docs/microbiome_data/endo_gen
 
 ## Running FocusDB
 
-Now that we know what genomes to be expecting, we ran focusDB on the genera found, and combined the results into a new database:
-
-```{bash}
-
-cat ./results/2019-11-11-results/*fast_ribo16s.fasta > results/combined_focusDB_seqs.fasta
-
-```
-```{r}
-silva_orig <- readFasta("~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz")
-focusDB_seqs <- readFasta("path/to/silva_file_rna.fasta")
-seqs.dna <- as(sread(foo), "DNAStringSet") # Translates from RNA code w/ Us to DNA code w/ Ts
-writeFasta(ShortRead(seqs.dna, id(foo)), "path/to/silva_file_dna.fasta", width=20000L)
-
-```
-
-
-
-```{r}
-endo_data <- read.csv(
- "./results/2019-10-20-endo-genus-results/summary_all_endo_genus.tab",
-  sep="\t", header=F, col.names = c("org", "status", "state", "messag"),
-  stringsAsFactors = F)
-endo_data$mock <- "endo"
-summary_data <- endo_data
-
-globals <- summary_data %>% filter(state=="global") %>%
-  select(mock, org, messag) %>% dplyr::rename(globalmessage=messag)
-summary_data <- summary_data %>% filter(state!="global")
-(globals$globalmessage <- ifelse(globals$globalmessage == "", "Success", globals$globalmessage))
-# tidy things up;  this clarifies the immage a bit
-(globals$globalmessage <- gsub("No 16s sequences detected in re-assemblies", "Success", globals$globalmessage))
-# (globals$globalmessage <- gsub("No available.*", "No available references", globals$globalmessage))
-
-p_summary_data_pre <- full_join(
-  summary_data , globals, by=c("org", "mock")) %>% 
-  select(mock, org, globalmessage, messag, state ) %>%  distinct()
-
-p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org", "mock")) %>% 
-  mutate(
-    strain=org, 
-    pmessage = case_when(
-      startsWith(messag, "Unknown error") ~ "Error",
-      is.na(messag) ~ "QC Fail",  # for bases with no references or no SRAs
-      startsWith(messag,"Error downloading") ~ "Error",
-      startsWith(messag,"No forward/single") ~ "QC Fail",
-      startsWith(messag,"Insufficient coverage")	~ "QC Fail",
-      startsWith(messag, "No reference meets threshold") ~ "No Reference",
-      startsWith(messag, "Library type Error") ~ "QC Fail",
-      startsWith(messag, "Reads were") ~ "QC Fail",
-      startsWith(messag, "Unable to process") ~ "QC Fail",
-      messag=="" ~ "16S Recovered", 
-      messag=="riboSeed unsuccessful" ~ "No 16S Recovered")) 
-
-plot_mock <- function(df){
-  df <- df  %>%  arrange(pmessage) %>%
-    group_by(strain) %>%
-    mutate(thisid = row_number()) %>%
-    transform(thisid = ifelse(is.na(messag), 0, thisid)) 
-77  df$strain <- factor(df$strain, levels=rev(levels(factor(df$strain))))
-
-  # for coloring x/y axis
-  alpha_info <-  rev(ifelse(df[!duplicated(df$strain), "globalmessage"]=="Success", "gray90", "gray60"))
-  alpha_data <- df %>%
-    group_by(strain) %>% 
-    mutate(alpha = ifelse(globalmessage=="Success", "gray10", "gray70")) %>% 
-    select(strain, alpha) %>% distinct() %>% as.data.frame()
-  
-  alpha_v <- alpha_data[order(alpha_data$strain, alpha_data$alpha), "alpha"]
-  # put in original number of orrganisms, for plotting purposes()
-  (p <- ggplot(df, aes(x=strain, y=thisid, shape=pmessage,
-                       color=pmessage, fill=pmessage)) + 
-      scale_shape_manual(guide = "legend", values = c(21, 22, 23,24, 25, 20)) + 
-      geom_point(size=2)  + coord_flip() + mytheme +
-      scale_colour_brewer(palette = "Set2") +
-      scale_fill_brewer(palette = "Set2") +
-      # unfortuantely facet wrapping throws off our beautiful alpha'd out names
-      # due to those repeated
-      facet_wrap(~mock) +
-    labs("SRAs Proccessed by focusDB",
-         y="Number of whole-genome sequencing SRAs", x="", color="Per SRA", fill="Per SRA", shape="Per SRA")  +
-      theme(axis.text=element_text(size=10),
-            axis.title.x =element_text(size=14),
-            axis.text.y = element_text(colour = alpha_v))
-  )
-  return(p)
-}
-mock_plots <- list()
-for (grp in  c("endo")){
-  thisgroup <- quo(grp)
-  (mock_plots[[grp]] <- plot_mock(df=p_summary_data%>% filter(mock == (!!thisgroup))))
-  ggsave(paste0("docs/figures/S2", grp, ".png"), mock_plots[[grp]], device = "png", dpi = 300, width = 12, height = 7)
-}
-```
-
-```{r plot_uniqueness, cache=TRUE}
-all_focus <- DNAStringSet() 
-uniqueness <- data.frame("Organism"=NA, "Unique"=NA,  "Duplicated"=NA, "DB"=NA, stringsAsFactors = F)
-uniqueness <- uniqueness[!is.na(uniqueness),]
-for (path in Sys.glob("./results/2019-10-20-endo-genus-results/*_ribo16s.fasta")){
-  organism <- gsub("_", " ", gsub(".*\\/(.*)_ribo16s.fasta", "\\1", path))
-  print(paste("processing", organism))
-  silva_subset <-silva[grepl(organism, names(silva))]
-  nsilv <- length(silva_subset)
-  nsilvdup = sum(duplicated(silva_subset), na.rm = TRUE)
-  uniqueness <- rbind(
-    uniqueness, 
-    data.frame("Organism"=organism, "Unique"=nsilv-nsilvdup,  "Duplicated"=nsilvdup, "DB"="silv"))
-  focus_subset <- readDNAStringSet(path)
-  nfoc <- length(focus_subset)
-  nfocdup = sum(duplicated(focus_subset), na.rm = TRUE)
-  uniqueness <- rbind(
-    uniqueness, 
-    data.frame("Organism"=organism, "Unique"=nfoc-nfocdup,  "Duplicated"=nfocdup, "DB"="focus"))
-  both_subsets  <- append(DNAStringSet(silva_subset), focus_subset)
-  nboth <- length(both_subsets)
-  nbothdup = sum(duplicated(both_subsets), na.rm = TRUE)
-  uniqueness <- rbind(
-    uniqueness, 
-    data.frame("Organism"=organism, "Unique"=nboth-nbothdup,  "Duplicated"=nboth, "DB"="combined"))
-  all_focus <- append(all_focus, both_subsets)
-}
-popular <- uniqueness %>% filter(DB=='silv') %>% filter(Unique >400 | Duplicated>400)
-p_uniqueness <- uniqueness %>% distinct() %>% gather(key="grp", value="val", -Organism, -DB ) %>%
-  spread(key=DB, value=val) %>% 
-  mutate(SILVA=combined-focus, focusDB=combined-silv) %>% 
-  select(-silv, -combined, -focus)  %>%
-  gather(key="DB", value="val", -Organism, -grp ) %>%
-  # reverse levels for plottting
-  mutate(Organism = factor(Organism), 
-         Organism = factor(Organism, levels = rev(levels(Organism))))
-(p_unique <- ggplot(
-  p_uniqueness %>% mutate(fac = ifelse(Organism %in% popular$Organism, "Over-represented", "Under-represented")),
-  aes(x=Organism, y=val, alpha=grp, group=grp, fill=DB)) +
-    coord_flip() +
-    facet_wrap(~fac, scales="free") +
-    scale_fill_manual(values = viridis::viridis(n=3)[c(2, 1)]) +
-    scale_alpha_manual(values = c(.2, 1)) + mytheme +
-    labs(y="Number of Sequence", x="", alpha="", fill="Database") +
-    theme(axis.text=element_text(size=13)) +
-    geom_bar(stat="identity", position="stack") #+ facet_wrap(~grp) 
-)
-
-
-```
+Now that we know what genomes to be expecting, we ran focusDB on the genera found, and combined the results into a new database.
 
 
 ## Combining the DB:
 
-
-```{bash}
-cat ./results/2019-10-08-endo-results/*.fasta > ./docs/microbiome_data/combined.fasta
-cat ~/Downloads/silva_species_assignment_v132.fa >> ./docs/microbiome_data/combined.fasta
-```
-
-
 ```{r}
-
 gg <- read.table("./docs/microbiome_data/endo_species.txt")
-
+tt <-taxa_silva[1:10, ]
 
 taxa_silva_both <- assignSpecies(taxa, "./docs/microbiome_data/combined.fasta", allowMultiple = T)
 
 together <- merge(by="seq", all=TRUE,
-                  data.frame(focus_genus=as.character(taxa_silva_both[,1]),
-                             focus_species=as.character(taxa_silva_both[,2]),
-                             seq = row.names(taxa_silva_both),
-                             stringsAsFactors=FALSE),
-                  data.frame(genus=as.character(taxa_silva[,1]),
-                             species=as.character(taxa_silva[,2]),
+                 cbind() data.frame(focus_genus=as.character(taxa_silva[,1]),
+                             focus_species=as.character(taxa_silva[,2]),
                              seq = row.names(taxa_silva),
+                             stringsAsFactors=FALSE),
+                  data.frame(genus=as.character(taxa_silva_plus[,1]),
+                             species=as.character(taxa_silva_plus[,2]),
+                             seq = row.names(taxa_silva_plus),
                              stringsAsFactors=FALSE)
 )
                   

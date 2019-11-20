@@ -1,11 +1,16 @@
 ---
-title: "f"
+title: "Assessing Taxa Assignment with the silva plus dataset"
 author: "Ben Nolan and  Nicholas Waters"
-date: "10/7/2019"
+date: "last update: `r format(Sys.Date(), format = '%d %B %Y')`" 
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
+# Overview
+To assess the effect of using the auggmented  dataset, we show  the  taxanomic assignment for 4 dataset:  DADA2's "Balanced", "HMP", and "Extremes", and data from the recent "Endobiota" study.
+
+The preprocessing of all the data is preformed in the next four sections, and then the final section describes combining all the sequneces into one sequence table matrix for simplicity of manipulation of the results, while keeping track of which sequence comes from where.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -14,7 +19,8 @@ library(dada2); packageVersion("dada2")
 library(ShortRead); packageVersion("ShortRead")
 library(Biostrings); packageVersion("Biostrings")
 SPEED = TRUE  # use  pregenerated files, dont plot if you can avoid it
-if ( SPEED ){ load("./microbiome.RData")}
+dirpath <- "./docs/microbiome_data/"
+
 ```
 Here, we download the data from the Endobiota study.
 
@@ -22,10 +28,10 @@ Here, we download the data from the Endobiota study.
 while read x; do fasterq-dump --split-files $x ; done < ~/Downloads/SRR_Acc_List-1.txt
 
 ```
-
+# Endobiota study
 We follow a very generic DADA2 workflow:
 ```{r}
-dirpath <- "./docs/microbiome_data/"
+
 filtpath <- "./docs/microbiome_data/clean/"
 mb_meta <- read.csv2("./docs/microbiome_data/metadata.tsv", stringsAsFactors = F,sep="\t",comment.char = '#')
 sra_meta <- read.csv("./docs/microbiome_data/SraRunTable-PRJEB26800.txt", stringsAsFactors = F,sep=",")
@@ -37,70 +43,241 @@ meta$site <- gsub("(.*?) .*", "\\1", meta$sample_description)
 meta$status <- gsub(".*\\((.*?)\\)$", "\\1", meta$sample_description)
 
 # Forward and reverse fastq filenames have format: SAMPLENAME_R1_001.fastq and SAMPLENAME_R2_001.fastq
-fnFs <- sort(list.files(dirpath, pattern="_1.fastq.gz", full.names = TRUE))
-fnRs <- sort(list.files(dirpath, pattern="_2.fastq.gz", full.names = TRUE))
+endo_fnFs <- sort(list.files(dirpath, pattern="_1.fastq.gz", full.names = TRUE))
+endo_fnRs <- sort(list.files(dirpath, pattern="_2.fastq.gz", full.names = TRUE))
 # Extract sample names, assuming filenames have format: SAMPLENAME_XXX.fastq
-sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
+sample.names.endo <- sapply(strsplit(basename(endo_fnRs), "_"), `[`, 1)
+```
 
+```{r eval=!SPEED}
+ggsave(plotQualityProfile(endo_fnFs), filename = file.path(dirpath, "end_F_q.png"),dpi = 300, width = 16, height = 10, units = "in")
+ggsave(plotQualityProfile(endo_fnRs), filename = file.path(dirpath, "end_R_q.png"),dpi = 300, width = 16, height = 10, units = "in")
 
-if (!SPEED) ggsave(plotQualityProfile(fnFs), filename = file.path(dirpath, "F_q.png"),dpi = 300, width = 16, height = 10, units = "in")
-if (!SPEED)  ggsave(plotQualityProfile(fnRs), filename = file.path(dirpath, "R_q.png"),dpi = 300, width = 16, height = 10, units = "in")
+# We noticed that one of the datasets should be removed, as the seqeuncing quality appears severly impaired
+baddiesF <-c(sample.names.endo[grep("009",sample.names.endo)])
+baddiesR <-c(sample.names.endo[grep("009",sample.names.endo)])
 
-baddiesF <-c(sample.names[grep("009",sample.names)])
-baddiesR <-c(sample.names[grep("009",sample.names)])
-
-sample.names <- sample.names[!sample.names %in% unique(c(baddiesF, baddiesR))]
+sample.names.endo <- sample.names.endo[!sample.names.endo %in% unique(c(baddiesF, baddiesR))]
 for (baddie in c(baddiesF, baddiesR)){
-  fnFs <- fnFs[!grepl(baddie, fnFs)]
-  fnRs <- fnRs[!grepl(baddie, fnRs)]
+  endo_fnFs <- endo_fnFs[!grepl(baddie, endo_fnFs)]
+  endo_fnRs <- endo_fnRs[!grepl(baddie, endo_fnRs)]
 }
 # Place filtered files in filtered/ subdirectory
-filtFs <- file.path(dirpath, "filtered", paste0(sample.names, "_F_filt.fastq.gz"))
-filtRs <- file.path(dirpath, "filtered", paste0(sample.names, "_R_filt.fastq.gz"))
-names(filtFs) <- sample.names
-names(filtRs) <- sample.names
-
-if (!SPEED) {
-  out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs,trimLeft=30, trimRight=40,
-                       maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
-                       compress=TRUE, multithread=TRUE)
-} else {
-  out <- list.files("./docs/microbiome_data/filtered")
-}
-head(out)
+endo_filtFs <- file.path(dirpath, "filtered", paste0(sample.names.endo, "_F_filt.fastq.gz"))
+endo_filtRs <- file.path(dirpath, "filtered", paste0(sample.names.endo, "_R_filt.fastq.gz"))
+names(endo_filtFs) <- sample.names.endo
+names(endo_filtRs) <- sample.names.endo
 
 
-errF <- learnErrors(filtFs, multithread=TRUE)
-errR <- learnErrors(filtRs, multithread=TRUE)
-if (!SPEED)  plotErrors(errF, nominalQ=TRUE)
-derepF <- derepFastq(filtFs, verbose=TRUE)
-derepR <- derepFastq(filtRs, verbose=TRUE)
+endo_out <- filterAndTrim(
+  endo_fnFs, endo_filtFs, 
+  endo_fnRs, endo_filtRs,
+  trimLeft=30, trimRight=40,
+  maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
+  compress=TRUE, multithread=TRUE)
 
-dadaFs <- dada(derepF, err=errF, multithread=TRUE)
-dadaRs <- dada(derepR, err=errR, multithread=TRUE)
 
-merger <- mergePairs(dadaFs, derepF, dadaRs, derepR, verbose=TRUE)
-seqtab <- makeSequenceTable(merger)
-summary((nchar(getSequences(seqtab))))
-hist(nchar(colnames(seqtab)))
-seqtab2 <- seqtab[,nchar(colnames(seqtab)) %in% 360:450]
-hist(nchar(colnames(seqtab2)))
-dim(seqtab2)
+endo_errF <- learnErrors(endo_filtFs, multithread=TRUE)
+endo_errR <- learnErrors(endo_filtRs, multithread=TRUE)
+plotErrors(endo_errF, nominalQ=TRUE)
+endo_derepF <- derepFastq(endo_filtFs, verbose=TRUE)
+endo_derepR <- derepFastq(endo_filtRs, verbose=TRUE)
 
-seqtab.nochim <- removeBimeraDenovo(seqtab2, method="consensus", multithread=TRUE, verbose=TRUE)
-sum(seqtab.nochim)/sum(seqtab2)
-dim(seqtab.nochim)
+endo_dadaFs <- dada(endo_derepF, err=endo_errF, multithread=TRUE)
+endo_dadaRs <- dada(endo_derepR, err=endo_errR, multithread=TRUE)
+
+endo_merger <- mergePairs(endo_dadaFs, endo_derepF, endo_dadaRs, endo_derepR, verbose=TRUE)
+
+endo_seqtab <- makeSequenceTable(endo_merger)
+summary((nchar(getSequences(endo_seqtab))))
+hist(nchar(colnames(endo_seqtab)))
+
+# here we trim some of those shorter seqeunces
+endo_seqtab2 <- endo_seqtab[,nchar(colnames(endo_seqtab)) %in% 360:450]
+hist(nchar(colnames(endo_seqtab2)))
+dim(endo_seqtab2)
+# [1]    83 23152
+endo_seqtab.nochim <- removeBimeraDenovo(endo_seqtab2, method="consensus", multithread=TRUE, verbose=TRUE)
+sum(endo_seqtab.nochim)/sum(endo_seqtab2)
+# [1] 0.9577382
+dim(endo_seqtab.nochim)
+#  [1]   83 3876
 
 getN <- function(x) sum(getUniques(x))
-track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(merger, getN), rowSums(seqtab.nochim))
+endo_track <- cbind(endo_out, sapply(endo_dadaFs, getN), sapply(endo_dadaRs, getN), sapply(endo_merger, getN), rowSums(endo_seqtab.nochim))
 # If processing a single sample, remove the sapply calls: e.g. replace sapply(dadaFs, getN) with getN(dadaFs)
-colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
-rownames(track) <- sample.names
-head(track)
+colnames(endo_track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+rownames(endo_track) <- sample.names.endo
+head(endo_track)
+
+#save.image("./endo.RData")
+save(endo_seqtab.nochim, file = "./endo_seqtab.RData")
 ```
+
+
+
+# Extremes dataset ##################################
+Here, we larely use the parameters defined in the original paper, but we updated to use the commands recommended in the tutorial for version  1.12.
+```{r exec=!SPEED}
+extremes_path <-  "."
+ex_fnF <- file.path(extremes_path, "SRR2990088_1.fastq")
+ex_fnR <- file.path(extremes_path, "SRR2990088_2.fastq")
+
+ggsave(plotQualityProfile(ex_fnF), filename = file.path(dirpath, "ex_F_q.png"),dpi = 300, width = 16, height = 10, units = "in")
+ggsave(plotQualityProfile(ex_fnR), filename = file.path(dirpath, "ex_R_q.png"),dpi = 300, width = 16, height = 10, units = "in")
+#  Forward reads are reasonably high quality. Trimming the first 20 nts, and last 10 (truncate at 240).
+# Reverse read quality drops off substantially. Trimming the first 20 nts, and last 50 (truncate at 200).
+
+ex_filtF <- "ExtremeF_EE2.fastq.gz"
+#ex_filtFO <- "ExtremeFO_EE2.fastq.gz"
+ex_filtR <- "ExtremeR_EE2.fastq.gz"
+ex_out <- filterAndTrim(
+  fwd = ex_fnF, filt = ex_filtF, 
+  rev = ex_fnR, filt.rev = ex_filtR, 
+  maxN=0, maxEE=2, truncQ=2, 
+  truncLen=c(240,200), trimLeft=c(20,20), compress=TRUE, verbose=TRUE)
+# Kept about 60 percent of the paired reads and 70 percent of the forward-only reads.
+
+## Run DADA2 Pipeline
+ex_errF <- learnErrors(ex_filtF, multithread=TRUE)
+ex_errR <- learnErrors(ex_filtR, multithread=TRUE)
+ex_dadaF <- dada(ex_filtF, err=ex_errF, multithread=TRUE)
+ex_dadaR <- dada(ex_filtR, err=ex_errR, multithread=TRUE)
+ex_mergers <- mergePairs(ex_dadaF, ex_filtF, ex_dadaR, ex_filtR, verbose=TRUE)
+
+ex_seqtab <- makeSequenceTable(ex_mergers)
+
+hist(nchar(colnames(ex_seqtab)))
+ex_seqtab.nochim <- removeBimeraDenovo(ex_seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+sum(ex_seqtab.nochim)/sum(ex_seqtab)
+dim(ex_seqtab.nochim)
+save(ex_seqtab.nochim, file = "./ex_seqtab.RData")
+
+```
+
+
+# Balanced dataset ##################################
+```{r eval=!SPEED}
+balanced_dir <- "~/Downloads/" # CHANGE ME to location of file
+balanced_fnF <- file.path(balanced_dir, "ERR777695_1.fastq.gz")
+balanced_fnR <- file.path(balanced_dir, "ERR777695_2.fastq.gz")
+
+ggsave(plotQualityProfile(balanced_fnF), filename = file.path(dirpath, "balanced_F_q.png"),dpi = 300, width = 16, height = 10, units = "in")
+ggsave(plotQualityProfile(balanced_fnR), filename = file.path(dirpath, "balanced_R_q.png"),dpi = 300, width = 16, height = 10, units = "in")
+
+balanced_filtF <- "balanced_F.fastq.gz"
+#ex_filtFO <- "ExtremeFO_EE2.fastq.gz"
+balanced_filtR <- "balanced_R.fastq.gz"
+
+balanced_out <- filterAndTrim(
+  fwd = balanced_fnF, filt = balanced_filtF, 
+  rev = balanced_fnR, filt.rev = balanced_filtR, 
+  maxN=0, maxEE=2, truncQ=2, 
+  trimLeft=c(10,10), trimRight = c(40,40), 
+  compress=TRUE, verbose=TRUE)
+
+balanced_errF <- learnErrors(balanced_filtF, multithread=TRUE)
+balanced_errR <- learnErrors(balanced_filtR, multithread=TRUE)
+balanced_dadaF <- dada(balanced_filtF, err=balanced_errF, multithread=TRUE)
+balanced_dadaR <- dada(balanced_filtR, err=balanced_errR, multithread=TRUE)
+balanced_mergers <- mergePairs(balanced_dadaF, balanced_filtF, balanced_dadaR, balanced_filtR, verbose=TRUE)
+
+balanced_seqtab <- makeSequenceTable(balanced_mergers)
+
+hist(nchar(colnames(balanced_seqtab)))
+balanced_seqtab.nochim <- removeBimeraDenovo(balanced_seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+sum(balanced_seqtab.nochim)/sum(balanced_seqtab)
+dim(balanced_seqtab.nochim )
+save(balanced_seqtab.nochim, file = "./balanced_seqtab.RData")
+
+```
+
+# HMP
+```{r eval=!SPEED}
+hmp_dir <- "~/Downloads/130403" # CHANGE ME to location of file
+hmp_fnF <- file.path(hmp_dir, "Mock1_S1_L001_R1_001.fastq.bz2")
+hmp_fnR <- file.path(hmp_dir, "Mock1_S1_L001_R2_001.fastq.bz2")
+
+ggsave(plotQualityProfile(hmp_fnF), filename = file.path(dirpath, "hmp_F_q.png"),dpi = 300, width = 16, height = 10, units = "in")
+ggsave(plotQualityProfile(hmp_fnR), filename = file.path(dirpath, "hmp_R_q.png"),dpi = 300, width = 16, height = 10, units = "in")
+# the reverse reeds dont look great
+hmp_filtF <- "hmp_F.fastq.gz"
+#ex_filtFO <- "ExtremeFO_EE2.fastq.gz"
+hmp_filtR <- "hmp_R.fastq.gz"
+
+hmp_out <- filterAndTrim(
+  fwd = hmp_fnF, filt = hmp_filtF, 
+  rev = hmp_fnR, filt.rev = hmp_filtR, 
+  maxN=0, maxEE=2, truncQ=2, 
+  truncLen=c(240,200), trimLeft=c(20,20),
+  compress=TRUE, verbose=TRUE)
+
+hmp_errF <- learnErrors(hmp_filtF, multithread=TRUE)
+hmp_errR <- learnErrors(hmp_filtR, multithread=TRUE)
+hmp_dadaF <- dada(hmp_filtF, err=hmp_errF, multithread=TRUE)
+hmp_dadaR <- dada(hmp_filtR, err=hmp_errR, multithread=TRUE)
+hmp_mergers <- mergePairs(hmp_dadaF, hmp_filtF, hmp_dadaR, hmp_filtR, verbose=TRUE)
+
+hmp_seqtab <- makeSequenceTable(hmp_mergers)
+
+hist(nchar(colnames(hmp_seqtab)))
+hmp_seqtab.nochim <- removeBimeraDenovo(hmp_seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+sum(hmp_seqtab.nochim)/sum(hmp_seqtab)
+dim(hmp_seqtab.nochim )
+save(hmp_seqtab.nochim, file = "./hmp_seqtab.RData")
+
+```
+
+
+# Combine sequence tables
+
+```{r}
+if (SPEED){
+  for (p  in c("hmp_seqtab.RData", "ex_seqtab.RData", "balanced_seqtab.RData", "endo_seqtab.RData")){
+    load(p)
+  }
+}
+
+# Now, we format them so we can bind them all together
+#View(hmp_seqtab.nochim)
+#View(endo_seqtab.nochim)
+
+rownames(hmp_seqtab.nochim) <- "HMP"
+rownames(ex_seqtab.nochim) <- "Extremes"
+rownames(balanced_seqtab.nochim) <- "Balanced"
+
+thesenames <- c(
+  rownames(endo_seqtab.nochim), 
+  rownames(hmp_seqtab.nochim),
+  rownames(ex_seqtab.nochim),
+  rownames(balanced_seqtab.nochim)
+)
+combined_seqtab <- dplyr::bind_rows(
+  as.data.frame(endo_seqtab.nochim, row.names = rownames(endo_seqtab.nochim)),
+  as.data.frame(hmp_seqtab.nochim,  row.names = rownames(hmp_seqtab.nochim)),
+  as.data.frame(ex_seqtab.nochim,  row.names = rownames(ex_seqtab.nochim)),
+  as.data.frame(balanced_seqtab.nochim,  row.names = rownames(balanced_seqtab.nochim)),
+    
+)
+rownames(combined_seqtab) <- thesenames
+combined_seqtab <- as.matrix(combined_seqtab)
+#combined_seqtab <-  combined_seqtab[, 1:40]
+```
+
 Now, we need to reformat the SILVA database for use with dada2. We could use the prebuild one, but as we have to build 2 (the normal SILVA 132 and our augmented one), we outline the steps here.
 
-```{bash}
+we download the SILVA tax file:
+https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_tax_silva.fasta.gz
+
+And the alignment file.
+https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva_full_align_trunc.fasta.gz
+ 
+We recreate the databases described here: https://zenodo.org/record/1172783, but to do that, we need to add our seqeunces to the alignment, which we can do with MAFFT. 
+
+
+
+```{bash eval=FALSE}
+
 mkdir ~/Downloads/dada2_dbs/
 
 zcat < ~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz | sed 's/>/> /g' | cut -f 1,3 -d " " | sed 's/ //g'  | awk '/^>/ {$0=$0 ";"}1' |gzip -c > ~/Downloads/dada2_dbs/silva.132.formated.fasta.gz
@@ -110,6 +287,8 @@ cp  ~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz  ~/Downloads/SILVA_132_SSURe
 cat ./results/fast_focusDB_ribo16s.fasta |gzip -c  >>  ~/Downloads/SILVA_132_SSURef_tax_silva_plus.fasta.gz
 zcat < ~/Downloads/SILVA_132_SSURef_tax_silva_plus.fasta.gz | sed 's/>/> /g' | cut -f 1,3 -d " " | sed 's/ //g'  | awk '/^>/ {$0=$0 ";"}1'  | gzip -c > ~/Downloads/dada2_dbs/silva.132.plus.formated.fasta.gz
 zcat < ~/Downloads/dada2_dbs/silva.132.plus.formated.fasta.gz | awk 'BEGIN{RS=">";FS="\n"}NR>1{printf ">%s\n",$1;for (i=2;i<=NF;i++) {gsub(/U/,"T",$i); printf "%s\n",$i}}' |gzip -c > ~/Downloads/dada2_dbs/silva.132.plus.formated.dna.fasta.gz
+
+
 ```
 
 
@@ -123,20 +302,49 @@ dada2:::makeSpeciesFasta_Silva("~/Downloads/SILVA_132_SSURef_tax_silva_plus.fast
 
 
 That aside,we can assign taxanomic levels to each
-```{r, cache=TRUE}
+```{r, cache=TRUE, eval=FALSE}
+taxa_silva  <- assignTaxonomy(combined_seqtab, "~/Downloads/dada2_dbs/silva.132.dna.formated.fasta.gz", multithread=TRUE, verbose = T)
+taxa_silva_species <- assignSpecies(taxa_silva,verbose = T, "~/Downloads/dada2_dbs/silva_species_assignment_v132.fa.gz", allowMultiple = T)
+# 710 out of 4098 were assigned to the species level.
 
-taxa_silva  <- assignTaxonomy(seqtab.nochim, "~/Downloads/dada2_dbs/silva.132.dna.formated.fasta.gz", multithread=TRUE)
-taxa_silva_species <- assignSpecies(taxa_silva, "~/Downloads/silva_species_assignment_v132.fa.gz", allowMultiple = T)
+taxa_silva_plus  <- assignTaxonomy(combined_seqtab, "~/Downloads/dada2_dbs/silva.132.plus.formated.dna.fasta.gz", multithread=TRUE, verbose = T)
+taxa_silva_plus_species <- assignSpecies(taxa_silva_plus, "~/Downloads/dada2_dbs/silva_plus_species_assignment_v132.fa.gz", allowMultiple = T, verbose = T)
+# 713 out of 4098 were assigned to the species level.
 
-taxa_silva_plus  <- assignTaxonomy(seqtab.nochim, "~/Downloads/dada2_dbs/silva.132.plus.formated.dna.fasta.gz", multithread=TRUE)
-taxa_silva_plus_species <- assignSpecies(taxa_silva_plus, "~/Downloads/dada2_dbs/silva_plus_species_assignment_v132.fa.gz", allowMultiple = T)
+save.image("taxa_assigned.RData")
+```
+
+Now we have taxa matrices for the data with both the SILVA db and our SILVA+ db created with focusDB.  How did it change the assignment?
+
+
+```{r}
+together <- merge(
+  by="seq", all=TRUE, 
+  data.frame(silva=paste(
+    as.character(taxa_silva_species[,1]),
+    as.character(taxa_silva_species[,2])),
+    seq = row.names(taxa_silva_species),
+    stringsAsFactors=FALSE),
+  data.frame(focuDB=paste(
+    as.character(taxa_silva_plus_species[,1]),
+    species=as.character(taxa_silva_plus_species[,2])),
+    seq = row.names(taxa_silva_plus_species),
+    stringsAsFactors=FALSE)
+)
+together[together$silva!=together$focuDB, ] %>% View()
+
 
 ```
 
-The first time we ran the analysis (before having the focusDB results), here is what we did to ggenerate the species files, etc:
-```{r, eval=FALSE}
-taxa.print <- taxa_silva # Removing sequence rownames for display only
 
+
+
+
+
+
+The first time we ran the analysis (before having the focusDB results), here is what we did to generate the species files, etc:
+```{r, eval=FALSE}
+taxa.print <- endo_taxa_silva # Removing sequence rownames for display only
 taxa.print[is.na(taxa.print[,1])] <- ""
 taxa.print[is.na(taxa.print[,2])] <- ""
 thesenames <- gsub("^ $", "", paste(taxa.print[,1], taxa.print[,2] ))
@@ -164,47 +372,27 @@ Now that we know what genomes to be expecting, we ran focusDB on the genera foun
 gg <- read.table("./docs/microbiome_data/endo_species.txt")
 tt <-taxa_silva[1:10, ]
 
-taxa_silva_both <- assignSpecies(taxa, "./docs/microbiome_data/combined.fasta", allowMultiple = T)
 
-together <- merge(by="seq", all=TRUE,
-                 cbind() data.frame(focus_genus=as.character(taxa_silva[,1]),
-                             focus_species=as.character(taxa_silva[,2]),
-                             seq = row.names(taxa_silva),
-                             stringsAsFactors=FALSE),
-                  data.frame(genus=as.character(taxa_silva_plus[,1]),
-                             species=as.character(taxa_silva_plus[,2]),
-                             seq = row.names(taxa_silva_plus),
-                             stringsAsFactors=FALSE)
+together <- merge(
+  by="seq", all=TRUE, 
+  data.frame(silva=paste(
+    as.character(endo_taxa_silva_species[,1]),
+    as.character(endo_taxa_silva_species[,2])),
+    seq = row.names(endo_taxa_silva_species),
+    stringsAsFactors=FALSE),
+  data.frame(focuDB=paste(
+    as.character(endo_taxa_silva_plus_species[,1]),
+    species=as.character(endo_taxa_silva_plus_species[,2])),
+    seq = row.names(endo_taxa_silva_plus_species),
+    stringsAsFactors=FALSE)
 )
-                  
-taxa_silva_both_noname <- taxa_silva_both
-rownames(taxa_silva_both_noname) <- NULL
-taxa_silva_noname <- taxa_silva
-rownames(taxa_silva_noname) <- NULL
-
-taxa_silva_noname[is.na(taxa_silva_noname)] <- ""
-taxa_silva_both_noname[is.na(taxa_silva_both_noname)] <- ""
-
-table(taxa_silva_both_noname[,1] == taxa_silva_noname[, 1], useNA="always")
-table(taxa_silva_both_noname[,2] == taxa_silva_noname[, 2], useNA="always")
-
+together[together$silva!=together$focuDB, ]
 ```
-
-
-
 
 # save for rerunning:
 
 ```{r}
-save.image("./microbiome.RData")
-```
-
-Here, we can double check the read lengths of those we reejected for being to short
-x <- p_summary_data %>% filter(grepl("short", messag)) %>% select(state)
-cat(paste(unlist(x)))
-```{bash eval=FALSE}
-for i in SRR3924065 SRR3924066 SRR3924070 SRR3924069 SRR005679 SRR3924088 SRR3924090 SRR3926452 SRR4240105 SRR4240096 SRR4240104 SRR4240099 SRR4240101 SRR4240297 SRR4240295 SRR4240296 SRR2482990 SRR3926142 SRR5323657 SRR3926150 SRR3926138 SRR5323654 SRR3926531 SRR3926532 SRR005656 SRR3923709 DRR030207 DRR030209 DRR030208 DRR030206 DRR030211 DRR030210 SRR005676 SRR3926186 SRR3926185 SRR4239826 SRR3926134 SRR3926509 SRR3926450 SRR3926506 SRR4239827
-SRR3926132 SRR3926152 SRR3926449 SRR3926133 SRR3926447 SRR3926153 SRR3926448 SRR3926508 SRR4239825 SRR4239974 SRR4239964 SRR4239962 SRR4239973 SRR4239968 SRR4239970 SRR4239969 SRR4239965 SRR4239967 SRR4239961 SRR4239963 SRR4239972 SRR4239971 SRR4239966 SRR3924296 SRR3924298 SRR3926755 SRR3926319 SRR3926324 SRR3926322 SRR3926323 SRR072399 SRR5320242 SRR3923869 SRR3923865 SRR3923868 SRR3923866 SRR5275895 SRR2102984 SRR060972 SRR3923850 SRR3923849 SRR3926776 SRR8448542 SRR3926775 SRR3923757 SRR3923756 SRR3925598 SRR3925597 SRR4240119 SRR4240118 SRR4240120 SRR3923884 SRR3923885 SRR4239979 SRR4239983 SRR4239982 SRR4239981 SRR4239980 SRR4239978 SRR4239985 SRR4239987 SRR4239986 SRR4239984 SRR3927509 SRR029223 SRR029225 SRR3927350; do awk '{if(NR%4==2) {count++; bases += length} } END{print bases/count}' ../.focusDB/$i/${i}_1.fastq >> shorties ; done
+#save.image("./microbiome.RData")
 ```
 
 
@@ -303,16 +491,16 @@ Rprimer <- "ACGGYTACCTTGTTACGACTT"
 # genusPalette <- c(Bacillus="#e41a1c", Enterococcus="#377eb8", Escherichia="#4daf4a", Lactobacillus="#984ea3",
 #                   Listeria="#ff7f00", Pseudomonas="#ffff33", Salmonella="#a65628", Staphylococcus="#f781bf")
 pacF <- sort(list.files(dpath, pattern=".fastq.gz", full.names = TRUE))
-sample.names <- sapply(strsplit(basename(pacF), "_"), `[`, 3)
+pac.sample.names <- sapply(strsplit(basename(pacF), "_"), `[`, 3)
 
 nop <- sort(file.path(dpath, "noprimers", basename(pacF)))
 prim <- removePrimers(pacF, nop, primer.fwd=Fprimer, primer.rev=dada2:::rc(Rprimer), orient=TRUE, verbose=TRUE)
-hist(nchar(dada2::getSequences(prim)), 100)
+#hist(nchar(dada2::getSequences(prim)), 100)
 
 dir.create(file.path(dpath, "noprimers", "filtered"))
 filt <- sort(file.path(dpath, "noprimers", "filtered", basename(pacF)))
 for (i in 1:length(filt)){
-track <- fastqFilter(fn = nop[i], fout = filt[i], minQ=3, minLen=1000, maxLen=1600, maxN=0, rm.phix=FALSE, maxEE=2, verbose=TRUE)
+track <- fastqFilter(fn = nop[i], fout = filt[i], minQ=3, minLen=1400, maxLen=1600, maxN=0, rm.phix=FALSE, maxEE=2, verbose=TRUE)
 }
 drp <- derepFastq(filt, verbose=TRUE)
 

@@ -24,14 +24,15 @@ Anaerofilum
 Anaerofustis
 Anaeroglobus
 Anaeroplasma
-Anaerosporobacter
 Anaerostipes
 Anaerotruncus
 Anaerovibrio
+Anaerovorax
 Angelakisella
 Anoxybacillus
 Aphagea
 Arcanobacterium
+Asaccharospora
 Asteroleplasma
 Atopobiaceae
 Atopobium
@@ -68,7 +69,6 @@ Catenibacterium
 Catenisphaera
 Catonella
 Cellulosilyticum
-Cerasicoccus
 Christensenella
 Christensenellaceae
 Chryseobacterium
@@ -124,7 +124,6 @@ Fastidiosipila
 Finegoldia
 Flavonifractor
 Fournierella
-Frigoribacterium
 Fusicatenibacter
 Fusobacterium
 Gardnerella
@@ -163,7 +162,6 @@ Lawsonella
 Legionella
 Lelliottia
 Leptotrichia
-Leptotrichiaceae
 Leucobacter
 Leuconostoc
 Libanicoccus
@@ -189,7 +187,6 @@ Mitsuokella
 Mobiluncus
 Moraxella
 Moryella
-Mucinivorans
 Murdochiella
 Muribaculaceae
 Mycoplasma
@@ -197,6 +194,7 @@ Negativibacillus
 Negativicoccus
 Neisseria
 Neisseriaceae
+Oceanivirga
 Ochrobactrum
 Odoribacter
 Olsenella
@@ -234,6 +232,7 @@ Providencia
 Pseudoflavonifractor
 Pseudoglutamicibacter
 Pseudomonas
+Pseudoscardovia
 Psychrobacter
 Puniceicoccaceae
 Pygmaiobacter
@@ -263,8 +262,8 @@ Skermanella
 Slackia
 Sneathia
 Solobacterium
+Sphingomonadaceae
 Sphingomonas
-Stakelama
 Staphylococcus
 Stenotrophomonas
 Streptococcus

@@ -114,9 +114,34 @@ head(endo_track)
 save(endo_seqtab.nochim, file = "./endo_seqtab.RData")
 ```
 
+### Preliminary taxa assignment for EndoBiota study
+The first time we ran the analysis (before having the focusDB results), here is what we did to generate the species files that were used when running focusDB:
+
+```{r, eval=FALSE}
+endo_taxa <- assignTaxonomy(endo_seqtab.nochim, "~/Downloads/silva_nr_v132_train_set.fa.gz", multithread=TRUE)
+endo_taxa_species <- addSpecies(endo_taxa, "~/Downloads/silva_species_assignment_v132.fa.gz")
+taxa.print <- endo_taxa_species # Removing sequence rownames for display only
+taxa.print[is.na(taxa.print[,6])] <- ""
+taxa.print[is.na(taxa.print[,7])] <- ""
+thesenames <- gsub("^ $", "", paste(taxa.print[,6], taxa.print[,7] ))
+table(thesenames)
+
+write.table(sort(unique(thesenames)), file = "./docs/microbiome_data/endo_species.txt", row.names = F,  col.names = F, quote=F)
+# here, if the genus level annotation is something like "group" or "clade" or otherwise unhelpful, we tidy it up, or use the "family" level annotation if needed.  These get fixed later when making the combined list for the actual run.
+fg <-  data.frame(endo_taxa_species[,c(5,6)], stringsAsFactors = F)
+rownames(fg) <- NULL
+fg$cleangenus <- gsub("[-_](.*)", "", fg$Genus)
+fg$cleanfamily <- gsub("[-_](.*)", "", fg$Family)
+fg$cleangenus <- ifelse(grepl("\\d", fg$cleangenus),fg$cleanfamily, fg$cleangenus)
+fg$cleangenus <- ifelse(is.na(fg$cleangenus),fg$cleanfamily, fg$cleangenus)
+# fix escherichia/shigella
+# fg$cleangenus[gsub("(.*)\\/(.*)", "\\1", fg$cleangenus) !=  fg$cleangenus]
+fg$cleangenus <-  gsub("(.*)\\/(.*)", "\\1", fg$cleangenus)
+write.table(sort(unique(fg$cleangenus)), file = "./docs/microbiome_data/endo_genus.txt", row.names = F,  col.names = F, quote=F)
+```
 
 
-# Extremes dataset ##################################
+# Extremes dataset
 Here, we larely use the parameters defined in the original paper, but we updated to use the commands recommended in the tutorial for version  1.12.
 ```{r exec=!SPEED}
 extremes_path <-  "."
@@ -318,6 +343,7 @@ Now we have taxa matrices for the data with both the SILVA db and our SILVA+ db 
 
 
 ```{r}
+if (SPEED){load("taxa_assigned.RData")}
 together <- merge(
   by="seq", all=TRUE, 
   data.frame(silva=paste(
@@ -332,8 +358,7 @@ together <- merge(
     stringsAsFactors=FALSE)
 )
 together[together$silva!=together$focuDB, ] %>% View()
-
-
+write.table(together[together$silva!=together$focuDB, ], file = "STABLE_different_assignment.tab", row.names = F, sep="\t")
 ```
 
 
@@ -342,23 +367,7 @@ together[together$silva!=together$focuDB, ] %>% View()
 
 
 
-The first time we ran the analysis (before having the focusDB results), here is what we did to generate the species files, etc:
-```{r, eval=FALSE}
-taxa.print <- endo_taxa_silva # Removing sequence rownames for display only
-taxa.print[is.na(taxa.print[,1])] <- ""
-taxa.print[is.na(taxa.print[,2])] <- ""
-thesenames <- gsub("^ $", "", paste(taxa.print[,1], taxa.print[,2] ))
-table(thesenames)
 
-write.table(sort(unique(thesenames)), file = "./docs/microbiome_data/endo_species.txt", row.names = F,  col.names = F, quote=F)
-fg <-  data.frame(taxa[,c(5,6)], stringsAsFactors = F)
-rownames(fg) <- NULL
-fg$cleangenus <- gsub("[-_](.*)", "", fg$Genus)
-fg$cleanfamily <- gsub("[-_](.*)", "", fg$Family)
-fg$cleangenus <- ifelse(grepl("\\d", fg$cleangenus),fg$cleanfamily, fg$cleangenus)
-fg$cleangenus <- ifelse(is.na(fg$cleangenus),fg$cleanfamily, fg$cleangenus)
-write.table(sort(unique(fg$cleangenus)), file = "./docs/microbiome_data/endo_genus.txt", row.names = F,  col.names = F, quote=F)
-```
 
 
 ## Running FocusDB
@@ -507,42 +516,47 @@ drp <- derepFastq(filt, verbose=TRUE)
 err <- learnErrors(drp, BAND_SIZE=32, multithread=TRUE, errorEstimationFunction=dada2:::PacBioErrfun) # 10s of seconds
 dd <- dada(drp, err=err, BAND_SIZE=32, multithread=TRUE) # seconds
 
-seqtab <- makeSequenceTable(dd)
-summary((nchar(getSequences(seqtab))))
-hist(nchar(colnames(seqtab)))
+pacbio_seqtab <- makeSequenceTable(dd)
+summary((nchar(getSequences(pacbio_seqtab))))
+hist(nchar(colnames(pacbio_seqtab)))
 
-seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
-sum(seqtab.nochim)/sum(seqtab)
-dim(seqtab.nochim)
+pacbio_seqtab.nochim <- removeBimeraDenovo(pacbio_seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+sum(pacbio_seqtab.nochim)/sum(pacbio_seqtab)
+dim(pacbio_seqtab.nochim)
+
+```
+
+And we can assign taxonomy
+```{r, cache=TRUE, eval=FALSE}
+pacbio_taxa_silva  <- assignTaxonomy(pacbio_seqtab.nochim, "~/Downloads/dada2_dbs/silva.132.dna.formated.fasta.gz", multithread=TRUE, verbose = T)
+pacbio_taxa_silva_species <- assignSpecies(pacbio_taxa_silva,verbose = T, "~/Downloads/dada2_dbs/silva_species_assignment_v132.fa.gz", allowMultiple = T)
+
+# 25 out of 144 were assigned to the species level.
+
+pacbio_taxa_silva_plus  <- assignTaxonomy(pacbio_seqtab.nochim, "~/Downloads/dada2_dbs/silva.132.plus.formated.dna.fasta.gz", multithread=TRUE, verbose = T)
+pacbio_taxa_silva_plus_species <- assignSpecies(pacbio_taxa_silva_plus, "~/Downloads/dada2_dbs/silva_plus_species_assignment_v132.fa.gz", allowMultiple = T, verbose = T)
+# 26 out of 144 were assigned to the species level.
+
+save(pacbio_taxa_silva, pacbio_taxa_silva_species,
+     pacbio_taxa_silva_plus, pacbio_taxa_silva_plus_species, 
+     file = "pacbio_taxa_assigned.RData")
 
 
-taxa <- assignTaxonomy(seqtab.nochim, "~/Downloads/silva_nr_v132_train_set.fa.gz", multithread=TRUE,)
-taxa_silva <- assignSpecies(taxa, "~/Downloads/silva_species_assignment_v132.fa.gz", allowMultiple = T)
-taxa_silva_both <- assignSpecies(taxa, "./docs/microbiome_data/combined.fasta", allowMultiple = T)
 
-
-together <- merge(by="seq", all=TRUE,
-                  data.frame(focus_genus=as.character(taxa_silva_both[,1]),
-                             focus_species=as.character(taxa_silva_both[,2]),
-                             seq = row.names(taxa_silva_both),
-                             stringsAsFactors=FALSE),
-                  data.frame(genus=as.character(taxa_silva[,1]),
-                             species=as.character(taxa_silva[,2]),
-                             seq = row.names(taxa_silva),
-                             stringsAsFactors=FALSE)
+pacbio_together <- merge(
+  by="seq", all=TRUE, 
+  data.frame(silva=paste(
+    as.character(pacbio_taxa_silva_species[,1]),
+    as.character(pacbio_taxa_silva_species[,2])),
+    seq = row.names(pacbio_taxa_silva_species),
+    stringsAsFactors=FALSE),
+  data.frame(focuDB=paste(
+    as.character(pacbio_taxa_silva_plus_species[,1]),
+    species=as.character(pacbio_taxa_silva_plus_species[,2])),
+    seq = row.names(pacbio_taxa_silva_plus_species),
+    stringsAsFactors=FALSE)
 )
-                  
-taxa_silva_both_noname <- taxa_silva_both
-rownames(taxa_silva_both_noname) <- NULL
-taxa_silva_noname <- taxa_silva
-rownames(taxa_silva_noname) <- NULL
-
-taxa_silva_noname[is.na(taxa_silva_noname)] <- ""
-taxa_silva_both_noname[is.na(taxa_silva_both_noname)] <- ""
-
-table(taxa_silva_both_noname[,1] == taxa_silva_noname[, 1], useNA="always")
-table(taxa_silva_both_noname[,2] == taxa_silva_noname[, 2], useNA="always")
-
+pacbio_together[pacbio_together$silva!=pacbio_together$focuDB, ] %>% View()
 
 
 ```

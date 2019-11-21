@@ -3,8 +3,8 @@ title: "Supplementary Materials"
 author: "Ben Nolan and  Nicholas Waters"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  word_document: default
   html_document: default
+  word_document: default
 editor_options:
   chunk_output_type: console
 ---
@@ -12,7 +12,6 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache.lazy = FALSE)
 library(tidyverse); packageVersion("tidyverse")
-#library(diagram); packageVersion("diagram")
 library(Biostrings); packageVersion("Biostrings")
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #    install.packages("BiocManager")
@@ -45,12 +44,11 @@ do
     then
         conda activate 16db
         focusDB  -o ${genus}_genus --organism_name "${genus}" --njobs 6 --threads 2 --cores 6 --memory 20 --n_references 200 --n_SRAs 50 --maxdist .1 --focusDB_data /mnt/shared/scratch/nw42839/.focusDB/ -v 1 --timeout 1500 --fastqtool fastq-dump --process_partial --use_available --sge --sge_env 16db
-        echo "moving results off synology"
-        mv ${genus}_genus /mnt/shared/scratch/nw42839/2019-11-04-focusdb/
     fi
     counter=$((counter + 1))
 done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
 ```
+
 Afterwards, the results were aggregated as follows:
 
 ```{bash eval=FALSE}
@@ -58,9 +56,11 @@ mkdir 2019-11-11-focusdb
 while read genus; do echo $genus; cp ./${genus}_genus/${genus}_ribo16s.fasta ./2019-11-11-results/ ; cp ./${genus}_genus/focusDB.log ./2019-11-11-results/${genus}.log ; cp ./${genus}_genus/sequence_summary.tab  ./2019-11-11-results/${genus}_seq_summary.tab; done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
 cp --parents ./*_genus/*/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta ./2019-11-11-results/
 cat ./*_genus/SUMMARY > 2019-11-11-results/summary_all
+cat ./2019-11-11-results/*seq_summary.tab > 2019-11-11-results/sequence_summary_all.tab
 tar czf 2019-11-11-results.tar.gz 2019-11-11-results/
 
 ```
+
 
 
 ### Suppl Figure 1: Number of SRAs available for each species
@@ -89,7 +89,8 @@ srac$species <- gsub("(.*) (.*)","\\2", srac$org)
 srac$binom <- paste(srac$genus, srac$species)
 nunique_strains <- length(unique(srac[, "org"]))
 nwith_sras <- length(unique(srac[srac$count > 0, "org"]))
-(psrastrains <- ggplot(srac %>% filter(mock != "endo") %>% filter(count > 0), aes(reorder(org,count), y=count, fill=genus, color=genus)) + 
+(psrastrains <- ggplot(srac %>% filter(count > 0), 
+                       aes(reorder(org,count), y=count, fill=genus, color=genus)) + 
     geom_bar(stat="identity") +
     coord_flip() + 
     scale_color_discrete(guide=F) +
@@ -114,14 +115,14 @@ tmp$species <- gsub("(.*) (.*)","\\2", tmp$org)
 tmp$binom <-paste(tmp$genus, tmp$species)
 tmp$mock <- "endo"
 srac <- rbind(srac, tmp)
-
 ```
 
-### Dataset  overlap
+### Dataset overlap
 
 ```{r}
 species_names <- data.frame(genus=character(), species=character(), dataset=character(), stringsAsFactors = F)
-for (f in c(Sys.glob("./docs/datasets/*species*"), "./docs/microbiome_data/endo_species.txt")){
+# note that we use the "genus" level list for the EndoBiota study because we had to clean up some of the bad annotations where text like "group_X" would be listed as the genus, while a valid genus would be listed at the family level.
+for (f in c(Sys.glob("./docs/datasets/*species*"), "./docs/microbiome_data/endo_genus.txt")){
   species_names <- rbind(
     species_names, 
     cbind(read.csv(f, sep=" ", stringsAsFactors = F, header=F, col.names = c("genus", "species")), dataset=f)
@@ -179,35 +180,34 @@ unique_and_valid <- theseproks %>% select(genus, ref, sras) %>% distinct() %>%
   filter(sras) %>% filter(ref)
 write.table(sort(unique_and_valid$genus), col.names = F, row.names = F, file = "./docs/datasets/combined_genuses.txt", quote=F)
 
-ggsave("docs/figures/S6-datasets.png", p_dataset_overlap, device = "png", dpi = 300, width = 4, height = 4)
+ggsave("docs/figures/S6-datasets.png", p_dataset_overlap, device = "png", dpi = 300, width = 5, height = 4)
+```
+
+## Identifying poor taxonomic assignments
+```{r}
+tax_summary <- read.csv(
+  file.path(results_dir, "sequence_summary_all.tab"),
+  col.names = c("id", "path","source", "start", "end", "taxonomy", "perc", "nseqs", "shortname"), 
+  header=FALSE, sep="\t", stringsAsFactors = FALSE)
+tax_summary$top_level_perc <- as.numeric(gsub("(.*?);.*", "\\1", tax_summary$perc))
+tax_summary$sra <- gsub("(.*?)_.*", "\\1", tax_summary$id)
+
+
+questionable_annotations <- tax_summary[tax_summary$top_level_perc < 70, ]
+write.table(unique(questionable_annotations$sra), file = "bad_sras.txt", row.names = FALSE, col.names = FALSE, quote=FALSE)
 ```
 
 ### Figure 2: sra successes
+
 ```{r plot_success}
-# 
-# bal_data <- read.csv("./results/2019-10-07-focusdb-balanced/balanced_summary_all",
-#                      sep="\t", header=F, col.names = c("org", "status", "state", "messag"),
-#                      stringsAsFactors = F)
-# bal_data$mock <- "Balanced"
-# # hmp_data <- read.csv("./results/2019-10-03-HMP-results/HMP_summary_all.tab",
-# #                      sep="\t", header=F,
-# #                      col.names = c("org", "status", "state", "messag"), 
-# #                      stringsAsFactors = F)
-# # hmp_data$mock <- "HMP"
-# ex_data <- read.csv("./results/2019-10-18-extremes-genus-focusdb/extremes_summary_all",
-#                     sep="\t", header=F,
-#                     col.names = c("org", "status", "state", "messag"), 
-#                     stringsAsFactors = F)
-# ex_data$mock <- "Extremes"
-# endo_data <- read.csv("./results/2019-10-20-endo-genus-results/summary_all_endo_genus.tab",
-#                     sep="\t", header=F,
-#                     col.names = c("org", "status", "state", "messag"), 
-#                     stringsAsFactors = F)
-# endo_data$mock <- "Endobiota"
 summary_data <- read.csv(file.path(results_dir, "summary_all"),
                     sep="\t", header=F,
                     col.names = c("org", "status", "state", "messag"), 
                     stringsAsFactors = F)
+# first, we drop anything with questionable annotations
+table(summary_data$state %in% questionable_annotations$sra)
+summary_data <- summary_data[!summary_data$state %in% questionable_annotations$sra, ]
+
 # here we get rid of those withougt references by matching up with unique_and_valid
 summary_data <- summary_data %>% filter(org %in% unique_and_valid$genus)
 globals <- summary_data %>% filter(state=="global") %>%
@@ -226,11 +226,16 @@ p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org")) %>%
   mutate(
     strain=org, 
     pmessage = case_when(
-      startsWith(messag, "Unknown error") ~ "QC Fail",
+      startsWith(messag, "Unknown error selecting reference") ~ "Error",
       is.na(messag) ~ "QC Fail",
-      startsWith(messag, "Library type Error") ~ "QC Fail",
-      startsWith(messag, "Reads were") ~ "QC Fail",
-      startsWith(messag, "Unable to process") ~ "QC Fail",
+      startsWith(messag, "Library error") ~ "QC Fail",
+      startsWith(messag, "Reads under") ~ "QC Fail",
+      startsWith(messag, "Reads over") ~ "QC Fail",
+      startsWith(messag, "No reference meets threshold") ~ "No close reference",
+      startsWith(messag, "Reads under the") ~ "QC Fail", 
+      startsWith(messag, "Insufficient coverage") ~ "QC Fail", 
+      startsWith(messag, "Unknown crit") ~ "Error",
+      startsWith(messag, "Error downloading") ~ "Error",
       messag=="" ~ "16S Recovered", 
       messag=="riboSeed unsuccessful" ~ "No 16S Recovered")) 
 
@@ -240,58 +245,78 @@ p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org")) %>%
 #   (mock_plots[[grp]] <- plot_mock(df=p_summary_data%>% filter(mock == (!!thisgroup))))
 #   ggsave(paste0("docs/figures/S2", grp, ".png"), mock_plots[[grp]], device = "png", dpi = 300, width = 12, height = 7)
 # }
-(mock_plots<- plot_mock(df=p_summary_data))
-ggsave(paste0("docs/figures/S2_rest.png"), mock_plots, device = "png", dpi = 300, width = 12,  height = 7)
-###################
-alpha_data <- p_summary_data %>%
-  group_by(strain) %>% 
-  mutate(alpha = ifelse(globalmessage=="Success", "gray10", "gray70")) %>% 
-  select(strain, alpha) %>% distinct() %>% as.data.frame()
-p_summary_data_B <- p_summary_data  %>%  arrange(pmessage) %>%
-    group_by(strain) %>%
-    mutate(thisid = row_number()) %>%
-    transform(thisid = ifelse(is.na(messag), 0, thisid)) 
-p_summary_data_B$strain <- factor(p_summary_data_B$strain, levels=rev(levels(factor(p_summary_data_B$strain))))
-
-alpha_v <- alpha_data[order(alpha_data$strain, alpha_data$alpha), "alpha"]
-(p_outcomesB <- ggplot(
-  p_summary_data_B, 
-  aes(x=strain, y=thisid, shape=pmessage,
-      color=pmessage, fill=pmessage)) + 
-    scale_shape_manual(guide = "legend", values = c(21, 22, 23,24)) + 
-    geom_point(size=5)  + coord_flip() + mytheme +
-    scale_colour_brewer(palette = "Set2") +
-    scale_fill_brewer(palette = "Set2") +
-    # unfortuantely facet wrapping throws off our beautiful alpha'd out names
-    # due to those repeated
-    #facet_wrap(~mock, nrow = 2, scales = "free") +
-    labs("SRAs Proccessed by focusDB",
-         y="Number of whole-genome sequencing SRAs", x="", color="Per SRA", fill="Per SRA", shape="Per SRA")  +
-    theme(axis.text=element_text(size=13),
-          axis.title.x =element_text(size=14),
-          axis.text.y = element_text(colour = alpha_v))
-)  
-ggsave("docs/figures/2-success.png", p_outcomesB, device = "png", dpi = 300, width = 12, height = 7)
+(mock_plots<- plot_genera(df=p_summary_data))
+ggsave(paste0("docs/figures/2-genera.png"), plot_genera(df=p_summary_data), device = "png", dpi = 300, width = 10,  height = 13)
+# ###################
+# alpha_data <- p_summary_data %>%
+#   group_by(strain) %>% 
+#   mutate(alpha = ifelse(globalmessage=="Success", "gray10", "gray70")) %>% 
+#   select(strain, alpha) %>% distinct() %>% as.data.frame()
+# p_summary_data_B <- p_summary_data  %>%  arrange(pmessage) %>%
+#     group_by(strain) %>%
+#     mutate(thisid = row_number()) %>%
+#     transform(thisid = ifelse(is.na(messag), 0, thisid)) 
+# p_summary_data_B$strain <- factor(p_summary_data_B$strain, levels=rev(levels(factor(p_summary_data_B$strain))))
+# 
+# alpha_v <- alpha_data[order(alpha_data$strain, alpha_data$alpha), "alpha"]
+# (p_outcomesB <- ggplot(
+#   p_summary_data_B, 
+#   aes(x=strain, y=thisid, shape=pmessage,
+#       color=pmessage, fill=pmessage)) + 
+#     scale_shape_manual(guide = "legend", values = c(21, 22, 23,24)) + 
+#     geom_point(size=5)  + coord_flip() + mytheme +
+#     scale_colour_brewer(palette = "Set2") +
+#     scale_fill_brewer(palette = "Set2") +
+#     # unfortuantely facet wrapping throws off our beautiful alpha'd out names
+#     # due to those repeated
+#     #facet_wrap(~mock, nrow = 2, scales = "free") +
+#     labs("SRAs Proccessed by focusDB",
+#          y="Number of whole-genome sequencing SRAs", x="", color="Per SRA", fill="Per SRA", shape="Per SRA")  +
+#     theme(axis.text=element_text(size=13),
+#           axis.title.x =element_text(size=14),
+#           axis.text.y = element_text(colour = alpha_v))
+# )  
+# ggsave("docs/figures/2-success.png", p_outcomesB, device = "png", dpi = 300, width = 12, height = 7)
 
 ```
 
 ## Assessing uniqueness:
 First, for simplicity, we combine all the sequences for all the runs.  We have the logs to relate the seqeunces to why they were selected, but as we are talking about improving the database as a whole, combining them all simplifies aspects of interpretation.
-```{bash, eval=FASLE}
-cat ./results/*/*full_ribo16s.fasta > ./results/full_focusDB_ribo16s.fasta
-cat ./results/*/*fast_ribo16s.fasta > ./results/fast_focusDB_ribo16s.fasta
 
+<!-- Note that first we remove any with dodgey taxonomic annotations, hence thhe inverse grep for the SRAs which fell beneath the 80% assignment threshold. -->
+
+Note that first we remove any with dodgey taxonomic annotations
+```{bash, eval=FALSE}
+cat ./results/*/*full_ribo16s.fasta  > ./results/pre_full_focusDB_ribo16s.fasta
+cat ./results/*/*fast_ribo16s.fasta  > ./results/pre_fast_focusDB_ribo16s.fasta
 ```
-
+```{r}
+for (f in c("full", "fast")){
+  lines <- readLines(paste0("./results/pre_", f,"_focusDB_ribo16s.fasta"))
+  newlines = c()
+  skip <- 0 
+  for (i in 1:length(lines)){
+    if (any(sapply(unique(questionable_annotations$sra), grepl, lines[i]))){
+      skip <- 2
+    }
+    if (skip > 0){
+      skip <- skip - 1
+    } else {
+      newlines <- c(newlines, lines[i])
+    }
+  }
+  writeLines(newlines, paste0("./results/", f,"_focusDB_ribo16s.fasta"))
+}
+```
 
 ##  Assessing SILVA's composition
 ```{bash, eval=FALSE}
-if [ -f "~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz" ] ; then echo "already downloaded" ; else wget    https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_tax_silva.fasta.gz   ; fi
+if [ -f "~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz" ] ; then echo "already downloaded" ; else wget    https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_tax_silva.fasta.gz ; fi
 ```
 
 First, we read in the silva db, and parse the headers for alter comparison. One thing we do it get the codes of what the prefixes from NCBI mean, and use that to determine with source of the sequences.
-```{r parse_headers, cache=TRUE}
-
+```{r parse_headers, cache=FALSE}
+ 
 process_db <- function(xset){
   # codes_from_ncbi read in shared.R
   headers <- data.frame("raw"=names(xset), stringsAsFactors = F)
@@ -341,11 +366,15 @@ process_db <- function(xset){
   )
   return( headers )
 }
-#datasets <- list()  # list where first item string set, second is the header info
+#datasets <- list()  #first item string set, second is the header info
 silva <- readRNAStringSet("~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz")
+
+# first, we need to exclude any bad sequences
 all_focus_full <- readRNAStringSet("./results/full_focusDB_ribo16s.fasta")
 all_focus_fast <- readRNAStringSet("./results/fast_focusDB_ribo16s.fasta")
 de_novo <-  readRNAStringSet("./results/de_novo_seqs.fasta")
+
+
 datasets <-  list(
   silva = list(set = silva, metadata = process_db(xset=silva)),
   fast =  list(set = all_focus_fast, metadata = process_db(xset=all_focus_fast)), 
@@ -357,7 +386,7 @@ datasets <-  list(
 
 
 
-```{r plot_uniqueness, cache=TRUE}
+```{r count_Ns, cache=TRUE}
  
 uniqueness <- data.frame("Organism"=NA, "Unique"=NA,  "Duplicated"=NA, "DB"=NA, stringsAsFactors = F)
 uniqueness <- uniqueness[!is.na(uniqueness),]
@@ -376,7 +405,8 @@ for (i in c("silva", "full", "fast")){
 
 ```
 
-```{r}
+
+```{r check_uniqueness, cache=TRUE}
 counter <- 1
 for (organism in unique(datasets[["fast"]][["metadata"]]$binom)){
   #rganism <- gsub("_", " ", gsub(".*\\/(.*)_ribo16s.fasta", "\\1", path))
@@ -402,9 +432,13 @@ for (organism in unique(datasets[["fast"]][["metadata"]]$binom)){
     data.frame("Organism"=organism, "Unique"=nboth-nbothdup,  "Duplicated"=nboth, "DB"="combined"))
   counter <- counter + 1
 }
+```
+
+```{r plotting_uniqueness}
 #uniqueness <- uniqueness[1105:nrow(uniqueness), ]
 # set an arbtrary cutoff for popularity, just for plotting purposes
-popthresh = 1000; popular <- uniqueness %>% filter(DB=='silv') %>% filter(Unique > popthresh | Duplicated > popthresh)
+popthresh = 100; popular <- uniqueness %>% filter(DB=='silv') %>% filter(Unique > popthresh | Duplicated > popthresh) 
+#popular$Organism <- as.character(popular$Organism)
 p_uniqueness <- uniqueness %>% distinct() %>% gather(key="grp", value="val", -Organism, -DB ) %>%
   spread(key=DB, value=val) %>% 
   mutate(SILVA=combined-focus, focusDB=combined-silv) %>% 
@@ -414,10 +448,11 @@ p_uniqueness <- uniqueness %>% distinct() %>% gather(key="grp", value="val", -Or
   mutate(Organism = factor(Organism), 
          Organism = factor(Organism, levels = rev(levels(Organism))))
 (p_unique <- ggplot(
-  p_uniqueness %>% mutate(fac = ifelse(Organism %in% popular$Organism, "Over-represented", "Under-represented")),
+  p_uniqueness, 
+  #%>% mutate(fac = ifelse(Organism %in% popular$Organism, "Over-represented", "Under-represented")),
   aes(x=Organism, y=val, alpha=grp, group=grp, fill=DB)) +
     coord_flip() +
-    facet_wrap(~fac, scales="free") +
+    #facet_wrap(~fac, scales="free") +
     scale_fill_manual(values = viridis::viridis(n=3)[c(2, 1)]) +
     scale_alpha_manual(values = c(.2, 1)) + mytheme +
     labs(y="Number of Sequence", x="", alpha="", fill="Database") +
@@ -425,39 +460,47 @@ p_uniqueness <- uniqueness %>% distinct() %>% gather(key="grp", value="val", -Or
     geom_bar(stat="identity", position="stack") #+ facet_wrap(~grp) 
 )
 (p_unique_alt <- ggplot(
-  p_uniqueness %>% mutate(fac = ifelse(Organism %in% popular$Organism, "Over-represented", "Under-represented"))%>% filter(grp=="Unique"),
+  p_uniqueness %>% 
+    #mutate(fac = ifelse(Organism %in% popular$Organism, "Over-represented", "Under-represented"))%>% 
+    filter(grp=="Unique"),
   aes(x=Organism, y=val,  fill=DB)) +
     coord_flip() +
-    facet_wrap(~fac, scales="free") +
+    #facet_wrap(~fac, scales="free") +
     scale_fill_manual(values = viridis::viridis(n=3)[c(2, 1)]) +
     scale_alpha_manual(values = c(.2, 1)) + mytheme +
     labs(y="Number of Sequence", x="", alpha="", fill="Database") +
     theme(axis.text=element_text(size=13)) +
     geom_bar(stat="identity", position="stack") #+ facet_wrap(~grp) 
 )
-p_unique_perc <-  right_join(
+p_unique_perc <-  
   p_uniqueness %>% spread(grp, val) %>%
     dplyr::rename(binom=Organism) %>%
     select(-Duplicated) %>% spread(DB, Unique) %>% 
     mutate(
       perc_inc=round((focusDB/SILVA) *100, 1 ),
       perc_of_tot=round(focusDB/((SILVA + focusDB)) *100, 1 ),
-    ),
-  srac %>% select(binom, mock))%>% 
-  filter(!is.na(perc_inc))
-(p_unique_heat <- ggplot(p_unique_perc,
-  aes(x=binom, y=mock, fill=mock)) +
-    coord_flip() +
-    scale_fill_discrete(guide="none")+
-    theme(rect = element_blank(),
-          text=element_text(color="white"),
-          axis.text.y  = element_blank(),
-          axis.text.x  = element_text(size=10),
-          line = element_blank(),
-            
-      )+
-  geom_tile())
-(p_uniqueV <- ggplot(p_unique_perc %>% select(-mock) %>% distinct(),
+    )%>% 
+  filter(!is.na(perc_inc)) %>% ungroup() %>%
+  mutate(genus = gsub("(.*) .*", "\\1", binom)) %>%
+  group_by(genus) %>%
+  mutate(
+    perc_inc_genus=round((sum(focusDB)/sum(SILVA)) *100, 1 ),
+    perc_of_tot_genux=round(sum(focusDB)/((sum(SILVA) + sum(focusDB))) *100, 1 ))
+
+
+# (p_unique_heat <- ggplot(p_unique_perc,
+#   aes(x=binom, y=mock, fill=mock)) +
+#     coord_flip() +
+#     scale_fill_discrete(guide="none")+
+#     theme(rect = element_blank(),
+#           text=element_text(color="white"),
+#           axis.text.y  = element_blank(),
+#           axis.text.x  = element_text(size=10),
+#           line = element_blank(),
+#             
+#       )+
+#   geom_tile())
+(p_unique_species <- ggplot(p_unique_perc %>% distinct(),
   aes(x=binom, y=perc_inc)) +
     coord_flip() +
     scale_fill_manual(values = viridis::viridis(n=3)) +
@@ -466,19 +509,35 @@ p_unique_perc <-  right_join(
     theme(axis.text=element_text(size=13)) +
     geom_bar(stat="identity") #+ facet_wrap(~grp) 
 )
-(figure <- ggpubr::ggarrange(p_unique_heat, p_uniqueV, widths=c(1, 3)))
+(p_unique_genus <- ggplot(
+  p_unique_perc %>% select(genus, perc_inc_genus) %>% distinct(),
+  aes(x=reorder(genus, perc_inc_genus), y=perc_inc_genus)) +
+    coord_flip() +
+    scale_fill_manual(values = viridis::viridis(n=3)) +
+    mytheme +
+    labs(y="Percent increase in Unique Sequences", x="", alpha="", fill="Database") +
+    theme(axis.text=element_text(size=13)) +
+    geom_bar(stat="identity") #+ facet_wrap(~grp) 
+)
+
+
+#(figure <- ggpubr::ggarrange(p_unique_heat, p_uniqueV, widths=c(1, 3)))
 ggsave("docs/figures/3-unique.png", p_unique, device = "png", dpi = 300, width = 12, height = 10) 
+# length(unique(p_unique_perc$genus))
+ggsave("docs/figures/3-perc_unique.png", p_unique_species, device = "png", dpi = 300, width = 12, height = 10) 
+ggsave("docs/figures/3-perc_unique_genus.png", p_unique_genus, device = "png", dpi = 300, width = 12, height = 10) 
 ggsave("docs/figures/3-unique_alt2.png", p_unique_alt, device = "png", dpi = 300, width = 12, height = 10)
-ggsave("docs/figures/3-unique_alt.png", figure, device = "png", dpi = 300, width = 12, height = 10)
+#ggsave("docs/figures/3-unique_alt.png", figure, device = "png", dpi = 300, width = 12, height = 10)
 
 ```
 
 
 Here, we generate a table showing how many sequences (and unique seqeunces) are obtained from each level.  This is ued wiith table X in the paper
-```{r tabledata}
+```{r tabledata, exec=FALSE}
 A <- uniqueness %>% select(Organism, Unique, DB ) %>% distinct() %>%spread(key=DB, value=Unique)
 B <- p_summary_data %>% select(strain, pmessage, state) %>% filter(!is.na(state)) %>% group_by(strain) %>% summarise(All_SRAs=n(), Good_SRAs=table(pmessage)["16S Recovered"]) 
 right_join(B, A, by=c("strain"="Organism")) %>% 
+  #filter(!is.na(All_SRAs)) %>%
   mutate(Genus=gsub("(.*) (.*)", "\\1", strain),
          Species=gsub("(.*) (.*)", "\\2", strain)) %>%
   select(Genus, Species, All_SRAs, Good_SRAs, focus, silv, combined)
@@ -538,7 +597,7 @@ riboSeed has been show to generate high-quality reconstructions of each rDNA whe
 ### Provenance of strains
 First, we read in the silva headers for the strains. The header for the silva database constists of `>ACCESSION.start.end name`.  After a fruitless effort to rework sraFind's entrez calls to identify WGS master records with sraFind, I realized that info was already in pokaryotes.txt, and could be added as an afterthought.  As of release 0.8, that column is present as "WGS".  this allows us to relate the seqeunces in the SILVA headers to their original SRAs, so we can compare riboSeed's assemblies to those for which a complete genome is available, and assess the types of errors/collapses we see where only draft genomes are available. 
 
-```{r eval=TRUE}
+```{r sraFind, eval=TRUE}
 # read in the draft linked accessions and the complete genome linked accessions
 # if (!file.exists("sraFind.tab")){
 #   system("curl -O sraFind.tab -L https://raw.githubusercontent.com/nickp60/sraFind/master/sraFind.tab")
@@ -569,7 +628,7 @@ assembly_summary <- inner_join(
 (p_summary_cg    <-    assembly_summary  %>% filter(cg) %>% group_by(strain,  Assembly.Accession) %>% 
      select(strain, Assembly.Accession, id, start, stop) %>% distinct() %>%  summarize(n=n()))
 p_summary_n16s <- assembly_summary %>% select(raw, strain, Assembly.Accession,category) %>%distinct() %>% group_by(strain,  Assembly.Accession) %>%  mutate(n=n()) %>%  select(-raw) %>% distinct()
-(p_n16s <-  ggplot(p_summary_n16s, aes(x=n,  fill=category)) + geom_density(adjust=2, alpha=.6) + 
+(p_n16s <-  ggplot(p_summary_n16s, aes(x=n,  fill=category)) + geom_density(adjust=4, alpha=.6) + 
     labs(x="Number of 16S  in assembly", y="Relative Distriubtion", fill="", title="Distribution of rDNA counts by assembly level") 
 )
 ggsave("docs/figures/S4-n16S.png", p_n16s, device = "png", dpi = 300, width = 6, height = 5)
@@ -602,9 +661,9 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, tri
   this_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",this_focus), collapse = "", sep="|"))
   
   # identify all seqeunces associated with this assembly accesssion
-  silva_subset_seqs <- silva[grepl(this_silva_query,  names(silva))]
+  silva_subset_seqs <- datasets[['silva']][["set"]][grepl(this_silva_query,  datasets[['fast']][["metadata"]]$raw)]
   # idenify the seqeunces from focusDB
-  focus_subset_seqs <- all_focus[grepl(this_focus_query, names(all_focus))]
+  focus_subset_seqs <- datasets[['fast']][["set"]][grepl(this_focus_query, datasets[['fast']][["metadata"]]$raw)]
   unique_focus_subset_seqs <- unique(focus_subset_seqs)
   if (length(unique_focus_subset_seqs) == 0) {
     warning(paste("No matches for ",this_focus_query,"(", assembly, ")  in focusDB results"))
@@ -719,13 +778,28 @@ build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
         
       }
       # we only add the top hit for each focusDB seqeunce
-      these_results <- rbind(
-        these_results,
-        this_row)
+      # if no good hits exist, thisrow wont exist
+      if (exists("this_row")){
+        these_results <- rbind(
+          these_results,
+          this_row)
+      }
     }
   }
+  if (nrow(these_results) == 0) {
+    warning(paste("No focusDB matches", assembly))
+    these_results <- data.frame(
+      "set"=NA,
+      "focusDB"=NA,
+      "silva"=NA,
+      "pkb"=NA,  
+      stringsAsFactors = F
+      )
+  }
+  
   these_results$assembly <- assembly
   return(these_results)
+  
 }
 
 
@@ -741,7 +815,8 @@ for (sra in these_sras){
     sra, only_illumina_assembly_summary$run_SRAs,  fixed = T)  |  only_illumina_assembly_summary$processed_in_this_study
 }
 table(only_illumina_assembly_summary$processed_in_this_study )
-only_illumina_assembly_summary <- only_illumina_assembly_summary%>% filter(processed_in_this_study)
+only_illumina_assembly_summary <- only_illumina_assembly_summary%>% filter(processed_in_this_study) %>%
+  filter(cg)
 
 ```
 
@@ -758,8 +833,7 @@ done
 
 ```
 
-```{r}
-
+```{r assess_assembly_snps, cache=TRUE}
 # dest_dir <- file.path("docs", "ref_msas")
 # dir.create( dest_dir)
 snp_results = data.frame(
@@ -787,7 +861,8 @@ for (i in 1:nrow(only_illumina_assembly_summary)){
     counter <- counter + 1
   }
 }
-(p_snps <- ggplot(snp_results, aes(x=set )) + 
+# remove NAs
+(p_snps <- ggplot(snp_results %>% filter(!is.na(pkb)), aes(x=set )) + 
     mytheme +
     geom_bar(aes(y=..count../10), fill="grey80")+ 
     geom_label(stat='count', aes(y=(..count../10) +20, label=paste(..count.., "\nsequences")))+ 
@@ -801,11 +876,25 @@ for (i in 1:nrow(only_illumina_assembly_summary)){
   )
 snp_results$source <- gsub("(.*?)\\s.*", "\\1", snp_results$focusDB)
 snp_results$target <- gsub("(.*?)\\s.*", "\\1", snp_results$silva)
+seqs_aligned_against_cg <- snp_results %>% filter(set=="fast") %>% nrow()
+n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow()
+(p_snps_hist <- ggplot(snp_results %>% filter(!is.na(pkb)) %>%filter(set=="fast"), aes(x=pkb)) + 
+    mytheme +
+    geom_histogram() +
+    labs(
+      x="SNPs/Kbp (per genome)", y="Number of Assemblies",
+      title="Comparing riboSeed-assembled 16S to Complete Genome's 16S",
+      subtitle=paste0(
+      "In the genera considered, ", 
+      nrow(only_illumina_assembly_summary), 
+      " sequences from ", nassemb, " complete genomes were present in SILVA.\n",
+      "riboSeed recovered ",seqs_aligned_against_cg, " sequences, of which ",  n_exact_seqs, " were exact.")
+    )
+)
 ggsave("docs/figures/S5-set-accuracy.png", p_snps, device = "png", dpi = 300, width = 6, height = 5)
+ggsave("docs/figures/4-fast-cg-accuracy.png", p_snps_hist, device = "png", dpi = 300, width = 8, height = 6)
 
 write.table(snp_results, file="./docs/snps_per_kbp.tab", sep="\t", row.names=F)
-
-
 ```
 
 Now, we build a interactive graph.
@@ -970,6 +1059,10 @@ View(merge(reassembly_results, srafind, by.x="assembly", by.y="Assembly.Accessio
 sraFind_data <- read.table("~/.focusDB/sraFind.tab", header=T, sep="\t", stringsAsFactors = F)
 tbassembled <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(!is.na(study_acc)) %>% nrow()
 tbreleased  <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(is.na(study_acc)) %>% nrow()
+```
+
+```{r how_many_seqs}
+sum(uniqueness[uniqueness$DB == "focus", "Unique"]) + sum(uniqueness[uniqueness$DB == "focus", "Duplicated"])
 ```
 
 ## Execution time

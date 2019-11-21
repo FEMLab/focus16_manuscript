@@ -37,7 +37,7 @@ plot_mock <- function(df){
   # put in original number of orrganisms, for plotting purposes()
   (p <- ggplot(df, aes(x=strain, y=thisid, shape=pmessage,
                        color=pmessage, fill=pmessage)) + 
-      scale_shape_manual(guide = "legend", values = c(21, 22, 23,24)) + 
+      scale_shape_manual(guide = "legend", values = c(21, 22, 23,24, 25)) + 
       geom_point(size=5)  + coord_flip() + mytheme +
       scale_colour_brewer(palette = "Set2") +
       scale_fill_brewer(palette = "Set2") +
@@ -45,6 +45,46 @@ plot_mock <- function(df){
       # due to those repeated
       facet_wrap(~mock) +
       labs("SRAs Proccessed by focusDB",
+           y="Number of whole-genome sequencing SRAs", x="", color="Per SRA", fill="Per SRA", shape="Per SRA")  +
+      theme(axis.text=element_text(size=10),
+            axis.title.x =element_text(size=14),
+            axis.text.y = element_text(colour = alpha_v))
+  )
+  return(p)
+}
+plot_genera <- function(df){
+  #  used to generate plots of which runs yielded fruitful results
+  #  See the plot_success section of the supplementary data script
+  df <- df  %>%  arrange(pmessage) %>%
+    group_by(strain) %>%
+    mutate(thisid = row_number()) %>%
+    transform(thisid = ifelse(is.na(messag), 0, thisid)) 
+  df$strain <- factor(df$strain, levels=rev(levels(factor(df$strain))))
+  
+  # for coloring x/y axis
+  alpha_info <-  rev(ifelse(df[!duplicated(df$strain), "globalmessage"]=="Success", "gray90", "gray60"))
+  alpha_data <- df %>%
+    group_by(strain) %>% 
+    mutate(alpha = ifelse(globalmessage=="Success", "gray10", "gray70")) %>% 
+    select(strain, alpha) %>% distinct() %>% as.data.frame()
+  
+  alpha_v <- alpha_data[order(alpha_data$strain, alpha_data$alpha), "alpha"]
+  # put in original number of orrganisms, for plotting purposes()
+  (p <- ggplot(df, aes(x=strain, y=thisid, shape=pmessage,
+                       color=pmessage, fill=pmessage)) + 
+      scale_shape_manual(guide = "legend", values = c(21, 22, 23,24, 25)) + 
+      geom_point(size=3)  + 
+      coord_flip() +
+      scale_y_continuous(expand = c(0.0,0), limits = c(0, 51)) + 
+      #expand_limits(y = c(0, 50)) + 
+      mytheme +
+      scale_colour_brewer(palette = "Set2") +
+      scale_fill_brewer(palette = "Set2") +
+      # unfortuantely facet wrapping throws off our beautiful alpha'd out names
+      # due to those repeated
+      #facet_wrap(~mock) +
+      labs(title="SRAs Proccessed by focusDB",
+           caption="QC failure includes insufficient coverage, invalid read length",
            y="Number of whole-genome sequencing SRAs", x="", color="Per SRA", fill="Per SRA", shape="Per SRA")  +
       theme(axis.text=element_text(size=10),
             axis.title.x =element_text(size=14),

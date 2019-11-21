@@ -10,3 +10,10 @@ docs/2019-Nolan-Waters-supplementary_cache/
 docs/2019-Nolan-Waters-supplementary_files/
 *.fastq.gz
 sraFind.tab
+results/*.tar.gz
+docs/microbiome_data/*.png
+docs/*.docx
+docs/*.html
+*.RData
+*.RDataT*
+zenodo_data/

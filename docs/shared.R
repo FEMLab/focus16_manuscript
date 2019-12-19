@@ -146,3 +146,35 @@ IAAA-IZZZ	DDBJ	TSA
 TAAA-TZZZ	DDBJ	Targeted Gene Projects
 KAAA-KZZZ	GenBank	Targeted Gene Projects
 AAAAA-AZZZZ	DDBJ	MGA", sep="\t", stringsAsFactors=F)
+
+write_msa <- function(db, assembly="GCA_000699725.1", destdir){
+  # get matching assembly from sraFind to get the complete genome/seqeunce accession
+  this_silva <- unique(db[grepl(assembly, db$Assembly.Accession), "raw" ])
+  if (length(this_silva) == 0) {
+    warning(paste("No matches ", assembly, ";  could be long reads?"))
+    return (list(NA, NA, NA, NA, NA, NA))
+  }
+  # paste tofgether to make a query string with or's; this is because for assemblies, 
+  # # different contigs will have different sequence names, but a single assembly accession
+  this_silva_query <- gsub("(.*)\\|$", "\\1", paste0(unique(gsub("(.*?)\\..*", "\\1", this_silva)), collapse = "", sep="|"))
+  # get matching SRAs for assembly, so we can use them to search the focusdb results
+  this_focus <- unique(unlist(strsplit(db[grepl(assembly,  db$Assembly.Accession), "run_SRAs" ],",")))
+  # build focusdb query string;  get rid of the *_\\d suffix we add to SRAs to keep themunique
+  this_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",this_focus), collapse = "", sep="|"))
+  
+  # identify all seqeunces associated with this assembly accesssion
+  silva_subset_seqs <- silva[grepl(this_silva_query,  names(silva))]
+  # idenify the seqeunces from focusDB
+  focus_subset_seqs <- all_focus[grepl(this_focus_query, names(all_focus))]
+  unique_focus_subset_seqs <- unique(focus_subset_seqs)
+  if (length(unique_focus_subset_seqs) == 0) {
+    warning(paste("No matches for ",this_focus_query,"(", assembly, ")  in focusDB results"))
+    return (list(NA, NA, NA, NA, NA, NA))
+  } else{
+    Biostrings::writeXStringSet(
+      x=append(DNAStringSet(silva_subset_seqs), unique_focus_subset_seqs),
+      filepath = file.path(destdir, paste0(assembly, ".msa")),
+      append = F, 
+      format = "fasta")
+  }
+}

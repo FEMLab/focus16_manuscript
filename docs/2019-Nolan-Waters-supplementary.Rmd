@@ -189,27 +189,34 @@ ggsave("docs/figures/S6-datasets-log.png",
 
 ```
 
-## Identifying poor taxonomic assignments
-In the course of comparingg the reassembled seqeunces to those for which reference genomes were available, we determined that the pipeline struggled in two cases: the Treponema genus, and one B. anthracis SRA: SRR2155541.  We do not currently know the issue with the Treponema genus, but using blobtools we determined that SRR2155541 is contaminated:
+## Quality Control
+### Diagnosing poor assemblies
+In the course of comparing the reassembled seqeunces to those for which reference genomes were available, we determined that the pipeline struggled in two cases: the Treponema genus, and one B. anthracis SRA: SRR2155541.  We do not currently know the issue with the Treponema genus, but using blobtools we determined that SRR2155541 is contaminated with Micrococcus luteus:
 ```{bash blobforSRR2155541, eval=FALSE}
 # we downloaded GCF_000008165.1_ASM816v1_genomic.fna as a reference
 docker run --memory 16G --rm  -v $HOME:/home/ nickp60/ezblobtools  -r /home/Downloads/genome_assemblies\(1\)/ncbi-genomes-2019-12-19/GCF_000008165.1_ASM816v1_genomic.fna  -A /home/GitHub/focusdb/results/2019-12-19-results/Bacillus_genus/SRR2155541/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta   -d ref_prok_rep_genomes -o /home/GitHub/focusdb/docs/blob_SRR2155541/ -t 2 -m 16
 ```
-![Contaminated SRA](docs/blob_SRR2155541/assembly_all/all.blobDB.json.bestsum.species.p8.span.100.blobplot.velvet.png)
+![Contaminated SRA](blob_SRR2155541/blob_all/all.blobDB.json.bestsum.species.p8.span.100.blobplot.velvet.png)
+
+### Identifying poor taxonomic assignments
+In addition to those mentioned above with poor assemblies, we filtered out any SRAs with inconclusive domain-level agreement.
 ```{r}
 tax_summary <- read.csv(
   file.path(results_dir, "sequence_summary_all.tab"),
   col.names = c("id", "path","source", "start", "end", "taxonomy", "perc", "nseqs", "shortname"), 
   header=FALSE, sep="\t", stringsAsFactors = FALSE)
-tax_summary$top_level_perc <- as.numeric(gsub("(.*?);.*", "\\1", tax_summary$perc))
+tax_summary$root_perc <- as.numeric(gsub("(.*?);.*", "\\1", tax_summary$perc))
+tax_summary$domain_perc <- as.numeric(gsub("(.*?);(.*?);.*", "\\2", tax_summary$perc))
+tax_summary$phylum_perc <- as.numeric(gsub("(.*?);(.*?);(.*?);.*", "\\3", tax_summary$perc))
 tax_summary$sra <- gsub("(.*?)_.*", "\\1", tax_summary$id)
 
-ggplot(tax_summary, aes(x=top_level_perc, fill=top_level_perc>70)) + geom_histogram() + 
-  labs(title="Taxonomic Assignment", subtitle="Histogram of top-level taxonomic assignment percentages", y="Number of sequences", fill="Top-level Assignment > 70%") + theme(legend.position = "bottom") 
-questionable_annotations <- tax_summary[tax_summary$top_level_perc < 70 | grepl("Homo sapiens", tax_summary$taxonomy), ]
-write.table(unique(questionable_annotations$sra), file = "bad_sras.txt", row.names = FALSE, col.names = FALSE, quote=FALSE)
+ggplot(tax_summary, aes(x=domain_perc, fill=domain_perc>70)) + geom_histogram() + 
+  labs(title="Taxonomic Assignment", subtitle="Histogram of Domain-level taxonomic assignment percentages", y="Number of sequences", fill="Domain-level Assignment > 70%") + theme(legend.position = "bottom") 
+questionable_annotation_sras <- unique(tax_summary[tax_summary$domain_perc < 70 | grepl("Homo sapiens", tax_summary$taxonomy), "sra"])
+questionable_annotation_sras <-c(questionable_annotation_sras, "SRR2155541")
+write.table(questionable_annotation_sras, file = "bad_sras.txt", row.names = FALSE, col.names = FALSE, quote=FALSE)
 ```
-Here, we parse the outputs from Kraken2's taxonomic assignment, and flag any with a low (<70) percent of assigned sequnces, as this could indicate that an SRA is contaminated.  Some (such as Treponema SRAs 	SRR3571775 and SRR3584844) have $\approx$ 60% human DNA, indicating incomplete removal of host DNA, and as such, we drop them. as such, we lose `r unique(tax_summary[grepl("Homo sapiens", tax_summary$taxonomy), "sra"])` SRAs.  However, it should be noted that BLASTing contigs from these assemblies appear to show bacterial DNA -- the Kraken2 database itself may have contamination where Treponema kmers are labelled as human.  Either way, these (and any other under the 70% top-level assignment threshold) will be dropped.
+Here, we parse the outputs from Kraken2's taxonomic assignment, and flag any with a low (<70) percent of domain-assigned sequnces, as this could indicate that an SRA is contaminated.  Some (such as Treponema SRAs 	SRR3571775 and SRR3584844) have $\approx$ 60% human DNA, indicating incomplete removal of host DNA, and as such, we drop them. as such, we lose `r unique(tax_summary[grepl("Homo sapiens", tax_summary$taxonomy), "sra"])` SRAs.  However, it should be noted that BLASTing contigs from these assemblies appear to show bacterial DNA -- the Kraken2 database itself may have contamination where Treponema kmers are labelled as human.  Either way, these (and any other under the 70% domain-level assignment threshold) will be dropped.
 
 
 ### Figure 2: sra successes
@@ -220,8 +227,8 @@ summary_data <- read.csv(file.path(results_dir, "summary_all"),
                     col.names = c("org", "status", "state", "messag"), 
                     stringsAsFactors = F)
 # first, we drop anything with questionable annotations
-table(summary_data$state %in% questionable_annotations$sra)
-summary_data <- summary_data[!summary_data$state %in% questionable_annotations$sra, ]
+table(summary_data$state %in% questionable_annotation_sras)
+summary_data <- summary_data[!summary_data$state %in% questionable_annotation_sras, ]
 
 # here we get rid of those withougt references by matching up with unique_and_valid
 summary_data <- summary_data %>% filter(org %in% unique_and_valid$genus)
@@ -264,6 +271,19 @@ p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org")) %>%
 ggsave(paste0("docs/figures/2-genera.png"), plot_genera(df=p_summary_data), device = "png", dpi = 300, width = 10,  height = 13)
 ```
 
+### Extracting 16S rRNA from de novo controls
+```{bash, eval=FALSE}
+rm ./results/2019-12-19-results/pre_denovo_focusDB_ribo16s.fasta
+for i in results/2019-12-19-results/*_genus/*/
+do 
+echo $i
+thissra=$(basename $i)
+contigs="${i}/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta"
+python ../py16db/make_silva_style_db_from_contigs.py --name $thissra $contigs  ./results/2019-12-19-results/pre_denovo_focusDB_ribo16s.fasta
+done
+
+```
+
 ## Assessing uniqueness:
 First, for simplicity, we combine all the sequences for all the runs.  We have the logs to relate the seqeunces to why they were selected, but as we are talking about improving the database as a whole, combining them all simplifies aspects of interpretation.
 
@@ -275,13 +295,13 @@ cat ./results/2019-12-19-results/*full_ribo16s.fasta  > ./results/2019-12-19-res
 cat ./results/2019-12-19-results/*fast_ribo16s.fasta  > ./results/2019-12-19-results/pre_fast_focusDB_ribo16s.fasta
 ```
 ```{r}
-for (f in c("full", "fast")){
+for (f in c("full", "fast", "denovo")){
   file.remove(paste0(results_dir, f,"_focusDB_ribo16s.fasta"))
   lines <- readLines(paste0(results_dir, "pre_", f,"_focusDB_ribo16s.fasta"))
   newlines = c()
   skip <- 0 
   for (i in 1:length(lines)){
-    if (any(sapply(unique(questionable_annotations$sra), grepl, lines[i]))){
+    if (any(sapply(questionable_annotation_sras, grepl, lines[i]))){
       skip <- 2
     }
     if (skip > 0){
@@ -294,18 +314,6 @@ for (f in c("full", "fast")){
 }
 ```
 
-### Extracting 16S rRNA from de novo controls
-```{bash, eval=FALSE}
-rm ./results/2019-12-19-results/de_novo_seqs.fasta
-for i in results/2019-12-19-results/*_genus/*/
-do 
-echo $i
-thissra=$(basename $i)
-contigs="${i}/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta"
-python ../py16db/make_silva_style_db_from_contigs.py --name $thissra $contigs  ./results/2019-12-19-results/de_novo_seqs.fasta
-done
-
-```
 
 
 ##  Assessing SILVA's composition
@@ -376,7 +384,7 @@ summary(silva@ranges@width)
 # first, we need to exclude any bad sequences
 all_focus_full <- readRNAStringSet(file.path(results_dir, "full_focusDB_ribo16s.fasta"))
 all_focus_fast <- readRNAStringSet(file.path(results_dir, "fast_focusDB_ribo16s.fasta"))
-de_novo <-  readRNAStringSet(file.path(results_dir, "de_novo_seqs.fasta"))
+de_novo <-  readRNAStringSet(file.path(results_dir, "denovo_focusDB_ribo16s.fasta"))
 
 
 datasets <-  list(
@@ -849,26 +857,22 @@ for (i in 1:nrow(only_illumina_assembly_summary)){
     counter <- counter + 1
   }
 }
-bad_snp_results <- snp_results[snp_results$pkb  > 100, ]
-#  most of the bad ones are Treponema
 
-snp_results$Treponema <- grepl("Treponema", snp_results$silva)
 # remove NAs
 (p_snps <- ggplot(snp_results %>% filter(!is.na(pkb)), aes(x=set )) + 
     mytheme +
     #geom_bar(aes(y=..count../10), fill="grey80")+ 
-    geom_label(stat='count', aes(y=(..count../10) +20, label=paste("n = ", ..count..)), size=3,label.size=0 , color="grey70")+ 
+    geom_label(stat='count', aes(y=(..count../10) +10, label=paste("n = ", ..count..)), size=3,label.size=0 , color="grey70")+ 
     geom_boxplot(aes(y=pkb, color=set), color="grey30", fill=NA, outlier.shape = NA, outlier.colour = "grey") + 
     geom_jitter(aes(y=pkb, color=set), alpha=.3, width = .2, height = .002) +  
     scale_color_discrete(guide="none") +
-    facet_grid(~Treponema) + 
-    labs(title="Accuracy of 16S sequences by assembly method ", 
+    labs(title="Accuracy of 16S rRNA sequences by assembly method ", 
          #subtitle="gray bars represent the number of sequences recovered",
          x= "focusDB  Mode",
          color="Assembly mode",
          #y="Errors per kbp \n(and relative ammount of seqeunces recovered)")
          y="Errors per kbp",
-         caption="denovo: recovered from a de novo assembly\nfast: 16S sequences recovered from riboSeed's subassemblies\nfull: 16S sequences recovered from riboSeed's de fere novo assembly")
+         caption="denovo: recovered from a de novo assembly\nfast: recovered from riboSeed's subassemblies\nfull: recovered from riboSeed's de fere novo assembly")
   )
 snp_results$source <- gsub("(.*?)\\s.*", "\\1", snp_results$focusDB)
 snp_results$target <- gsub("(.*?)\\s.*", "\\1", snp_results$silva)
@@ -876,14 +880,14 @@ seqs_aligned_against_cg <- snp_results %>% filter(set=="fast") %>% nrow()
 n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow()
 (p_snps_hist <- ggplot(snp_results %>% filter(!is.na(pkb)) %>%filter(set=="fast")%>%
                          group_by(pkb) %>%
-                         summarize(bin=unique(pkb), 
-                                y=n()), aes(x=bin, y=y, fill=rev(bin))) + 
+                         summarize(bin=unique(ceiling(pkb)), 
+                                y=n()), aes(x=bin, y=y, fill=bin==0)) + 
     mytheme +
-    geom_bar(stat="identity", width = .2, positiion="dodge") +
-    scale_fill_continuous(guide="none") +
+    geom_bar(stat="identity", width = .8, positiion="dodge") +
+    scale_fill_manual(guide="none", values=wesanderson::wes_palettes$IsleofDogs1[4:5]) +
     labs(
       x="Errors/Kbp", y="Sequences",
-      title="Accuracy of recovered 16S",
+      title="Accuracy of reassembled 16S rRNA",
       subtitle=paste0(
       "In the genera considered, ", 
       nrow(only_illumina_assembly_summary), 
@@ -891,7 +895,8 @@ n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow
       "riboSeed recovered ",seqs_aligned_against_cg, " sequences, of which ",  n_exact_seqs, " were exact.")
     )
 )
-ggsave("docs/figures/S5-set-accuracy.png", p_snps, device = "png", dpi = 300, width = 6, height = 5)
+
+ggsave("docs/figures/S5-set-accuracy.png", p_snps, device = "png", dpi = 300, width = 7, height = 5)
 ggsave("docs/figures/4-fast-cg-accuracy.png", p_snps_hist, device = "png", dpi = 300, width = 8, height = 6)
 
 write.table(snp_results, file="./docs/snps_per_kbp.tab", sep="\t", row.names=F)

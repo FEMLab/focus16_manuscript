@@ -359,12 +359,8 @@ together <- merge(
 )
 together[together$silva!=together$focuDB, ] %>% View()
 write.table(together[together$silva!=together$focuDB, ], file = "STABLE_different_assignment.tab", row.names = F, sep="\t")
+
 ```
-
-
-
-
-
 
 
 
@@ -407,7 +403,7 @@ together[together$silva!=together$focuDB, ]
 
 ## Long length read data
 
-With short read data, we do not identify more sequences, but we wantred to see how it would perfom on full-length 16s from the same physilogical location. We identified a  dattaset from wagner 2016: <https://bmcmicrobiol.biomedcentral.com/articles/10.1186/s12866-016-0891-4>.  We downloaded those reads from ENA, and converted to fastq with PacBio's <https://github.com/PacificBiosciences/pbh5tools>.
+With short read data, we only  identify 3  more sequences, but we wantred to see how it would perfom on full-length 16s from the same physilogical location. We identified a  dattaset from wagner 2016: <https://bmcmicrobiol.biomedcentral.com/articles/10.1186/s12866-016-0891-4>.  We downloaded those reads from ENA, and converted to fastq with PacBio's <https://github.com/PacificBiosciences/pbh5tools>.
 
 ```{bash, eval=FALSE} 
 conda create -n pacdada pbh5tools bax2bam lima ; conda activate pacdada

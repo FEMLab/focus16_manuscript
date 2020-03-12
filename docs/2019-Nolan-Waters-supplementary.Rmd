@@ -106,7 +106,7 @@ nwith_sras <- length(unique(srac[srac$count > 0, "org"]))
     theme(legend.position = c(.8, .3), 
           text = element_text(size=8))
 )
-ggsave("docs/figures/S1-sras.png", psrastrains, device = "png", dpi = 300, width = 8, height = 5)
+ggsave("docs/figures/S1-sras.png", psrastrains, device = "png", dpi = 300, width = 9, height = 5)
 ## add endo data
 thispath = file.path("results", paste0("endo", "_sra_count"), "sralist.txt")
 tmp <- read.csv2(thispath, sep=":", col.names = c("org", "count"), stringsAsFactors = F, header=F)
@@ -182,10 +182,12 @@ unique_and_valid <- theseproks %>% select(genus, ref, sras) %>% distinct() %>%
   filter(sras) %>% filter(ref)
 write.table(sort(unique_and_valid$genus), col.names = F, row.names = F, file = "./docs/datasets/combined_genuses.txt", quote=F)
 
-ggsave("docs/figures/S6-datasets.png", p_dataset_overlap, device = "png", dpi = 300, width = 5, height = 4)
+ggsave("docs/figures/S6-datasets.png", 
+       p_dataset_overlap, 
+       device = "png", dpi = 300, width = 6, height = 5)
 ggsave("docs/figures/S6-datasets-log.png", 
        p_dataset_overlap + scale_x_upset(ytrans = "log1p") , 
-       device = "png", dpi = 300, width = 5, height = 4)
+       device = "png", dpi = 300, width = 6, height = 5)
 
 ```
 

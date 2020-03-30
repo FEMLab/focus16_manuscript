@@ -1,6 +1,6 @@
 ---
-title: 'focusDB: mining underutilized SRAs to make a high-resolution 16S rRNA database'
-author: Ben Nolan, Florence Abram, Fiona Brenna, Vincent O'Flaherty,  Leighton Pritchard, Nicholas Waters
+title: 'Mining underutilized SRAs to improve 16S rRNA databases'
+author: Ben Nolan, Florence Abram, Fiona Brennan, Vincent O'Flaherty,  Leighton Pritchard, Nicholas Waters
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 toc: false
 papersize: a4 
@@ -12,9 +12,10 @@ output:
 editor_options:
   chunk_output_type: console
 bibliography: focusdb_references.bib
-abstract: Current approaches to interpreting 16S rDNA amplicon data are hampered by several factors. Among these are database inaccuracy or incompleteness, sequencing inaccuracy, and biased DNA/RNA extraction. Existing 16S rDNA databases source the majority of sequences from deposited amplicon sequences, draft genomes, and complete genomes. The majority of draft genomes available are assembled from short reads. However, repeated ribosomal regions are notoriously difficult to assemble well from short reads, and as a consequence the short-read-assembled 16S rDNA region is frequently an amalgamation of the different loci within the genome. Especially when using amplicon sequence variants (ASVs) for high-resolution community analysis, assigning exact taxonomy to a given amplicon would be impossible in such a case, as even a perfectly sequenced amplicon would not be an exact match to an amalgamated 16S rDNA sequence in the database. We present focusDB, a pipeline for improving 16S rDNA databases by mining NCBI's Sequence Read Archive for underexploited whole-genome sequencing runs. Using riboSeed (a genome assembly tool for correcting rDNA misassembly), focusDB allows for large-scale curation of 16S rDNA databases. When applied to four datasets, we show an average increase of 60% in the number of unique sequences for given species. Assigning taxonomy using this augmented SILVA database resulted in more annotated ASVs . Further, fine-scale classification improved by revealing ambiguities at the genus or species level for ASVs that would otherwise have been exclusively (and incorrectly) classified as one particular taxa.  Here, we show that taxonomic assignment improvements can be gained for a number of genera, and invite the community to expand our work to augment existing 16S rDNA databases such as SILVA, GreenGenes, and RDP.
+abstract: Current approaches to interpreting 16S rDNA amplicon data are hampered by several factors. Among these are database inaccuracy or incompleteness, sequencing inaccuracy, and biased DNA/RNA extraction. Existing 16S rDNA databases source the majority of sequences from deposited amplicon sequences, draft genomes, and complete genomes. The majority of draft genomes available are assembled from short reads. However, repeated ribosomal regions are notoriously difficult to assemble well from short reads, and as a consequence the short-read-assembled 16S rDNA region is frequently an amalgamation of the different loci within the genome. The complicates high-resolution community analysis as draft genome's 16S sequence may be a chimera of multiple loci; in such cases, it may not be an exact match to the appropriate reference sequence. We present Glean16, a pipeline for improving 16S rDNA databases by mining NCBI's Sequence Read Archive for underexploited whole-genome sequencing runs. Using riboSeed (a genome assembly tool for correcting rDNA misassembly), Glean16 allows for large-scale curation of 16S rDNA databases. When applied to the taxa from three mock datasets and one real-world  dataset, we show an average increase of 60% in the number of unique sequences for given species compared to SILVA 16S rRNA database alone. We augmented the widely-used SILVA 16S database with the novel sequences disclosed by Glean16 and re-processed sequences from the differennt datasets with DADA2; using this augmented SILVA database increased the number of ASVs that could be given proper annnotations. Further, fine-scale classification improved by revealing ambiguities; for example, an ASV may have been assigned to be a particular genus, but the additional diversity in the augmented database revealed that the ASV may belong to two or more different genera.  Having shown these types of taxonomic-assignment improvements can be gained for a moderate number of genera, we invite the community to expand our work to augment existing 16S rDNA databases such as SILVA, GreenGenes, and RDP.
 ---
 
+ <!-- classiat the genus or species level for ASVs that would otherwise have been exclusively (and incorrectly) classified as one particular taxa. -->
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(cache=FALSE)
@@ -22,7 +23,8 @@ library(tidyverse)
 library(diagram)
 
 library(kableExtra)
-
+# draft 3 but I thinkwe have a name
+toolname <- "Glean16"
 ```
 
 
@@ -34,82 +36,116 @@ library(kableExtra)
 The use of genetic markers for microbial classification has seen explosive growth over the past decade [@liu2012popular].The 16S rDNA gene is the standard utilised in the assessment of prokaryotic community composition by amplicon sequencing. 16S rDNA has been used for community analysis in diverse environments such as the gut microbiota of cattle and pigs [@avila2018prediction], soil [@santamaria2018soil], marine environments [@dang2000bacterial], and the gut[@jovel_characterization_2016]. The rDNA regions are highly conserved between species but maintain enough diversity that organisms can be differentiated at the genus level [@woo2008then], whilst also maintaining enough conservation to distinguish at the Domain level [@woese1990towards]. 
 
 
-Organisms have been observed to contain  up to 21 copies of the rDNA operon[@vetrovsky_variability_2013;stoddard_rrndb_2015;@acinas2004divergence], and there may be variability between each 16S rDNA copy [@sun2013intragenomic].  This can negatively impact  16S rRNA classification. The degree of nucleotide identity  between rDNA copies varies by taxa. Extremophiles have been reported to possess high 16S rDNA copy heterogeneity, between 2.4% and 9.3% sequence variation between copies in  several species [@sun2013intragenomic].  Although these repeats complicate genome assembly, each instance of the 16S rRNA contains valuable information; an ideal amplicon analysis framework would be able to  both correct for copy number variation between organisms in a community, and also know which set of 16S rRNA variants might belong to a particular organism. 
+Microbial genomes have a range of 16S rRNA gene copy numbers (GCNs), from the many *Mycobacterum* with a single copy up to  *Photobacterium damselae* Phdp Wu-121 with 21 copies [@vetrovsky_variability_2013;@stoddard_rrndb_2015;@acinas2004divergence].  There may be variability between each 16S rDNA copy [@sun2013intragenomic]; this can negatively impact 16S rRNA classification in two ways.  First, in taxa with low variability, diversity estimates by overestimatinng taxa with higher GCN and underestimating those with low GCN. Second, some organisms have sufficient sequence variability between copies that they may be assigned different taxonomies; indeed,  certain extremophiles have been reported to possess very high 16S rRNA copy heterogeneity, up to 9.3% sequence variation in some species [@sun2013intragenomic]; this is well beyond the 97% or 99% clustering thresholds commonly used for community analysis.  Although these repeats complicate community analysis, each instance of the 16S rRNA contains valuable information; an ideal analysis framework would utilize a database incorporating this information to both correct for copy number variation between organisms in a community, and correctly relate 16S rRNA variants to each organism. 
 
 
-The three most popular  16S rDNA databases for bacteria and archaea are Greengenes [@desantis2006greengenes], SILVA [@quast2012silva], and the Ribosomal Database Project (RDP) [@cole2005ribosomal] each contain 16S rRNA sequences derived from multiple major international nucleotide sequence databases, principally EMBL/ DDBJ and Genbank.  The databases differ in their approach to  sequence classification. The RDP database uses the RDP classifier to assign taxonomic to 16S rRNA sequences [@wang2007naive]. SILVA and Greengenes inherit a sequence's taxonomic assignment from the source database(such as NCBI or EBI).. SILVA provides a non-redundant database version in which no two sequences share more than 99% sequence identity at a given taxonomic level[@quast2012silva]. Although each database performs sequence quality checks, only Greengenes actively checks for chimeric sequences, which can negatively affect 16S taxonomic assignment if present in a reference database [@desantis2006greengenes]. 
+Amongsth the most widely used 16S rDNA databases for bacteria and archaea are Greengenes [@desantis2006greengenes], SILVA [@quast2012silva], and the Ribosomal Database Project (RDP) [@cole2005ribosomal]. Each contains 16S rRNA sequences derived from multiple major international nucleotide sequence databases, principally EMBL/ DDBJ and Genbank.  The databases differ in their approach to  sequence classification. The RDP database uses the RDP classifier to assign taxonomic to 16S rRNA sequences [@wang2007naive]. SILVA and Greengenes inherit a sequence's taxonomic assignment from the source database (such as NCBI or EBI). SILVA provides a non-redundant database version in which no taxonomic classification contains sequences with  greater than 99% pairwise identity [@quast2012silva]. Although each database performs sequence quality checks, only Greengenes actively checks for chimeric sequences, which can negatively affect 16S taxonomic assignment if present in a reference database [@desantis2006greengenes]. 
 
 
-The National Centre for Biotechnology Information (NCBI) provides multiple databases, including the Sequence Read Archive (SRA) [@kodama2011sequence] for raw  high-throughput sequencing data, the Genome database as an umbrella for draft and complete genomes.  However, not all genome sequences in the NCBI Genome database have publicly available raw data  in the SRA, and only  10% of genomes are closed or complete [@waters2018riboseed]. A common weakness of draft assemblies from short-read sequencing is incorrect assembly of repeated rDNA regions of a genome, which may be collapsed/merged into a single rDNA (and the 16S rRNA  will in turn be incorporated into SILVA, GreenGenes, or RDP). 
+The National Centre for Biotechnology Information (NCBI) provides multiple databases, including the Sequence Read Archive (SRA) [@kodama2011sequence] for raw  high-throughput sequencing data, the Genome database as an umbrella for draft and complete genomes.  Not all genome sequences in the NCBI Genome database have publicly available raw data  in the SRA, and only  10% of genomes are closed or complete [@waters2018riboseed]. A common weakness of draft assemblies from short-read sequencing is incorrect assembly of repeated rDNA regions of a genome, which may be collapsed/merged into a single rDNA; the resulting 16S rRNA  will in turn be incorporated into SILVA, GreenGenes, or RDP. This comprimises the quality of 16S rRNA databases; such sequences should be treated with caution.
 
 
-A survey of the SILVA 132 database shows that 9.5% of sequences come from draft genome assemblies; the vast majority (87%) consist of amplicon sequences (usually Sanger sequenced), and the remaining 2% come from complete genomes. Illumina-sequenced genome assemblies are prone to errors in rDNA regions, as the length of the region exceeds read lengths. PCR spanning the rDNA region, followed by Sanger sequencing, or the use of long-read technologies such as PacBio or Nanopore sequencing, can resolve these multiple copies but, as the majority of the data generated over the last two decades comes from short read sequences, fixing these collapsed regions remains a valuable goal[@land2015insights;@wagner_evaluation_2016].  
+A survey of the SILVA 132 database shows that 9.5% of sequences come from draft genome assemblies; the vast majority (87%) consists of amplicon sequences (usually Sanger sequenced), and the remaining 2% come from complete genomes. Genome assemblies from short reads are prone to errors in rDNA regions, as the length of the region exceeds read lengths. PCR spanning the rDNA region, followed by Sanger sequencing, or the use of long-read technologies such as PacBio or Nanopore sequencing, can resolve these multiple copies but, as the majority of the data generated over the last two decades comes from short read sequences, fixing these collapsed regions remains a valuable goal[@land2015insights;@wagner_evaluation_2016].  
 
 
-The correct reassembly of multiple rDNA regions of draft genomes can be achieved using riboSeed, which uses a reference genome to help assemble the rDNA regions of a draft genome [waters2018riboseed]. riboSeed exploits the observation that the flanking regions of the rDNA region are highly conserved within a taxon, yet variable between rDNA copies in the same genome. 
+The correct reassembly of multiple rDNA regions of draft genomes can be achieved using riboSeed, which uses a reference genome to help assemble the rDNA regions of a draft genome [waters2018riboseed]. riboSeed exploits the observation that the flanking regions of the rDNA region are highly conserved within a taxon yet variable between rDNA copies in the same genome, by using targeted subassembly to correctly place uniquely-reassembled copies of multi-locus repeats.  The knock-on effect of assembling multicopy rDNA operons is the gain of highly-accurate 16S rRNA sequences, which can be incorporated into 16S rRNA databases.
 
-We developed focusDB to augment existing 16S rRNA databases by mining the SRA database for candidate whole-genome sequencing studies for reassembly. Incorporating these reassembled sequences improves fine-scale taxonomic classification, aiding researchers efforts to understand microbial communities.
+Here, we present the results of using such an approach to augment existing 16S rRNA databases.  The sequence diversity gained by incorporating these reassembled sequences improves fine-scale taxonomic classification with existing analysis pipelines, aiding efforts to understand microbial communities.
+
 
 
 # Methods
 
-## The FocusDB Pipeline
+## The `r toolname` Pipeline
 
-focusDB is a pipeline to identify, download, and reassemble whole-genome-sequencing projects from NCBI's SRA using riboSeed to improve 16S rDNA assembly,  and thereby augment existing 16S rRNA databases (such as SILVA, Greengenes, RDP) to enhance taxonomic classification. 
 
-focusDB can be installed via pip into a conda environment, for ease and reproducibility.
+We developed `r toolname`: a pipeline to augment existing 16S rRNA databases by mining the SRA database for candidate whole-genome sequencing studies for reassembly. Candidate SRAs are identified, downloaded, subjected to automated quality control, reassembled with riboSeed to resolve the rDNA operons, given a taxonomic assignment with Kraken, and formatted for addition with existing databases. 
 
-The focusDB pipeline is shown as a flowchart (Figure \@ref(fig:flowchart)). Details of third-party tools used in focusDB can be found in supplementary information.
 
-Given a genus or "Genus species" binomial, focusDB progresses as follows:
+The  pipeline is shown as a flowchart (Figure \@ref(fig:flowchart)). Details of third-party tools used in `r toolname` can be found in supplementary information.
 
-1.  Potential complete reference genomes are identified and downloaded from Refseq by matching the provided organism name (this may also be restricted to genomes defined by the user). 
-2. Barrnap [@seemann_barrnap_2020]  is used to screen these complete genomes by estimating the 16S rRNA count. 
-3. Reference genomes with a single 16S rRNA are discarded. This catches two cases: 
+Given a genus or "Genus species" binomial, the pipeliine progresses as follows:
+
+1.  Candidate reference genomes are identified and downloaded from Refseq by matching the provided organism name (this may also be restricted to genomes defined by the user). 
+2. Barrnap [@seemann_barrnap_2020]  is used to screen these complete genomes by estimating the 16S rRNA count.  Reference genomes with a single 16S rRNA are discarded. This catches two cases: 
 
     a. An organism may only have a single 16S rRNA. In this case riboSeed assembly will not improve on existing draft genomes.
     b.  A draft genome may have been incorrectly attributed the classification of "complete".  Errant reference genomes are therefore discarded, and the remaining references are available for use in the pipeline. 
 
-4. A Mash[@ondov_mash_2016a] sketch is generated from the remaining references.
-5. sraFind ^[https://github.com/nickp60/sraFind] is used to identify all whole-genome sequencing SRA accessions for the organism of interest. All of these are downloaded with fast(er)q-dump [@sra-tools_2019]. Steps 5a-5e proceed for each SRA.
+3. A Mash[@ondov_mash_2016a] sketch is generated from the remaining references.
+4. sraFind ^[https://github.com/nickp60/sraFind] is used to identify all whole-genome sequencing SRA accessions for the organism of interest; these are downloaded with fast(er)q-dump [@sra-tools_2019]. Steps 5a-5e proceed for each SRA.
 
-    a. **Identify closest reference genome**. For a given SRA, the most compatible reference genome is determined via plentyofbugs, which performs an initial assembly with the fast and highly-accurate assembler SKESA [@souvorov_skesa_2018] using a subsample of the dataset. Mash is used to identify the closest match between the preliminary assembly and all the reference genomes from step 1. If no close match above a user-defined threshold (defaulting to a Mash distance of 0.1, roughly corresponding to a within-genus match[@ondov_mash_2016a]), the SRA is skipped; otherwise, the closest match is  later used for a reference with riboSeed. 
+    a. **Identify closest reference genome**. For a given SRA, the most compatible reference genome is determined via plentyofbugs[@waters_plentyofbugs_2019], which performs an initial assembly with the fast and highly-accurate assembler SKESA [@souvorov_skesa_2018] using a subsample of the dataset. Mash is used to identify the closest match between the preliminary assembly and all the reference genomes from step 1. If no close match above a user-defined threshold (defaulting to a Mash distance of 0.1, roughly corresponding to a within-genus match[@ondov_mash_2016a]), the SRA is skipped; otherwise, the closest match is  later used for a reference with riboSeed. 
     b. **Assign Taxonomy**. Kraken2[@woodKrakenUltrafastMetagenomic2014] is used to assign taxonomy to the preliminary SKESA assembly. The highest-ranked binomial name is recorded, and the full kraken report is stored in the output folder for inspection.  
-    c. **Pre-Assembly Quality Control**. Reads are run through several quality control steps. The average length of the reads is checked based on the first 1000 reads. An SRA that contains reads of very low length (<65bp) will be rejected, as very short reads cannot be used effectively by riboSeed to differentiate rDNA flanking regions. Reads are then quality trimmed with sickle using default parameters. fastp is used to identify and remove any remaining adapter sequences. For paired-end runs, unpaired reads are rejected.  
-    d. **Downsample**. Read coverage is assessed using a provided estimate of genome length, or the length of the reference genome. If read coverage exceeds a user-specified threshold (for an explanation of the default 50x coverage, see SPAdes paper [@bankevichSPAdesNewGenome2012]), trimmed reads are down-sampled to reach the desired coverage with seqtk [@li_seqtk_2020].
+    c. **Pre-Assembly Quality Control**. Reads are run through several quality control steps. The average length of the reads is checked; an SRA that contains reads of very low length (<65bp) will be rejected, as very short reads cannot be used effectively by riboSeed to differentiate rDNA flanking regions. Reads are then quality trimmed with sickle using default parameters. fastp is used to identify and remove any remaining adapter sequences. For paired-end runs, unpaired reads are rejected.  
+    d. **Downsample**. Read coverage is assessed using a provided estimate of genome length, or the length of the reference genome. If read coverage exceeds a user-specified threshold (defaults to 50x coverage, as futher coverage can artificailly support sequencing errors; see SPAdes paper [@bankevichSPAdesNewGenome2012]), trimmed reads are down-sampled to reach the desired coverage with seqtk [@li_seqtk_2020].
     e.  **De fere novo Assembly**. The SRA reads are then assembled using riboSeed, using the reference genome determined in (2a) as a template genome. Subassemblies are performed with SPAdes[@bankevichSPAdesNewGenome2012]; the default parameters of 3 rounds of seeding and 1kbp flanking regions are used.
     
-6.  16S rDNA sequences are extracted from either the subassemblies ("fast" mode) or from the final assembly ("full" mode) using barrnap, marked with the taxonomy classified by Kraken2, and written to a fasta file that matches the format used by the SILVA database. The taxonomy, run statistics, and other diagnostic information is recorded in tabular files. If an aspect of the pipeline fails, rerunning the same command will reuse available intermediate results wherever appropriate. 
+5.  16S rDNA sequences are extracted from either the subassemblies ("fast" mode) or from the final assembly ("full" mode) using barrnap, marked with the taxonomy classified by Kraken2 in step 4b, and written to a fasta file that matches the format used by the SILVA database. 
+
+In our analysis, we filtered retained full-length seqeunces by removing any 16S rRNA under 1358bp (under the 1st quartile of the sequence lengths in SILVA); additionally, we removed any 16S rRNA for which Kraken2's taxonomic report showed less than a 70% majority of sequences were assigned at the genus level; this was done to remove any datasets that may be suffering from contamination.  Sequences from an additional SRA were removed due to contamination (see supplementary data section "Identifying poor taxonomic assignments").
 
 
-In our analysis, we removed any 16S rRNA under 1358bp (under the 1st quartile of the sequence lengths in SILVA, and removed any 16S rRNA for which Kraken2's taxonomic  assignment showed less than a 70% majority of sequences were assigned at the genus level.  Sequences from an additional SRA were removed due to contamination (see supplementary data).
-
-
-```{r flowchart, echo=FALSE, fig.cap="Flowchart of the focusDB pipeline. Gray lines refer to taxonomic information, and black lines refer to sequence information.", out.width = '80%'}
+```{r flowchart, echo=FALSE, fig.cap="Flowchart of the pipeline that resolves multi-copy 16s loci from sequenced genomes with reads in SRA (as implemented in Glean16). Candidate reference genomes are downloaded from RefSeq. Reads for each SRA are downloaded and Kraken2 is ues to assign taxonomy. Corresponding reference genomes and SRA read sets are identified (using SKESA and Mash), and a new assembly constructed for these using riboSeed. The assembled 16S regions are then taken forward for phylogenetic reconstruction, or to supplement existing reference databases. Gray lines refer to taxonomic information, and black lines refer to sequence information.", out.width = '80%'}
 knitr::include_graphics("figures/1-flowchart.png")
 ```
 
+### Implementation
+
+The `r toolname` pipeline was implemented with scale in mind. Users can use SRA-tools's prefetch command for faster downloads of SRA data; the status of each SRA is recorded in an SQLite database. For those with access to a computing cluster running Open Grid Scheduler, the time-consuming  assembly steps can be distributed as array jobs as needed.  All of the dependencies are available on Conda.
+
+The first time the pipeline is used, an automated setup prodecure is run to download the required databases for Kraken2 and sraFind. 
+
+Throughout,  diagnostic information is recorded; if an aspect of the pipeline fails, rerunning the same command will reuse available intermediate results wherever appropriate.  
+
+`r toolname` can be installed via pip into a conda environment, for ease and reproducibility.
+
 ## Selecting suitable test datasets and identifying genera
 
-Three mock communities described in the DADA2 manuscript [@callahanDADA2HighresolutionSample2016] were selected to assess the utility of focusDB.  These communities, named "Extremes", "HMP", and "Balanced", and comprising 27, 21, and 57 members respectively[@schirmer_insight_2015;kozich_development_2013], were sequenced on an Illumina MiSeq yielding over 500,000 250bp paired-end reads. To provide an assessment of of real-world usage of focusDB, we used the data generated in the EndoBiota study[@ataEndobiotaStudyComparison2019]^[PRJEB26800]. 
+Three mock communities described in the DADA2 manuscript [@callahanDADA2HighresolutionSample2016] were selected to assess the utility of `r toolname`.  These communities, named "Extremes", "HMP", and "Balanced", and comprising 27, 21, and 57 members respectively[@schirmer_insight_2015;@kozich_development_2013], were sequenced on an Illumina MiSeq yielding over 500,000 250bp paired-end reads. 
 
-```{r datasets, echo=FALSE, fig.cap="SUPPLEMENTARY. Of the 333 unique genera across the 4 datasets, 85 had public short-read data in the SRA and at least one Refesq complete genome available.  While only a fraction of the SRAs meet the requirements for reassembly, future data availability will allow us to revisit previously excluded SRAs", out.width = '60%'}
+To provide an assessment of of real-world usage of `r toolname`, we used the data generated in the EndoBiota study[@ataEndobiotaStudyComparison2019]^[PRJEB26800]: a survey of the microbiomes across 3 sites between women with and without endometriosis. These datasets are summarized in Table \@ref(tab:dataset-tab).
+
+```{dataset-tab}
+knitr::kable(col.names = c("Name",	"N Strains",	"Reference",	"Description"),
+  booktabs=TRUE,
+  caption="Description of the four datasets considered in this study.  The number or strains was readily availible for the mock communities; for the Endobiota study, thiis was determined by a preliminary analysis using DADA2 and SILVA. Asterisk indicates that this is a calculated number, not a value known a priori.",
+  read.table(text="
+Balanced	57	@schirmer_insight_2015	Mock community of bacteria and archaea; all strains in equal proportions
+HMP	21	@kozich_development_2013	Mock community eith common members of the human microbiome
+Extremes	27	@callahanDADA2HighresolutionSample2016	Mock community of bacteria with greatly varying proportions
+Endobiota	292*	@ataEndobiotaStudyComparison2019	Study comparing microbiomes of women with endometriosis to healthy controls
+", sep="\t")
+)
+```
+
+As the pipeline takes a genus or binomial name as input, we first identified the genera present in each dataset. , a preliminary assessment was performed with DADA2, assigning taxonomy with the DADA2-formatted subset of SILVA 132 (see microbiome.Rmd, section "Preliminary taxa assignment for EndoBiota study"). 
+
+Unlike the mock communities, the genera present in the Endobiota samples is not known *a priori*, we determined the community members by processing the samples through DADA2 similar to how the Balanced, Extremes, and HMP datasets were analyzed. The analysis script `microbiome.Rmd` can be found in the supplementary data repo; processed data was deposited  along with the rest of results generated in this work at  https://zenodo.org/record/1172783.  In short, DADA2 was used to build error profiles for each of the samples in the study. ERR2586009 was found to be of poor quality and was excluded from the analysis.  Reads were then trimmed 30bp on the 5' end and 40bp on the 3' end, quality trimmed after two low-Q bases, and any residual phi-X sequence was removed. Merged amplicons were filtered to retain those between 360 and 450 bases.  4.2% of seqeunces were determed to be chimeric and removed.  Taxonomy was assigned using  DADA2's `assignTaxonomy` command with the SILVA non-redundant version 132 release provided by DADA2, and species-level taxonomy was assigned using DADA2's `addSpecies` command as described in their manual.
+
+
+
+```{r datasets, echo=FALSE, fig.cap="SUPPLEMENTARY. The x axis shows the overlapping set of the genera among the four dataset; the color shows how many of the genera met the inclusion criteria. Of the 333 unique genera, 85 met our criteria of having public short-read data in the SRA and at least one RefSeq complete genome available. While only a fraction of the SRAs meet the requirements for reassembly, future data availability will allow us to revisit previously excluded SRAs.", out.width = '60%'}
 knitr::include_graphics("figures/S6-datasets-log.png")
 ```
 
-As focusDB takes a genus or binomial name as input, we first identified the genera present in each dataset. In the three mock communities, genera were identified from manuscripts of their respective studies. To identify which genera to process with focusDB for the EndoBiota study, a preliminary assessment was performed with DADA2, assigning taxonomy with the DADA2-formatted subset of SILVA 132 (see microbiome.Rmd, section "Preliminary taxa assignment for EndoBiota study" https://zenodo.org/record/1172783).  This resulted in the identification of 333 genera combined across the four datasets. When cross-referenced with sraFind and RefSeq, this list was filtered down to the 85 genera that had both short-read SRAs available and at least one reference genome for that genus (SUPPLEMENTARY Figure \@ref(fig:datasets), and supplementary table S2).
+ This resulted in the identification of 333 genera combined across the four datasets. When cross-referenced with sraFind and RefSeq, this list was filtered down to the 85 genera that had both short-read SRAs available and at least one reference genome for that genus (SUPPLEMENTARY Figure \@ref(fig:datasets), and supplementary table S2).
 
 
 ## SUPPLEMENTARY METHOD 1: Assembly mode parameter choice
-As candidate 16S rRNA sequences could be identified from both riboSeed's subassemblies and the final *de fere novo* assembly, we identified which SRAs in our dataset had completed genomes, and performed an analysis comparing complete genomes to the sequences recovered from "fast" mode (sequences from riboSeed's subassemblies) and "full" mode (sequences from riboSeed's final *de fere novo* assembly). This showed that the subassemblies have fewer errors (SUPPLEMENTARY Figure \@ref(fig:rdnamodes)), and as such are the ones we report below and recommend for augmenting a database (see supplementary data section "assess_assembly_snps"). Job-handling parameters and run scripts are available in supplementary data. 
+As candidate 16S rRNA sequences could be identified from both riboSeed's subassemblies and the final *de fere novo* assembly, we identified which SRAs in  dataset had completed genomes, and performed an analysis comparing complete genomes to the sequences recovered from "fast" mode (sequences from riboSeed's subassemblies) and "full" mode (sequences from riboSeed's final *de fere novo* assembly). This showed that the subassemblies have fewest errors (SUPPLEMENTARY Figure \@ref(fig:rdnamodes)), and as such are the ones we report below and recommend for augmenting a database (see supplementary data section "assess_assembly_snps").  
  
 ```{r rdnamodes, echo=FALSE, fig.cap="SUPPLEMENTARY. Comparing assembly modes for accuracy. SRAs in our dataset that underwent genome completion were used to identify the most accurate method of 16S rRNA sequence assembly. De novo assembly resulted in highly accurate 16S rRNA sequences, but was only able to recover 66 sequences. '--fast' mode proved to be the best tradeoff of accuracy and efficiency.", out.width = '60%'}
 knitr::include_graphics("figures/4-fast-cg-accuracy.png")
 ```
 
 
-## Running FocusDB
-FocusDB was run in a conda environment with the required dependencies (see supplementary material repository file "focusDB_env.txt"). For each of the 85 genera, up to 200 reference genomes were used (depending on the number of reference genomes available) and limited the scope of the analysis to a maximum of 50 randomly selected SRAs for computational reasons. A minimum Mash distance was set to 0.1 [@ondov_mash_2016a] between a preliminary assembly and a reference genome, as this was shown to be the maximum distance between the reference and sequenced isolate that riboSeed performs well with (see @waters2018riboseed Figure 5). 
+
+## Running `r toolname`
+`r toolname` was run in a conda environment with the required dependencies (see supplementary material repository file "`r toolname`_env.txt"). For each of the 85 genera, up to 200 reference genomes were used (depending on the number of reference genomes available) and limited the scope of the analysis to a maximum of 50 randomly selected SRAs for computational reasons. A minimum Mash distance was set to 0.1 [@ondov_mash_2016a] between a preliminary assembly and a reference genome, as this was shown to be the maximum distance between the reference and sequenced isolate that riboSeed performs well with (see @waters2018riboseed Figure 5). Run scripts are available in supplementary data.
+
+### SUPPLEMENTARY Method 2:
+
 
 ## Benchmarking Reassembled 16S rRNA against Complete Genome 16S rRNA sequences
 
@@ -122,21 +158,21 @@ We used the DADA2 pipeline to assign taxonomy after processing the reads as desc
 # Results
 
 ## 1. Benchmarking Reassembly Accuracy 
-riboSeed has been shown to generate high-quality reconstructions of each rDNA region when benchmarked against hybrid assemblies[@waters2018riboseed]. Using sraFind, we identified which sequences in SILVA originated from closed, complete genomes; these were used to benchmark the accuracy of the 16S rRNA sequences reassembled with the focusDB pipeline. In our dataset, 69 SRA/complete genome pairs met that criteria. 
+riboSeed has been shown to generate high-quality reconstructions of each rDNA region when benchmarked against hybrid assemblies[@waters2018riboseed]. Using sraFind, we identified which sequences in SILVA originated from closed, complete genomes; these were used to benchmark the accuracy of the 16S rRNA sequences reassembled with the `r toolname` pipeline. In our dataset, 69 SRA/complete genome pairs met that criteria. 
 
-```{r accuracy, echo=FALSE, fig.cap="Assembly errors per Kbp were calculated between each focusDB sequence to the reference genome. Grey bar represents sequences with no assembly errors.", out.width = '60%'}
+```{r accuracy, echo=FALSE, fig.cap="Assembly errors per Kbp were calculated between each `r toolname` sequence to the reference genome. Grey bar represents sequences with no assembly errors.", out.width = '60%'}
 knitr::include_graphics("figures/S5-set-accuracy.png")
 ```
 
-Comparing the re-assembled 16S rRNA sequences to the 16S rRNA sequences from complete genomes shows a low error rate (Figure \@ref(fig:accuracy)). This confirms that focusDB's best-case accuracy is comparable to long-read/hybrid assembly, and that focusDB sequences can be used to augment existing databases.
+Comparing the re-assembled 16S rRNA sequences to the 16S rRNA sequences from complete genomes shows a low error rate (Figure \@ref(fig:accuracy)). This confirms that `r toolname`'s best-case accuracy is comparable to long-read/hybrid assembly, and that `r toolname` sequences can be used to augment existing databases.
 
 ## 2. Comparing reassembled 16S rRNA to draft 16S rRNA
 As repeated rDNA operons are difficult to resolve with short read sequences, draft genome assemblies can (and often do) contain a single assembled rDNA region with elevated read coverage. This can be problematic for genus or 16S rRNA classification as– the 16S rRNA recovered may not just correspond to one of $n$ 16S rRNAs, but it can be a consensus "summary"/"collapsed" 16S rRNA resulting from imperfect assembly of the repeated region. In the supplementary data, we show a few examples of such alignments.
 
-## 3. Augmenting SILVA with results from focusDB
+## 3. Augmenting SILVA with results from `r toolname`
 ### Recovering sequences from reassembly
 <!-- (Figure \@ref(fig:sras)) -->
-focusDB was used to build an improved database for the three mock datasets described in the DADA2 paper and a real-world dataset from the Endobiota Study (insert reference here). From the 85 genera considered, focusDB processed 2387 SRAs, and recovered sequences from 1397 SRAs. Several factors can contribute to failing to recover 16S rRNA sequences from a given SRA; among these are a too-distant reference genome, low rDNA flanking diversity, low read length, or high read error rates. In total, we recovered 5854 16S rRNA sequences, of which 3008 were unique. 
+`r toolname` was used to build an improved database for the three mock datasets described in the DADA2 paper and a real-world dataset from the Endobiota Study. From the 85 genera considered, `r toolname` processed 2387 SRAs, and recovered 16S rRNA sequences from 1397 SRAs. Several factors can contribute to failing to recover 16S rRNA sequences from a given SRA; among these are a too-distant reference genome, low rDNA flanking diversity, low read length, or high read error rates. In total, we recovered 5854 16S rRNA sequences, of which 3008 were unique. 
 
 ```{r sras, eval=FALSE, echo=FALSE, fig.cap="SRAs available from datasets available.", out.width = '80%'}
 knitr::include_graphics("figures/2-genera.png")
@@ -144,7 +180,7 @@ knitr::include_graphics("figures/2-genera.png")
 
 
 ### Improving database diversity
-Ideally, focusDB would be applied to every eligible SRA currently available, and periodically rerun as more high-quality reference genomes are generated with long-read techonologies; As we do not have the resources to do this, we assessed the diversity increase gained by augmenting SILVA with the 85 genera considered in this study. For thoroughly-sequenced genera such as *Escherichia*, *Pseudomonas*, or *Bacillus*, the gains are small. However, other taxa showed marked increases in the genus-level diversity (Figure \@ref(fig:reassembly)). 
+Ideally, `r toolname` would be applied to every eligible SRA currently available, and periodically rerun as more high-quality reference genomes are generated with long-read techonologies; As we do not have the resources to do this, we assessed the diversity increase gained by augmenting SILVA with the 85 genera considered in this study. For thoroughly-sequenced genera such as *Escherichia*, *Pseudomonas*, or *Bacillus*, the gains are small. However, other taxa showed marked increases in the genus-level diversity (Figure \@ref(fig:reassembly)). 
 
 
  ```{r reassembly, echo=FALSE, fig.cap="Green circles indicate SRAs that yielded 16S rRNA sequences, while blue diamonds indicate SRAs failing to yield reassembled 16S rRNA sequences. Pink triangles show SRAs that were rejected due to limitations in the diversity of available reference genomes, and inverted green triangles show SRAs rejected due to read length, insufficient coverage, poor read quality, etc. A few errors occurred, usually when the SRAs metadata conflicted with the associated sequencing data and caused download errors or errors from reads with incorrect pairing.", out.width = '80%'}
@@ -153,16 +189,16 @@ knitr::include_graphics("figures/2-genera.png")
 
 
 ## 4 Assessing Taxonomic Assignment 
-DADA2 was used to identify ASVs from the 4 datasets, resulting in a total of 4098 ASVs (109 sequences from the "HMP" dataset, 26 from the "Extreme" dataset, 94 from the "balanced" dataset, and the rest from the EndoBiota study). We then compared the taxonomic results of classification using either the SILVA 132 or SILVA 132 augmented with the focusDB. Of the 4098 sequences, focusDB improved the assignment of 20 strains; see Table \@ref(tab:hits-tab), or Supplementary file STABLE_different_assignment.tab for the actual seqeunces. Improvement could happen in two ways: a previously un-classified ASV gained classification, or previously-assigned ASV gained more species- (or genus-) level details. In our dataset, three unclassified strains gained annotations (numbers 5, 10, and 11) . The remaining 17 had more detail added to the genus or species level; usually, this meant that with SILVA alone, a single species classification was given, but with the augmented database, it was revealed that the ASV could belong to more than one or more other organisms at either the species (numbers 4,6,8,9,12,13,14 ) or genus (1,2,7, 15-20) level.
+DADA2 was used to identify ASVs from the 4 datasets, resulting in a total of 4098 ASVs (109 sequences from the "HMP" dataset, 26 from the "Extreme" dataset, 94 from the "balanced" dataset, and the rest from the EndoBiota study). We then compared the taxonomic results of classification using either the SILVA 132 or SILVA 132 augmented with the `r toolname`. Of the 4098 sequences, `r toolname` improved the assignment of 20 strains; see Table \@ref(tab:hits-tab), or Supplementary file STABLE_different_assignment.tab for the actual seqeunces. Improvement could happen in two ways: a previously un-classified ASV gained classification, or previously-assigned ASV gained more species- (or genus-) level details. In our dataset, three unclassified strains gained annotations (numbers 5, 10, and 11) . The remaining 17 had more detail added to the genus or species level; usually, this meant that with SILVA alone, a single species classification was given, but with the augmented database, it was revealed that the ASV could belong to more than one or more other organisms at either the species (numbers 4,6,8,9,12,13,14 ) or genus (1,2,7, 15-20) level.
 
-```{r diversity, echo=FALSE, fig.cap="Increasing the genus-level diversity of the SILVA database by augmenting with focusDB.", out.width = '80%'}
+```{r diversity, echo=FALSE, fig.cap="Increasing the genus-level diversity of the SILVA database by augmenting with `r toolname`.", out.width = '80%'}
 knitr::include_graphics("figures/3-perc_unique_genus.png")
 ```
 
 ```{r hits-tab, size="tiny"}
 knitr::kable(
   booktabs=TRUE,
-  caption="Of the 4098 sequences across the datasets considered, the augmented database allowed improved taxonomic assignment of 20 seqeunces. Cells reading 'NA NA' indicate that no genus or species could be assigned.  Cells reading NA speciesA/speciesB indicate that the lowest common ancestor for a sequence could not be determined at the genus level. ", col.names =  c("", "SILVA", "SILVA + focusDB"),
+  caption="Of the 4098 sequences across the datasets considered, the augmented database allowed improved taxonomic assignment of 20 seqeunces. Cells reading 'NA NA' indicate that no genus or species could be assigned.  Cells reading NA speciesA/speciesB indicate that the lowest common ancestor for a sequence could not be determined at the genus level. ", col.names =  c("", "SILVA", "SILVA + `r toolname`"),
   read.csv("STABLE_different_assignment.tab", sep="\t") %>% 
     mutate(set=row_number()) %>% 
     select(set, silva, focuDB) %>% 
@@ -179,15 +215,15 @@ knitr::kable(
 
 
 # Discussion
-focusDB orchestrates the reassembly of whole-genome sequencing datasets in SRA to recover 16S rRNA sequences that may be missing from the existing reference databases. Using the riboSeed, FocusDB reassembles draft genomes that currently contribute a single (often collapsed) 16S rRNA to resolve distinct instances of the 16S rRNA operon. We show that this increases the sequence diversity of the 16S rRNA databases, and that the increased diversity results in measurable improvements to taxonomic assignment.
+`r toolname` orchestrates the reassembly of whole-genome sequencing datasets in SRA to recover 16S rRNA sequences that may be missing from the existing reference databases. Using the riboSeed, `r toolname` reassembles draft genomes that currently contribute a single (often collapsed) 16S rRNA to resolve distinct instances of the 16S rRNA operon. We show that this increases the sequence diversity of the 16S rRNA databases, and that the increased diversity results in measurable improvements to taxonomic assignment.
 
-focusDB improved fine-scale taxonomic assignment in two ways: by assigning previously unclassified sequences, and by revealing "overeager" species assignment when a 16S rDNA sequence could have come from two or more species. Based on the improvements gained with the 85 genera considered here, we believe a wide-scale application of focusDB could have great benefit.
+`r toolname` improved fine-scale taxonomic assignment in two ways: by assigning previously unclassified sequences, and by revealing "overeager" species assignment when a 16S rDNA sequence could have come from two or more species. Based on the improvements gained with the 85 genera considered here, we believe a wide-scale application of `r toolname` could have great benefit.
 
 
-The third limitation is the availability of high-quality closed genomes to use as references. With the increased adoption of long read technologies, we envisage that this limitation will decrease with time; indeed, a point will come when focusDB will no longer be needed.
+The third limitation is the availability of high-quality closed genomes to use as references. With the increased adoption of long read technologies, we envisage that this limitation will decrease with time; indeed, a point will come when `r toolname` will no longer be needed.
 
-Further limitations exist within focusDB and within riboSeed. The success of riboSeed's *de fere novo* assembly hinges on the similarity of the reference to the sequenced isolate, the differentiating power of the rDNA flanking regions, read length, and other factors. The vast majority of short-read sequencing is performed with single-end or paired-end libraries; currently riboSeed does not support less popular strategies such as mate-paired libraries. As the difficulty of genome completion decreases with the use of long read sequencing, this limitation will diminish. 
+Further limitations exist within `r toolname` and within riboSeed. The success of riboSeed's *de fere novo* assembly hinges on the similarity of the reference to the sequenced isolate, the differentiating power of the rDNA flanking regions, read length, and other factors. The vast majority of short-read sequencing is performed with single-end or paired-end libraries; currently riboSeed does not support less popular strategies such as mate-paired libraries. As the difficulty of genome completion decreases with the use of long read sequencing, this limitation will diminish. 
 
-Despite these limitations, we have shown that focusDB can contribute towards better molecular ecology anaalysis. Using focusDB to augment existing databases (such as NCBI's 16S RefSeq Microbial database, SILVA, RDP, and GreenGenes) will give researchers more clarity and confidence in low-level taxonomic assignment, which in turn will lend new insights into the inner workings of complex communities. 
+Despite these limitations, we have shown that `r toolname` can contribute towards better molecular ecology anaalysis. Using `r toolname` to augment existing databases (such as NCBI's 16S RefSeq Microbial database, SILVA, RDP, and GreenGenes) will give researchers more clarity and confidence in low-level taxonomic assignment, which in turn will lend new insights into the inner workings of complex communities. 
 
 # References

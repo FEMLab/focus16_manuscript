@@ -52,6 +52,7 @@ plot_mock <- function(df){
   )
   return(p)
 }
+
 plot_genera <- function(df){
   #  used to generate plots of which runs yielded fruitful results
   #  See the plot_success section of the supplementary data script
@@ -178,3 +179,4 @@ write_msa <- function(db, assembly="GCA_000699725.1", destdir){
       format = "fasta")
   }
 }
+

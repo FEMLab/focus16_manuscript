@@ -1,8 +1,14 @@
 ---
-title: "Supplementary Materials"
+title: "Supplementary Methods 1: Data processing and analyses"
 author: "Ben Nolan and  Nicholas Waters"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
+bibliography: focusdb_references.bib
+numbersections: true
+header-includes:
+  - \renewcommand{\figurename}{Figure S}
+  - \renewcommand{\tablename}{Table S}
 output:
+  pdf_document: default
   html_document: default
   word_document: default
 editor_options:
@@ -10,62 +16,34 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, cache.lazy = FALSE)
+knitr::opts_chunk$set(echo = FALSE, cache.lazy = FALSE)
 library(tidyverse); packageVersion("tidyverse")
 library(Biostrings); packageVersion("Biostrings")
 #if (!requireNamespace("BiocManager", quietly = TRUE))
 #    install.packages("BiocManager")
 #BiocManager::install("DECIPHER")
 library(ggupset)
-
+library(patchwork)
 library(DECIPHER)
 source("docs/shared.R")
+
 results_dir <- "./results/2019-12-19-results/"
+REPROCESS_RESULTS = FALSE
 ```
+# Introduction
+This document contains all the of steps needed to reproduce the findings presented in this work, with the exception of the community analyses described in `DADA2_analyses.Rmd`; it was written with literate programming, so all code can be viewed in the source document at <https://github.com/femlab/focusdb_manuscript/blob/master/docs/>.
 
-## Running focusDB on candidate taxa 
-Here is the script used to run the whole batch:
-```{bash  eval=FALSE}
-#!/bin/bash
-#$ -t 1-86
-#$ -tc 15
-#$ -cwd
-#$ -j yes
-#$ -N comb_genus
-#$ -pe mpi 4
-#$ -l h_vmem=20G
-set -e
-counter=1
+## Third-party software vesions
 
-cd /mnt/shared/scratch/synology/nw42839/2019-11-04-focusdb/
-while read genus species
-do
-    if [ "$counter" -eq "$SGE_TASK_ID" ]
-    then
-        conda activate 16db
-        focusDB  -o ${genus}_genus --organism_name "${genus}" --njobs 6 --threads 2 --cores 6 --memory 20 --n_references 200 --n_SRAs 50 --maxdist .1 --focusDB_data /mnt/shared/scratch/nw42839/.focusDB/ -v 1 --timeout 1500 --fastqtool fastq-dump --process_partial --use_available --sge --sge_env 16db
-    fi
-    counter=$((counter + 1))
-done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
-```
+The conda environment used for the analyses is defined in  <https://github.com/femlab/focusdb_manuscript/blob/master/focusDB_env.txt>.
 
-Afterwards, the results were aggregated as follows, and then were moved to this repo under the *results* dir.
+# Data Availability
+## Number of SRAs available for each species
 
-```{bash eval=FALSE}
-mkdir 2019-12-19-results
-while read genus; do echo $genus; cp ./${genus}_genus/${genus}_fast_ribo16s.fasta ./2019-12-19-results/;  cp ./${genus}_genus/${genus}_full_ribo16s.fasta ./2019-12-19-results/ ; cp ./${genus}_genus/focusDB.log ./2019-12-19-results/${genus}.log ; cp ./${genus}_genus/sequence_summary.tab  ./2019-12-19-results/${genus}_seq_summary.tab; done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
-cp --parents ./*_genus/*/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta ./2019-12-19-results/
-cat ./*_genus/SUMMARY > 2019-12-19-results/summary_all
-cat ./2019-12-19-results/*seq_summary.tab > 2019-12-19-results/sequence_summary_all.tab
-tar czf 2019-12-19-results.tar.gz 2019-12-19-results/
+A python script `sralist.py` was used to generate a list of the number of SRAs for a given species, based on parsing the results from sraFind from 2019-10-24.  The input files for the "Balanced", "HMP", and "Extremes" were created from the descriptions of the mock communities found in the their respective publications[@schirmer_insight_2015;@kozich_development_2013;@callahanDADA2HighresolutionSample2016;@ataEndobiotaStudyComparison2019].  Generating the Endobiota species file is described in `DADA2_analyses.Rmd` section "Preliminary taxa assignment for EndoBiota study".
 
-```
+The results per dataset are shown in Figure S\@ref(fig:pfig). Because some genera have thousands of SRAs, we limited subsequent analyses to 50 SRAs per genus.
 
-
-
-### Suppl Figure 1: Number of SRAs available for each species
-
-A python script `sralist.py` was used to generate a list of the number of SRAs for a given species, based on parsing the results from sraFind.
 ```{bash eval=FALSE}
 python scripts/sralist.py -s  ~/.focusDB/sraFind.tab -l ./docs/datasets/extreme_species_list.txt -o results/Extremes_sra_count
 python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.txt -l ./docs/datasets/balanced_species_list.txt -o results/Balanced_sra_count
@@ -73,53 +51,89 @@ python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.txt -l 
 python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.txt -l ./docs/microbiome_data/endo_species.txt -o results/endo_sra_count
 ```
 
-```{r plot_sras}
-srac <- data.frame("org"=NA, "count"=NA, stringsAsFactors = F)
+```{r plot_sras, eval=REPROCESS_RESULTS}
+srac <- data.frame("org"=NA, "ncount"=NA, stringsAsFactors = F)
 srac <- srac[!is.na(srac),]
 ###
 for (d in c("Extremes", "HMP", "Balanced")){
   thispath = file.path("results", paste0(d, "_sra_count"), "sralist.txt")
-  tmp <- read.csv2(thispath, sep=":", col.names = c("org", "count"), stringsAsFactors = F, header=F)
+  tmp <- read.csv2(thispath, sep=":", col.names = c("org", "ncount"), stringsAsFactors = F, header=F)
   tmp$mock <- d
   srac <- rbind(srac, tmp)
 }
+## add endo data
+thispath = file.path("results", paste0("endo", "_sra_count"), "sralist.txt")
+tmp <- read.csv2(thispath, sep=":", col.names = c("org", "ncount"), stringsAsFactors = F, header=F)
+tmp$mock <- "Endobiota"
+srac <- rbind(srac, tmp)
+
+
+
 
 srac$genus <- gsub("(.*) .*","\\1", srac$org)
 srac$species <- gsub("(.*) (.*)","\\2", srac$org)
 srac$binom <- paste(srac$genus, srac$species)
 nunique_strains <- length(unique(srac[, "org"]))
-nwith_sras <- length(unique(srac[srac$count > 0, "org"]))
-(psrastrains <- ggplot(srac %>% filter(count > 0), 
-                       aes(reorder(org,count), y=count, fill=genus, color=genus)) + 
-    geom_bar(stat="identity") +
+nunique_genera <- length(unique(srac[, "genus"]))
+nwith_sras <- length(unique(srac[srac$ncount > 0, "org"]))
+ngenerawith_sras <- length(unique(srac[srac$ncount > 0, "genus"]))
+
+# psrastrains <- ggplot(srac %>% filter(ncount > 0)  %>% group_by(mock) %>% top_n(ncount, n = 25), 
+#                        aes(reorder(org,ncount), y=ncount, fill=genus, color=genus)) + 
+#     geom_bar(stat="identity") +
+#     coord_flip() + 
+#   scale_y_log10() +
+#     scale_color_discrete(guide=F) +
+#     scale_fill_discrete(guide=F) +
+#     facet_wrap(~mock, scales = "free") +
+#     labs(
+#       title=" ", 
+#       subtitle=paste0(nrow(srac %>% filter(ncount > 0)), " of ", nunique_strains, " organisms have availabe SRA data "),
+#       fill="Genus",
+#      color="Genus",
+#      y= "Number of WGS SRAs", x="Strain") + 
+#     mytheme +
+#     theme(legend.position = c(.8, .3),
+#           axis.text.y  = element_text(face = "italic"),
+#           text = element_text(size=8))
+srac_summary <- srac %>% filter(ncount > 0) %>% group_by(mock, genus) %>% summarize(genus_count=sum(ncount)) %>% group_by(mock) %>% top_n(genus_count, n = 50) 
+plot_dataset <- function(df){
+  ggplot(df , 
+         aes(reorder(genus, genus_count), y=genus_count, fill=genus, color=genus)) + 
+    geom_bar(stat="identity", width=.7, fill="gray50", color="gray50") +
     coord_flip() + 
+    scale_y_log10(expand = c(0, 0)) +
     scale_color_discrete(guide=F) +
     scale_fill_discrete(guide=F) +
     facet_wrap(~mock, scales = "free") +
     labs(
-      title="Distribution of Data Availability for 3 Mock Communities", 
-      subtitle=paste0(nrow(srac %>% filter(count > 0)), " of ", nunique_strains, " organisms have availabe SRA data "),
+      title="", 
+      subtitle="",
       fill="Genus",
-     color="Genus",
-     y= "Number of WGS SRAs", x="Strain") + 
+      color="Genus",
+      y= "Number of WGS SRAs", x="Strain") + 
     mytheme +
-    theme(legend.position = c(.8, .3), 
+    theme(legend.position = c(.8, .3),
+          axis.text.y  = element_text(face = "italic"),
           text = element_text(size=8))
-)
-ggsave("docs/figures/S1-sras.png", psrastrains, device = "png", dpi = 300, width = 9, height = 5)
-## add endo data
-thispath = file.path("results", paste0("endo", "_sra_count"), "sralist.txt")
-tmp <- read.csv2(thispath, sep=":", col.names = c("org", "count"), stringsAsFactors = F, header=F)
-tmp$genus <- gsub("(.*) .*","\\1", tmp$org)
-tmp$species <- gsub("(.*) (.*)","\\2", tmp$org)
-tmp$binom <-paste(tmp$genus, tmp$species)
-tmp$mock <- "endo"
-srac <- rbind(srac, tmp)
+}
+psra_ndo <- plot_dataset(srac_summary %>% filter(mock=="Endobiota"))
+psra_hmp <- plot_dataset(srac_summary %>% filter(mock=="HMP"))
+psra_bal <- plot_dataset(srac_summary %>% filter(mock=="Balanced"))
+psra_ext <- plot_dataset(srac_summary %>% filter(mock=="Extremes"))
+combined_plots <- (psra_hmp/psra_bal/psra_ext + plot_layout(heights = c(.4,.4,.2))) | psra_ndo +  plot_layout(guides = 'auto')
+paste0(ngenerawith_sras, " of ", nunique_genera, " genra have availabe SRA data ")
+ggsave("docs/figures/S1-sras.png", combined_plots, device = "png", dpi = 300, width = 9, height = 8)
+``` 
+
+```{r pfig, fig.cap="Whole-genome sequencing SRA data availability for strains in the four datasets. Bars show the number of SRAs per genus as of 2019-10-24. Genera with no publicly available SRAs are removed; results are displayed on a log scale. 109 of 193 genera have availabe SRA data. Clinically-relavent genera tend to have many SRAs.", out.width="100%"}
+knitr::include_graphics("figures/S1-sras.png")
+
 ```
 
-### Dataset overlap
 
-```{r}
+
+```{r calc-dataset-overlap, eval=REPROCESS_RESULTS}
 species_names <- data.frame(genus=character(), species=character(), dataset=character(), stringsAsFactors = F)
 # note that we use the "genus" level list for the EndoBiota study because we had to clean up some of the bad annotations where text like "group_X" would be listed as the genus, while a valid genus would be listed at the family level.
 for (f in c(Sys.glob("./docs/datasets/*species*"), "./docs/microbiome_data/endo_genus.txt")){
@@ -160,8 +174,9 @@ theseproks <- left_join(
       sras & ref ~ "Eligible"
     )
   )
-
-(p_dataset_overlap <-  theseproks %>%   group_by(genus, exclusion) %>%
+summary_table_overlap <- theseproks %>%  group_by(dataset, exclusion) %>% select(-genus, -ref, -sras) %>% summarize(v = n()) %>% pivot_wider(id_cols = c(dataset), names_from = exclusion, values_from = v, values_fill = list(v = 0)) %>%
+  column_to_rownames("dataset") %>% as.data.frame()
+p_dataset_overlap <-  theseproks %>%   group_by(genus, exclusion) %>%
     summarize(ds = list(dataset)) %>% 
     ggplot(aes(x = ds, fill=exclusion)) +
     geom_bar(position=position_stack(reverse = TRUE)) + 
@@ -175,7 +190,7 @@ theseproks <- left_join(
       legend.background = element_blank(),
       legend.direction='vertical') +
     guides(fill = guide_legend(reverse = TRUE))
-)
+
 
 #species_names %>% ggplot(aes(x=dataset, y=genus)) + geom_tile()
 unique_and_valid <- theseproks %>% select(genus, ref, sras) %>% distinct() %>%
@@ -188,21 +203,137 @@ ggsave("docs/figures/S6-datasets.png",
 ggsave("docs/figures/S6-datasets-log.png", 
        p_dataset_overlap + scale_x_upset(ytrans = "log1p") , 
        device = "png", dpi = 300, width = 6, height = 5)
+ggsave("docs/figures/S6-datasets-tab.png", 
+p_dataset_overlap | gridExtra::tableGrob(summary_table_overlap, theme = gridExtra::ttheme_default(base_size=9 )),
+       device = "png", dpi = 300, width = 10, height = 6)
+```
+
+
+```{r datasets, echo=FALSE, fig.cap="368 genera across the four datasets were considered.  Of the 333 unique genera, 85 met our criteria of having public short-read data in the SRA and at least one RefSeq complete genome available. The x axis shows the overlapping sets of genera among the four dataset; the color shows how many of the genera met the inclusion criteria.  While only a fraction of the SRAs meet the requirements for reassembly, future data availability will allow us to revisit previously-excluded SRAs.", out.width = '80%'}
+knitr::include_graphics("figures/S6-datasets-tab.png")
+```
+
+
+
+\newpage
+# Running focusDB on candidate taxa 
+## Parameter choice
+Below is a copy of the script used to run the pipeline for the list of genera determined above. the following parameters were used:
+
+- `--n_references 200`:  the maximum number of RefSeq genomes to consider for use as a reference
+- `--n_SRAs 50`: limits reassembly to 50 random SRA readsets per genus
+- `--run_de_novo_control`: ensures riboSeed run a control *de novo* assembly with SPAdes.  This is used for mcomparisons of the *de novo* assembly to the *de fere novo* assemblies.
+- `--maxdist .1`: set the maximum Mash distance between a reference genome and a preliminary assembly
+- `-v 1`: sets verbosity
+- `--fastqtool fastq-dump`: prefer fastq-dump to fast(er)q-dump 
+- `--timeout 1500`: sets download limit for 25 minutes; we found downloads lasting long than that usually were hanging
+- `--process_partial `: if a download times out, proceed with the reads downloaded 
+- `--use_available`: use any reads downloaded during while previously processing an SRA
+- `--sge`: distribute assembly tasts as an SGE array job on the HPC
+- `--sge_env 16db`: name of the conda environment that the distributed jobs to be executed with
+- `--njobs 6` : number of tasks to be run concurrently for each SGE array 
+- `--threads 2`: resource allocation for main job
+- `--cores 6`: resource allocation  for main job
+- `--memory 20`: resource allocation for main job
+
+\newpage
+
+```{bash  eval=FALSE, echo=TRUE}
+#!/bin/bash
+#$ -t 1-85
+#$ -tc 15
+#$ -cwd
+#$ -j yes
+#$ -N comb_genus
+#$ -pe mpi 4
+#$ -l h_vmem=20G
+set -e
+counter=1
+
+cd /mnt/shared/scratch/synology/nw42839/2019-11-04-focusdb/
+while read genus species
+do
+    if [ "$counter" -eq "$SGE_TASK_ID" ]
+    then
+        conda activate 16db
+        focusDB  -o ${genus}_genus --organism_name "${genus}" --njobs 6 --threads 2 \
+        --cores 6 --memory 20 --n_references 200 --n_SRAs 50 --maxdist .1 \
+        --focusDB_data /mnt/shared/scratch/nw42839/.focusDB/ -v 1 --timeout 1500 \
+        --fastqtool fastq-dump --process_partial --use_available --sge --sge_env 16db
+    fi
+    counter=$((counter + 1))
+done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
+```
+
+Afterwards, the results were aggregated, and then were moved to this repo under the `results` dir.
+
+\newpage
+
+```{bash eval=FALSE}
+mkdir 2019-12-19-results
+while read genus; do echo $genus; cp ./${genus}_genus/${genus}_fast_ribo16s.fasta ./2019-12-19-results/;  cp ./${genus}_genus/${genus}_full_ribo16s.fasta ./2019-12-19-results/ ; cp ./${genus}_genus/focusDB.log ./2019-12-19-results/${genus}.log ; cp ./${genus}_genus/sequence_summary.tab  ./2019-12-19-results/${genus}_seq_summary.tab; done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
+cp --parents ./*_genus/*/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta ./2019-12-19-results/
+cat ./*_genus/SUMMARY > 2019-12-19-results/summary_all
+cat ./2019-12-19-results/*seq_summary.tab > 2019-12-19-results/sequence_summary_all.tab
+tar czf 2019-12-19-results.tar.gz 2019-12-19-results/
 
 ```
 
-## Quality Control
-### Diagnosing poor assemblies
-In the course of comparing the reassembled seqeunces to those for which reference genomes were available, we determined that the pipeline struggled in two cases: the Treponema genus, and one B. anthracis SRA: SRR2155541.  We do not currently know the issue with the Treponema genus, but using blobtools we determined that SRR2155541 is contaminated with Micrococcus luteus:
+
+## List of References Considered
+After execution of thhe pipeline, all of the references considered were recorded as follows:
+```
+while read genus ; do \
+for j in  .focusDB/references/$genus/*.fna; do \
+echo -e "${genus}\t${j}" >> ~/GitHub/focusdb_manuscript/docs/reference_genomes.tab ; \
+done ;done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
+```
+
+
+```{r calc-refs-per, eval=REPROCESS_RESULTS}
+reference_df <- read.csv("./docs/reference_genomes.tab", sep="\t", col.names = c("genus", "ref"), header=FALSE)
+ggplot(reference_df %>% group_by(genus) %>% summarize(n=n()), aes(x=genus, y=n)) + geom_bar(stat="identity") + coord_flip()
+ggsave(
+  "docs/figures/S7-refs.png", 
+ggplot(
+  reference_df %>% group_by(genus) %>% summarize(Genera="", n=n()), aes(x=Genera, y=n)) +
+  ggbeeswarm::geom_quasirandom(size=3, alpha=.4, beeswarmArgs=list(side=1)) + mytheme + labs(y="Number of\n RefSeq References Available", x="Genera") + coord_flip()    ,
+       device = "png", dpi = 300, width = 6, height = 2)
+# getting the median
+#tmp <- reference_df %>% group_by(genus) %>% summarize(Genera="", n=n())
+#median(tmp$n)
+```
+
+```{r reference-datasets, echo=FALSE, fig.cap="A median of 9 references were available for each of the genera considered. The number of references per genera was capped at 200.  In practice, this only effected the Bordetella genus.  Data was plotted with ggbeeswarm using the quasirandom layout to show the distribution.", out.width = '80%'}
+knitr::include_graphics("figures/S7-refs.png")
+```
+
+## List of SRAs
+
+After the pipeline was run, the SRAs processed for each genus was recorded.
+
+```
+ls -d results/2019-12-19-results/*_genus/* > docs/sras.tab
+```
+
+# Quality Control
+## Diagnosing poor assemblies
+
+In the course of comparing the reassembled sequences to those for which reference genomes were available, we determined that the pipeline struggled in two cases: the *Treponema* genus, and one *Bacillus anthracis* SRA: SRR2155541.  We do not currently know the issue with the *Treponema* genus, but using blobtools we determined that SRR2155541 is contaminated with *Micrococcus luteus*:
+
 ```{bash blobforSRR2155541, eval=FALSE}
 # we downloaded GCF_000008165.1_ASM816v1_genomic.fna as a reference
 docker run --memory 16G --rm  -v $HOME:/home/ nickp60/ezblobtools  -r /home/Downloads/genome_assemblies\(1\)/ncbi-genomes-2019-12-19/GCF_000008165.1_ASM816v1_genomic.fna  -A /home/GitHub/focusdb/results/2019-12-19-results/Bacillus_genus/SRR2155541/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta   -d ref_prok_rep_genomes -o /home/GitHub/focusdb/docs/blob_SRR2155541/ -t 2 -m 16
 ```
-![Contaminated SRA](blob_SRR2155541/blob_all/all.blobDB.json.bestsum.species.p8.span.100.blobplot.velvet.png)
 
-### Identifying poor taxonomic assignments
-In addition to those mentioned above with poor assemblies, we filtered out any SRAs with inconclusive domain-level agreement.
-```{r}
+```{r blob-bacillus, echo=FALSE, fig.cap="Assessing the contents of *Bacillus anthracis* SRA SRR2155541 showed possible contamination with *Micrococcus luteus*, as can be seen from the coverage and GC content differences.", out.width = '60%'}
+knitr::include_graphics("blob_SRR2155541/blob_all/all.blobDB.json.bestsum.species.p8.span.100.blobplot.velvet.png")
+```
+
+## Identifying poor taxonomic assignments
+In addition to those mentioned above with poor assemblies, we filtered out any SRAs with inconclusive domain-level agreement, where Kraken reports the top level Domain taxonomy with less than 70% aggreement. This primarily intended to remove datasets with poor host-DNA depletion.
+
+```{r calc-tax-agreement, eval=REPROCESS_RESULTS}
 tax_summary <- read.csv(
   file.path(results_dir, "sequence_summary_all.tab"),
   col.names = c("id", "path","source", "start", "end", "taxonomy", "perc", "nseqs", "shortname"), 
@@ -212,18 +343,40 @@ tax_summary$domain_perc <- as.numeric(gsub("(.*?);(.*?);.*", "\\2", tax_summary$
 tax_summary$phylum_perc <- as.numeric(gsub("(.*?);(.*?);(.*?);.*", "\\3", tax_summary$perc))
 tax_summary$sra <- gsub("(.*?)_.*", "\\1", tax_summary$id)
 
-ggplot(tax_summary, aes(x=domain_perc, fill=domain_perc>70)) + geom_histogram() + 
-  labs(title="Taxonomic Assignment", subtitle="Histogram of Domain-level taxonomic assignment percentages", y="Number of sequences", fill="Domain-level Assignment > 70%") + theme(legend.position = "bottom") 
+ggsave( file="docs/figures/aggreement.png", device = "png", dpi = 300, width = 5, height = 5,
+        ggplot(tax_summary, aes(x=domain_perc, fill=domain_perc>70)) + geom_histogram() + 
+          labs(title="", subtitle="Histogram of Domain-level taxonomic assignment percentages", y="Number of sequences", fill="Domain-level Assignment > 70%") + theme(legend.position = "bottom") 
+)
 questionable_annotation_sras <- unique(tax_summary[tax_summary$domain_perc < 70 | grepl("Homo sapiens", tax_summary$taxonomy), "sra"])
 questionable_annotation_sras <-c(questionable_annotation_sras, "SRR2155541")
 write.table(questionable_annotation_sras, file = "bad_sras.txt", row.names = FALSE, col.names = FALSE, quote=FALSE)
+
+print(length(unique(tax_summary[grepl("Homo sapiens", tax_summary$taxonomy), "sra"])))
 ```
-Here, we parse the outputs from Kraken2's taxonomic assignment, and flag any with a low (<70) percent of domain-assigned sequnces, as this could indicate that an SRA is contaminated.  Some (such as Treponema SRAs 	SRR3571775 and SRR3584844) have $\approx$ 60% human DNA, indicating incomplete removal of host DNA, and as such, we drop them. as such, we lose `r unique(tax_summary[grepl("Homo sapiens", tax_summary$taxonomy), "sra"])` SRAs.  However, it should be noted that BLASTing contigs from these assemblies appear to show bacterial DNA -- the Kraken2 database itself may have contamination where Treponema kmers are labelled as human.  Either way, these (and any other under the 70% domain-level assignment threshold) will be dropped.
+
+```{r tax-agreement-plot, echo=FALSE, fig.cap="Datasets where the average taxanomic assignment was less than 70 percent bacteria were removed, as these are likely contaminated with host DNA", out.width = '50%'}
+knitr::include_graphics("figures/aggreement.png")
+```
+
+Here, we parse the outputs from Kraken2's taxonomic assignment, and flag any with a low (<70) percent of domain-assigned sequences, as this could indicate that an SRA is contaminated.  Some (such as Treponema SRAs 	SRR3571775 and SRR3584844) have $\approx$ 60% human DNA, indicating incomplete removal of host DNA, and as such, we drop them. as such, we lose 9 SRAs.  However, it should be noted that BLASTing contigs from these assemblies appear to show bacterial DNA -- the Kraken2 database itself may have contamination where Treponema kmers are labelled as human.  Either way, these (and any other under the 70% domain-level assignment threshold) are dropped.
 
 
-### Figure 2: sra successes
+# Results
+## Assessing per-SRA outcomes of the pipeline
 
-```{r plot_success}
+The outcome of each SRA was determined after running the pipeline. For the purposes of this figure, the following messages were combined:
+
+- `Error`:
+  - Any errors involving riboSeed
+  - Error downloading datasets or references
+  - Unknown errors
+- `QC Fail`:
+  - Invaid library type (eg mate-paired reads)
+  - Reads < 65bp (eg early Genome Analyzer reads)
+  - Reads > 300bp (eg PacBio or Nanopore reads)
+  - Insuffient coverage < 15x
+
+```{r plot_success, eval=REPROCESS_RESULTS}
 summary_data <- read.csv(file.path(results_dir, "summary_all"),
                     sep="\t", header=F,
                     col.names = c("org", "status", "state", "messag"), 
@@ -269,11 +422,16 @@ p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org")) %>%
 #   (mock_plots[[grp]] <- plot_mock(df=p_summary_data%>% filter(mock == (!!thisgroup))))
 #   ggsave(paste0("docs/figures/S2", grp, ".png"), mock_plots[[grp]], device = "png", dpi = 300, width = 12, height = 7)
 # }
-(mock_plots<- plot_genera(df=p_summary_data))
+(mock_plots <- plot_genera(df=p_summary_data))
 ggsave(paste0("docs/figures/2-genera.png"), plot_genera(df=p_summary_data), device = "png", dpi = 300, width = 10,  height = 13)
 ```
 
-### Extracting 16S rRNA from de novo controls
+
+
+
+## Extracting 16S rRNA from de novo assemblies
+For the comparison of error rates between the *de fere novo* assembly and *de novo* assembly, `make_silva_style_db_from_contigs.py` was used  to identify 16S regions using Barrnap and extract those regions from the  *de novo* contigs .
+
 ```{bash, eval=FALSE}
 rm ./results/2019-12-19-results/pre_denovo_focusDB_ribo16s.fasta
 for i in results/2019-12-19-results/*_genus/*/
@@ -286,17 +444,17 @@ done
 
 ```
 
-## Assessing uniqueness:
-First, for simplicity, we combine all the sequences for all the runs.  We have the logs to relate the seqeunces to why they were selected, but as we are talking about improving the database as a whole, combining them all simplifies aspects of interpretation.
+## Assessing uniqueness
+First, for simplicity, we combine all the sequences for all the runs. We have the logs to relate the sequences to why they were selected, but as we are talking about improving the database as a whole, combining them all simplifies aspects of interpretation.
 
 <!-- Note that first we remove any with dodgey taxonomic annotations, hence thhe inverse grep for the SRAs which fell beneath the 70% assignment threshold. -->
 
-Note that first we remove any with dodgey taxonomic annotations
+We removed any from the list a identified above in section "Identifying poor taxonomic assignments".
 ```{bash, eval=FALSE}
 cat ./results/2019-12-19-results/*full_ribo16s.fasta  > ./results/2019-12-19-results/pre_full_focusDB_ribo16s.fasta
 cat ./results/2019-12-19-results/*fast_ribo16s.fasta  > ./results/2019-12-19-results/pre_fast_focusDB_ribo16s.fasta
 ```
-```{r}
+```{r eval=REPROCESS_RESULTS}
 for (f in c("full", "fast", "denovo")){
   file.remove(paste0(results_dir, f,"_focusDB_ribo16s.fasta"))
   lines <- readLines(paste0(results_dir, "pre_", f,"_focusDB_ribo16s.fasta"))
@@ -323,8 +481,9 @@ for (f in c("full", "fast", "denovo")){
 if [ -f "~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz" ] ; then echo "already downloaded" ; else wget    https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_tax_silva.fasta.gz ; fi
 ```
 
-First, we read in the silva db, and parse the headers for alter comparison. One thing we do it get the codes of what the prefixes from NCBI mean, and use that to determine with source of the sequences.
-```{r parse_headers, cache=FALSE}
+First, we read in the SILVA db, and parse the headers for later comparison. One thing we do it get the codes of what the prefixes from NCBI mean, and use that to determine with source of the sequences.  The list of prefixes can be found at <https://www.ncbi.nlm.nih.gov/Sequin/acc.html>.
+
+```{r parse_headers, eval=REPROCESS_RESULTS}
  
 process_db <- function(xset){
   # codes_from_ncbi read in shared.R
@@ -396,12 +555,6 @@ datasets <-  list(
   denovo = list(set = de_novo, metadata = process_db(xset=de_novo))
 )
 
-```
-
-
-
-```{r count_Ns, cache=TRUE}
- 
 uniqueness <- data.frame(
   "Organism" = character(),
   "Unique" = numeric(),
@@ -423,10 +576,7 @@ for (i in c("silva", "full", "fast")){
   if (no_n_len != raw_len) warning(paste0(" ",raw_len-no_n_len, " sequences with ambiguous nucleotides from the '", i, "' dataset"))
 }
 
-```
-
-
-```{r check_uniqueness, cache=TRUE}
+# check_uniqueness
 counter <- 1
 for (organism in unique(datasets[["fast"]][["metadata"]]$binom)){
   #rganism <- gsub("_", " ", gsub(".*\\/(.*)_ribo16s.fasta", "\\1", path))
@@ -452,9 +602,8 @@ for (organism in unique(datasets[["fast"]][["metadata"]]$binom)){
     data.frame("Organism"=organism, "Unique"=nboth-nbothdup,  "Duplicated"=nboth, "DB"="combined"))
   counter <- counter + 1
 }
-```
+#  plotting_uniqueness
 
-```{r plotting_uniqueness}
 #uniqueness <- uniqueness[1105:nrow(uniqueness), ]
 # set an arbtrary cutoff for popularity, just for plotting purposes
 popthresh = 100; popular <- uniqueness %>% filter(DB=='silv') %>% filter(Unique > popthresh | Duplicated > popthresh) 
@@ -552,8 +701,7 @@ ggsave("docs/figures/3-unique_alt2.png", p_unique_alt, device = "png", dpi = 300
 ```
 
 
-Here, we generate a table showing how many sequences (and unique seqeunces) are obtained from each level.  This is ued wiith table X in the paper
-```{r tabledata, exec=FALSE}
+```{r tabledata, eval=FALSE}
 A <- uniqueness %>% select(Organism, Unique, DB ) %>% distinct() %>%spread(key=DB, value=Unique)
 B <- p_summary_data %>% select(strain, pmessage, state) %>% filter(!is.na(state)) %>% group_by(strain) %>% summarise(All_SRAs=n(), Good_SRAs=table(pmessage)["16S Recovered"]) 
 right_join(B, A, by=c("strain"="Organism")) %>% 
@@ -564,19 +712,30 @@ right_join(B, A, by=c("strain"="Organism")) %>%
  # %>% mutate(perc  = focus/silv*100) %>% select(perc) %>% summary()
 ```
 
-## Generating Multiple Sequence Alignments
-### Defining the regions of 16S in E coli
-The coordinates for the common 16S primers correspond to E coli, so we selected this sequence.
-Reference: 
- - https://www.ncbi.nlm.nih.gov/nuccore/NC_000913.3?report=fasta&from=4166659&to=4168200
- - the regions https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/s12859-016-0992-
-These are implemented in the `calculate-shannon-entropy` script.
-
 ```{bash eval=FALSE}
+
+# ## Generating Multiple Sequence Alignments
+# ### Defining the regions of 16S in E coli
+# The coordinates for the common 16S primers correspond to E coli, so we selected this sequence.
+# Reference: 
+#  - <https://www.ncbi.nlm.nih.gov/nuccore/NC_000913.3?report=fasta&from=4166659&to=4168200>
+#  - the regions https://bmcbioinformatics.biomedcentral.com/track/pdf/10.1186/s12859-016-0992-
+# These are implemented in the `calculate-shannon-entropy` script.
+
+
+
+
 # Combining sequences
-while read genus species; do if [ -f "./results/2019-09-26-focusdb-results/${genus}_${species}_ribo16s.fasta" ] ; then combine-focusdb-and-silva -d ~/Downloads/SILVA_132_SSURef_tax_silva.fasta -n "$genus $species" -S  ./results/2019-09-26-focusdb-results/${genus}_${species}_ribo16s.fasta --dna --lower  > ./results/extracted_sequences/${genus}_${species}_db.fasta ; fi; done < ./docs/extreme_species_list.txt
+while read genus species; do 
+if [ -f "./results/2019-09-26-focusdb-results/${genus}_${species}_ribo16s.fasta" ] ; then \
+combine-focusdb-and-silva -d ~/Downloads/SILVA_132_SSURef_tax_silva.fasta -n "$genus $species" -S \
+./results/2019-09-26-focusdb-results/${genus}_${species}_ribo16s.fasta --dna --lower  > \
+./results/extracted_sequences/${genus}_${species}_db.fasta ; fi; done < ./docs/extreme_species_list.txt
 # alignment + trimming
-while read genus species; do if [ -f "./results/2019-09-26-focusdb-results/${genus}_${species}_ribo16s.fasta" ] ; then align-and-trim-focusdb --i ./results/extracted_sequences/${genus}_${species}_db.fasta -o ./results/extracted_sequences/${genus}_${species}_db ; fi; done < ./docs/extreme_species_list.txt
+while read genus species; do 
+if [ -f "./results/2019-09-26-focusdb-results/${genus}_${species}_ribo16s.fasta" ] ; then \
+align-and-trim-focusdb --i ./results/extracted_sequences/${genus}_${species}_db.fasta -o \
+./results/extracted_sequences/${genus}_${species}_db ; fi; done < ./docs/extreme_species_list.txt
 #  
 ```
 
@@ -603,21 +762,21 @@ ggsave("docs/figures/4-diversity.png", p_diversity, device = "png", dpi = 300, w
 ```
 
 
-## Assessing the provenance of the Silva strains
-16s sequences in databases such a silva, greengenes,or RDP can come from several sources, namely:
-- complete genomes (in Refseq, Genbank, etc)
+## Assessing the provenance of the SILVA strains
+16s sequences in databases such a SILVA, GreenGenes,or RDP can come from several sources, namely:
+- complete genomes (in RefSeq, Genbank, etc)
 - draft genomes (in the NCBI's Assembly database)
 - 16s amplicons from Sanger sequencing
 - 16s amplicons from high-throughput amplicon sequencing.
 
-As repeated rDNA operons are difficult to assembly, Draft genome rDNA can (and often do contain a single rDNA).  This is problematic for species ideentification -- the rDNA recovered is not just one of /n/ rDNAs, but it can be a consensus "summary" rDNA resulting from trying to assemble the repeated region.  
+As repeated rDNA operons are difficult to assembly, draft genomes can (and often do) contain a single rDNA.  This is problematic for species ideentification -- the rDNA recovered is not just one of *n* rDNAs, but it can be a consensus "summary" rDNA resulting from trying to assemble the repeated region.  
 
-riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. Here, we compare the 16s seqeunces from riboSeed reassembly of draft genomes to the initial (potentially collapsed) 16s seqeunces.
+riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. Here, we compare the 16s sequences from riboSeed reassembly of draft genomes to the initial (potentially collapsed) 16s sequences.
 
-### Provenance of strains
-First, we read in the silva headers for the strains. The header for the silva database constists of `>ACCESSION.start.end name`.  After a fruitless effort to rework sraFind's entrez calls to identify WGS master records with sraFind, I realized that info was already in pokaryotes.txt, and could be added as an afterthought.  As of release 0.8, that column is present as "WGS".  this allows us to relate the seqeunces in the SILVA headers to their original SRAs, so we can compare riboSeed's assemblies to those for which a complete genome is available, and assess the types of errors/collapses we see where only draft genomes are available. 
 
-```{r sraFind, eval=TRUE}
+First, we read in the silva headers for the strains. The header for the silva database constists of `>ACCESSION.start.end name`. As of release 0.8, the WGS master record is a column present as "WGS" in sraFind.tab.  This allows us to relate the sequences in the SILVA headers to their original SRAs, so we can compare riboSeed's assemblies to those for which a complete genome is available, and assess the types of errors/collapses we see where only draft genomes are available. 
+
+```{r sraFind, eval=REPROCESS_RESULTS}
 # read in the draft linked accessions and the complete genome linked accessions
 # if (!file.exists("sraFind.tab")){
 #   system("curl -O sraFind.tab -L https://raw.githubusercontent.com/nickp60/sraFind/master/sraFind.tab")
@@ -669,7 +828,7 @@ table(p_summary_n16s[p_summary_n16s$category!="Complete Genome", "n"])
 
 ```{r}
 build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, trimr=10){
-  # get matching assembly from sraFind to get the complete genome/seqeunce accession
+  # get matching assembly from sraFind to get the complete genome/sequence accession
   this_silva <- unique(db[grepl(assembly, db$Assembly.Accession), "raw" ])
   if (length(this_silva) == 0) {
     warning(paste("No matches ", assembly, ";  could be long reads?"))
@@ -683,16 +842,16 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, tri
   # build focusdb query string;  get rid of the *_\\d suffix we add to SRAs to keep themunique
   this_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",this_focus), collapse = "", sep="|"))
   
-  # identify all seqeunces associated with this assembly accesssion
+  # identify all sequences associated with this assembly accesssion
   silva_subset_seqs <- datasets[['silva']][["set"]][grepl(this_silva_query,  datasets[['fast']][["metadata"]]$raw)]
-  # idenify the seqeunces from focusDB
+  # idenify the sequences from focusDB
   focus_subset_seqs <- datasets[['fast']][["set"]][grepl(this_focus_query, datasets[['fast']][["metadata"]]$raw)]
   unique_focus_subset_seqs <- unique(focus_subset_seqs)
   if (length(unique_focus_subset_seqs) == 0) {
     warning(paste("No matches for ",this_focus_query,"(", assembly, ")  in focusDB results"))
     return (list(NA, NA, NA, NA, NA, NA))
   }
-  # merge, align the seqeunces
+  # merge, align the sequences
   # Silva by default is in RNA, so we type-cast to DNA
   # We add the silva seqs fist so we can check uniqueness by the presense of SRA seqs in the unique'd alignment
   aln <- DECIPHER::AlignSeqs(
@@ -726,7 +885,7 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, tri
 }
 
 build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
-  # get matching assembly from sraFind to get the complete genome/seqeunce accession
+  # get matching assembly from sraFind to get the complete genome/sequence accession
   this_silva <- unique(db[grepl(assembly, db$Assembly.Accession), "raw" ])
   if (length(this_silva) == 0) {
     warning(paste("No matches ", assembly, ";  could be long reads?"))
@@ -740,9 +899,9 @@ build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
   # build focusdb query string;  get rid of the *_\\d suffix we add to SRAs to keep themunique
   this_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",this_focus), collapse = "", sep="|"))
   
-  # identify all seqeunces associated with this assembly accesssion
+  # identify all sequences associated with this assembly accesssion
   silva_subset_seqs <- datasets[["silva"]][["set"]][grepl(this_silva_query,  names(datasets[["silva"]][["set"]]))]
-  # idenify the seqeunces from focusDB fast, align them, keep track of best alignments
+  # idenify the sequences from focusDB fast, align them, keep track of best alignments
   these_results = data.frame("set"=character(), "focusDB"=character(), "silva"=character(), "pkb"=numeric(), stringsAsFactors = F)
   for (thisset in c("fast", "full", "denovo")){
     focus_subset_seqs <-  datasets[[thisset]][["set"]][grepl(this_focus_query, names( datasets[[thisset]][["set"]]))]
@@ -779,7 +938,7 @@ build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
         }
         
       }
-      # we only add the top hit for each focusDB seqeunce
+      # we only add the top hit for each focusDB sequence
       # if no good hits exist, thisrow wont exist
       if (exists("this_row")){
         these_results <- rbind(
@@ -808,8 +967,9 @@ build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
 ```
 
 
-Next we  subsetted the dataframe to include only those that had sras from this study,(and by proxy, those that were seqeunced with illumina)
-```{r}
+Next we subsetted the dataframe to include only those that had sras from this study,(and by proxy, those that were sequenced with illumina)
+
+```{r eval=REPROCESS_RESULTS}
 only_illumina_assembly_summary <- assembly_summary # [assembly_summary$platform == "ILLUMINA", ]
 only_illumina_assembly_summary$processed_in_this_study <- FALSE
 these_sras <- unique(gsub("(.*)_(.*)", "\\1", datasets[['fast']][["metadata"]]$id))
@@ -823,14 +983,10 @@ only_illumina_assembly_summary <- only_illumina_assembly_summary%>% filter(proce
 
 ```
 
-Alright, so now we know which SRAs relate to which assemblies, and which we have analyzed. The first order of business is to compare the accuracy of fast mode (using riboSeed's `--just_seed` parameter) to 16S's from full assemblies.  However, for a full analysis, we also need to compare to the de novo assembly (which we enabled using the `--run_de_novo_control` flag).
-
-```
-see above section of `Extracting 16S rRNA from de novo controls`
-```
+ Now we have identified which SRAs relate to which assemblies, and which we have analyzed. The first order of business is to compare the accuracy of fast mode (using riboSeed's `--just_seed` parameter) to 16S's from full assemblies.  However, for a full analysis, we also need to compare to the *de novo* assembly (which we enabled using the `--run_de_novo_control` flag). Interactive outputs are created as well.
 
 
-```{r assess_assembly_snps, cache=TRUE}
+```{r assess_assembly_snps, cache=TRUE, eval=REPROCESS_RESULTS}
 # dest_dir <- file.path("docs", "ref_msas")
 # dir.create( dest_dir)
 snp_results = data.frame(
@@ -872,7 +1028,7 @@ for (i in 1:nrow(only_illumina_assembly_summary)){
          #subtitle="gray bars represent the number of sequences recovered",
          x= "focusDB  Mode",
          color="Assembly mode",
-         #y="Errors per kbp \n(and relative ammount of seqeunces recovered)")
+         #y="Errors per kbp \n(and relative ammount of sequences recovered)")
          y="Errors per kbp",
          caption="denovo: recovered from a de novo assembly\nfast: recovered from riboSeed's subassemblies\nfull: recovered from riboSeed's de fere novo assembly")
   )
@@ -902,11 +1058,7 @@ ggsave("docs/figures/S5-set-accuracy.png", p_snps, device = "png", dpi = 300, wi
 ggsave("docs/figures/4-fast-cg-accuracy.png", p_snps_hist, device = "png", dpi = 300, width = 8, height = 6)
 
 write.table(snp_results, file="./docs/snps_per_kbp.tab", sep="\t", row.names=F)
-```
 
-Now, we build a interactive graph.
-
-```{r}
 # install.packages("visNetwork")
 library(visNetwork)
 graph_res <- snp_results %>% filter(assembly %in% c(snp_results$assembly[1:1000]))
@@ -1061,21 +1213,23 @@ View(merge(reassembly_results, srafind, by.x="assembly", by.y="Assembly.Accessio
 
 
 
-## Discussion
+## Calculating total SRAs needing re-assembly
+
 ```{r calculate_needs_assembl}
 sraFind_data <- read.table("~/.focusDB/sraFind.tab", header=T, sep="\t", stringsAsFactors = F)
 tbassembled <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(!is.na(study_acc)) %>% nrow()
 tbreleased  <- sraFind_data %>% filter (nuccore_first_chrom=="") %>% filter(is.na(study_acc)) %>% nrow()
 ```
 
-```{r how_many_seqs}
+```{r how_many_seqs, eval=REPROCESS_RESULTS}
 sum(uniqueness[uniqueness$DB == "focus", "Unique"]) + sum(uniqueness[uniqueness$DB == "focus", "Duplicated"])
 ```
 
+
+
+
+```{r assess-execution-time, eval=REPROCESS_RESULTS}
 ## Execution time
-
-
-```{r}
 library(lubridate)
 alog <- readLines("./docs/timing_results/HMP-combined_log.txt")
 alog <- alog[1:length(alog)]
@@ -1127,24 +1281,24 @@ tlot  <- lot %>% select(bug, sra, Download_SRA, Trim, Assemble, Download_refs, F
   mutate(stage = ifelse(grepl("ad_SRA|Trim|Downsample", step), "SRA", "Global"))
 
 
-(p_timing <- ggplot(tlot, aes(x=step, y=s, color= bug)) + 
+p_timing <- ggplot(tlot, aes(x=step, y=s, color= bug)) + 
     geom_boxplot(color="black", fill=NA) +
     geom_jitter(width = .2, alpha=.4) + 
     scale_y_continuous() +
     scale_color_discrete(guide="none") +
     coord_flip() + 
     labs(title="Time per stage", x="Step", y="Minutes") +
-    facet_wrap(~stage, scales="free"))  
+    facet_wrap(~stage, scales="free")
 
 ggsave("docs/figures/S3-time.png", p_timing, device = "png", 
        dpi = 300, width = 11, height = 7)
 
 ```
 
+```{r ptime-ests, eval=FALSE}
 
-# very rough timing estimates, for fast mode
+# Very rough timing estimates, for fast mode
 
-```{r}
 time_means <- tlot %>% group_by(step) %>% summarise(mean_sec=mean(s))
 98329 * sum(time_means$mean_sec)
 as.numeric(98329 * sum(time_means$mean_sec), units="days") 

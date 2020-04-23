@@ -843,7 +843,7 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, tri
   this_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",this_focus), collapse = "", sep="|"))
   
   # identify all sequences associated with this assembly accesssion
-  silva_subset_seqs <- datasets[['silva']][["set"]][grepl(this_silva_query,  datasets[['fast']][["metadata"]]$raw)]
+  silva_subset_seqs <- datasets[["silva"]][["set"]][grepl(this_silva_query,  names(datasets[["silva"]][["set"]]))]
   # idenify the sequences from focusDB
   focus_subset_seqs <- datasets[['fast']][["set"]][grepl(this_focus_query, datasets[['fast']][["metadata"]]$raw)]
   unique_focus_subset_seqs <- unique(focus_subset_seqs)
@@ -854,34 +854,53 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, tri
   # merge, align the sequences
   # Silva by default is in RNA, so we type-cast to DNA
   # We add the silva seqs fist so we can check uniqueness by the presense of SRA seqs in the unique'd alignment
+  print("aligning")
   aln <- DECIPHER::AlignSeqs(
-    append(DNAStringSet(silva_subset_seqs), unique_focus_subset_seqs), 
+    append(DNAStringSet(silva_subset_seqs), focus_subset_seqs), 
   )
+  print("trimming")
+
   trimmed <- subseq(aln,trimf, -trimr)
   uniques <- trimmed[!duplicated(trimmed)]
-  
-  # identity <- data.frame(name=names(focus_subset_seqs), stringsAsFactors = F, unique=F )
-  # for (seq in identity$name){
-  #   focus_subset_seqs[seq, "unique"] <- mapply(function(x, y ) sum(x!=y), strsplit(silva_subset_seqs,""), strsplit(focus_subset_seqs[seq],""))
-  # }
-  # 
-  #BrowseSeqs(uniques, highlight=0)
-  dists <- stringDist(uniques, method="hamming")
-  min_snps <- list()
-  for (i in names(uniques)){
-    if (i %in% names(unique_focus_subset_seqs)){
-      these_snps <- as.matrix(dists)[grepl(i, labels(dists))]
-      min_snps[i] <-  min(these_snps[these_snps > 0])
+  consensus <- ConsensusSequence(trimmed[2],threshold = .999990, noConsensusChar="N", minInformation=1, includeTerminalGaps = F)
+  # trimmed[length(trimmed) + 1] <- consensus
+  # BrowseSeqs(trimmed, highlight = 1)
+  columns_to_view <- which(strsplit(as.character(consensus), "")[[1]]=="N") 
+  if (length(columns_to_view) == 0){
+    print("No alignment created, single unique seqeunce")
+    return (
+      list("alignment"=aln, 
+           "unique_from_focusDB"=sum(names(unique_focus_subset_seqs) %in% names(uniques)), 
+           "total"=length(focus_subset_seqs),
+           "focusDB"=length(unique_focus_subset_seqs),
+           "silva"=length(silva_subset_seqs),
+           "min_snps"=min_snps
+      )
+    )
+  } else {
+    SNP_aln <- DNAStringSet(sapply(1:length(trimmed), function(i){trimmed[i][[1]][columns_to_view]}))
+    names(SNP_aln) <- names(trimmed)
+    print("saving")
+    BrowseSeqs(SNP_aln, highlight = 2, htmlFile = 
+                 paste0("docs/figures/draft_alignments/", assembly, "_", sprintf("%04d", length(columns_to_view)), "_snps_", length(focus_subset_seqs), "_focusSeqs_", length(silva_subset_seqs), '_silvaSeqs.html'), openURL = F)
+    # 
+    dists <- stringDist(uniques, method="hamming")
+    min_snps <- list()
+    for (i in names(uniques)){
+      if (i %in% names(unique_focus_subset_seqs)){
+        these_snps <- as.matrix(dists)[grepl(i, labels(dists))]
+        min_snps[i] <-  min(these_snps[these_snps > 0])
+      }
     }
-  }
-  return (list("alignment"=aln, 
-               "unique_from_focusDB"=sum(names(unique_focus_subset_seqs) %in% names(uniques)), 
-               "total"=length(focus_subset_seqs),
-               "focusDB"=length(unique_focus_subset_seqs),
-               "silva"=length(silva_subset_seqs),
-               "min_snps"=min_snps
-               )
+    return (list("alignment"=aln, 
+                 "unique_from_focusDB"=sum(names(unique_focus_subset_seqs) %in% names(uniques)), 
+                 "total"=length(focus_subset_seqs),
+                 "focusDB"=length(unique_focus_subset_seqs),
+                 "silva"=length(silva_subset_seqs),
+                 "min_snps"=min_snps
+    )
   )
+  }
 }
 
 build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
@@ -978,6 +997,9 @@ for (sra in these_sras){
     sra, only_illumina_assembly_summary$run_SRAs,  fixed = T)  |  only_illumina_assembly_summary$processed_in_this_study
 }
 table(only_illumina_assembly_summary$processed_in_this_study )
+only_illumina_assembly_summary_draft <- only_illumina_assembly_summary%>% filter(processed_in_this_study) %>%
+  filter(wgs)
+
 only_illumina_assembly_summary <- only_illumina_assembly_summary%>% filter(processed_in_this_study) %>%
   filter(cg)
 
@@ -1041,22 +1063,37 @@ n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow
                          summarize(bin=unique(ceiling(pkb)), 
                                 y=n()), aes(x=bin, y=y, fill=bin==0)) + 
     mytheme +
-    geom_bar(stat="identity", width = .8, positiion="dodge") +
+    geom_bar(stat="identity", width = .8) +
     scale_fill_manual(guide="none", values=wesanderson::wes_palettes$IsleofDogs1[4:5]) +
     labs(
-      # subtitle=paste0(
-      # "In the genera considered, ", 
-      # nrow(only_illumina_assembly_summary), 
-      # " sequences from ", nassemb, " complete genomes were present in SILVA.\n",
-      # "riboSeed recovered ",seqs_aligned_against_cg, " sequences, of which ",  n_exact_seqs, " were exact."),
       x="Errors/Kbp", y="Sequences",
-      title="Accuracy of reassembled 16S rRNA"
+      subtitle="Histogram of per-sequence accuracy "
     )
 )
-p_snps_hist +
-         stat_bin(aes(y=cumsum(..count..)),geom="line",color="green")
+(p_snps_hist2 <- ggplot(snp_results %>% filter(!is.na(pkb)) %>%filter(set=="fast")%>%
+                         group_by(pkb) %>%
+                         summarize(bin=unique(ceiling(pkb)), 
+                                y=n()) %>% mutate(
+                                cumuy=cumsum(y)/sum(y) * 100) ,#%>% transform(y=y/sum(y) * 100), 
+                        aes(x=bin, y=y, fill=bin==0)) + 
+    mytheme +
+    #geom_bar(stat="identity", width = .8, positiion="dodge") +
+    scale_fill_manual(guide="none", values=wesanderson::wes_palettes$IsleofDogs1[4:5]) +
+    #geom_line(aes(y=cumuy), color="gray50", size=.8, linetype="solid") +
+    geom_bar(stat="identity", aes(y=cumuy), size=1) +
+    geom_hline(yintercept = 99, color="gray50", linetype="dashed") + 
+    annotate(geom="text", x = 3, y=95, label="99%", color="gray50") + 
+    labs(
+      x="Errors/Kbp", y="Percent of Sequences",
+      subtitle="Cumulative distribution "
+    ) +
+    scale_y_continuous(limits = c(0, 100))
+)
+
 ggsave("docs/figures/S5-set-accuracy.png", p_snps, device = "png", dpi = 300, width = 7, height = 5)
 ggsave("docs/figures/4-fast-cg-accuracy.png", p_snps_hist, device = "png", dpi = 300, width = 8, height = 6)
+ggsave("docs/figures/4-fast-cg-accuracy-cumu.png", 
+       (p_snps_hist | p_snps_hist2) + plot_annotation(tag_levels = "A", title = "Accuracy of re-assembled 16S rRNA"), device = "png", dpi = 300, width = 10, height = 6)
 ggsave("docs/figures/4-fast-cg-accuracy-subtitle.png", 
        p_snps_hist + labs(
       subtitle=paste0(
@@ -1138,24 +1175,26 @@ forceNetwork(Links = edges, Nodes = nodes,
 
 
 
-```{r eval=FALSE}
+```{r eval=REPROCESS_RESULTS}
 # going row by row reprocesses assemblies, so we skip if we have already processed it. because we 
 # are subsetting from the same dataset in the function, this allows us to keep everything in order (as opposed to having 
 # a separate list of unique assemblies, then subsetting both in the function and in the results assignment)
 # structure for results --  a pretty dataframe and a list of of the alignments
+dir.create("docs/figures/draft_alignments", showWarnings = FALSE)
 reassembly_results <- data.frame(assembly=NA, unique_focusdb=NA, total=NA, focusdb=NA, silva=NA, category=NA, min_snps=NA,  stringsAsFactors = F)
 reassembly_results <-  reassembly_results[!is.na(reassembly_results), ]
 alignments <- list()
 min_snps <- list()
 counter = 0
-for (i in 1:nrow(only_illumina_assembly_summary)){
-  assembly <- only_illumina_assembly_summary$Assembly.Accession[i]
+nassemb <- nrow(only_illumina_assembly_summary_draft)
+for (i in 1:nassemb){
+  assembly <- only_illumina_assembly_summary_draft$Assembly.Accession[i]
   if (assembly %in% reassembly_results$assembly){
     next
   } else{
     print(paste(counter, "of", nassemb ))
     res <- build_aln_for_assembly(
-      db=only_illumina_assembly_summary, 
+      db=only_illumina_assembly_summary_draft, 
       assembly=assembly, trimf=10, trimr=10
     )
     alignments[[assembly]] <-  res[[1]]

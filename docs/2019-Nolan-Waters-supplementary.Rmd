@@ -1044,18 +1044,29 @@ n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow
     geom_bar(stat="identity", width = .8, positiion="dodge") +
     scale_fill_manual(guide="none", values=wesanderson::wes_palettes$IsleofDogs1[4:5]) +
     labs(
+      # subtitle=paste0(
+      # "In the genera considered, ", 
+      # nrow(only_illumina_assembly_summary), 
+      # " sequences from ", nassemb, " complete genomes were present in SILVA.\n",
+      # "riboSeed recovered ",seqs_aligned_against_cg, " sequences, of which ",  n_exact_seqs, " were exact."),
       x="Errors/Kbp", y="Sequences",
-      title="Accuracy of reassembled 16S rRNA",
-      subtitle=paste0(
-      "In the genera considered, ", 
-      nrow(only_illumina_assembly_summary), 
-      " sequences from ", nassemb, " complete genomes were present in SILVA.\n",
-      "riboSeed recovered ",seqs_aligned_against_cg, " sequences, of which ",  n_exact_seqs, " were exact.")
+      title="Accuracy of reassembled 16S rRNA"
     )
 )
-
+p_snps_hist +
+         stat_bin(aes(y=cumsum(..count..)),geom="line",color="green")
 ggsave("docs/figures/S5-set-accuracy.png", p_snps, device = "png", dpi = 300, width = 7, height = 5)
 ggsave("docs/figures/4-fast-cg-accuracy.png", p_snps_hist, device = "png", dpi = 300, width = 8, height = 6)
+ggsave("docs/figures/4-fast-cg-accuracy-subtitle.png", 
+       p_snps_hist + labs(
+      subtitle=paste0(
+      "In the genera considered, ",
+      nrow(only_illumina_assembly_summary),
+      " sequences from ", nassemb, " complete genomes were present in SILVA.\n",
+      "riboSeed recovered ",seqs_aligned_against_cg, " sequences, of which ",  n_exact_seqs, " were exact."),
+      x="Errors/Kbp", y="Sequences",
+      title="Accuracy of reassembled 16S rRNA" 
+       )         , device = "png", dpi = 300, width = 8, height = 6)
 
 write.table(snp_results, file="./docs/snps_per_kbp.tab", sep="\t", row.names=F)
 
@@ -1179,7 +1190,7 @@ ggplot(reassembly_results_df %>% filter(category == "Complete Genome"), aes(x=sn
   aes(x=pkbp)) + geom_histogram() + labs(
     x="SNPs/Kbp (per genome)", y="Number of Assemblies",
     title="Comparing riboSeed-assembled 16S to Complete Genome's 16S",
-    subtitle=paste("In the genera considered, sequences for complete genomes were present in SILVA.\nriboSeed recovered 182 of 253 sequences.\nIn 14 genomes,16S alleles were identical between riboSeed and complete genome")
+    #subtitle=paste("In the genera considered, sequences for complete genomes were present in SILVA.\nriboSeed recovered 182 of 253 sequences.\nIn 14 genomes,16S alleles were identical between riboSeed and complete genome")
   )
 )
 (snps_cg_raw <- ggplot(

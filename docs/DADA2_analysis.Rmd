@@ -37,8 +37,8 @@ dirpath <- "./docs/microbiome_data/"
 
 
 
-# Endobiota study
-We follow a generic DADA2 workflow for the Endobiota BioProject PRJEB26800.  Plots describing the quality of the read sets can be found in "end_R_q.png" and "end_F_q.png". Sample ERR2586009 was removed due to low sequence depth and poor quality.
+# Endobiota study 
+We follow a generic DADA2 workflow for the Endobiota BioProject PRJEB26800.  Plots describing the quality of the read sets can be found in "end_R_q.png" and "end_F_q.png". Note that sample ERR2586009 was removed due to low sequence depth and poor quality.
 
 ```{bash eval=FALSE}
 # go to https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=572651

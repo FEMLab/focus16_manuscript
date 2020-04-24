@@ -8,14 +8,12 @@ header-includes:
   - \renewcommand{\figurename}{Figure S}
   - \renewcommand{\tablename}{Table S}
 output:
-  pdf_document: default
-  html_document: default
-  word_document: default
+  bookdown::pdf_document2: default
 editor_options:
   chunk_output_type: console
 ---
 
-```{r setup, include=FALSE}
+```{r setup-sup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, cache.lazy = FALSE)
 library(tidyverse); packageVersion("tidyverse")
 library(Biostrings); packageVersion("Biostrings")
@@ -25,17 +23,17 @@ library(Biostrings); packageVersion("Biostrings")
 library(ggupset)
 library(patchwork)
 library(DECIPHER)
-source("docs/shared.R")
-
-results_dir <- "./results/2019-12-19-results/"
+source("../docs/shared.R")
+results_dir <- "../results/2019-12-19-results/"
+figures_dir <- "../docs/figures/"
 REPROCESS_RESULTS = FALSE
 ```
 # Introduction
-This document contains all the of steps needed to reproduce the findings presented in this work, with the exception of the community analyses described in `DADA2_analyses.Rmd`; it was written with literate programming, so all code can be viewed in the source document at <https://github.com/femlab/focusdb_manuscript/blob/master/docs/>.
+This document contains all the of steps needed to reproduce the findings presented in this work, with the exception of the community analyses described in `DADA2_analyses.Rmd`; it was written with literate programming, so all code can be viewed in the source document at <https://github.com/femlab/focus16_manuscript/blob/master/docs/>.
 
-## Third-party software vesions
+## Third-party software versions
 
-The conda environment used for the analyses is defined in  <https://github.com/femlab/focusdb_manuscript/blob/master/focusDB_env.txt>.
+The conda environment used for the analyses is defined in  <https://github.com/femlab/focus16_manuscript/blob/master/focus16_env.txt>.
 
 # Data Availability
 ## Number of SRAs available for each species
@@ -52,17 +50,16 @@ python scripts/sralist.py -s ../16db/sraFind-All-biosample-with-SRA-hits.txt -l 
 ```
 
 ```{r plot_sras, eval=REPROCESS_RESULTS}
-srac <- data.frame("org"=NA, "ncount"=NA, stringsAsFactors = F)
-srac <- srac[!is.na(srac),]
+srac <- data.frame("org"=character(), "ncount"=numeric(), stringsAsFactors = F)
 ###
 for (d in c("Extremes", "HMP", "Balanced")){
-  thispath = file.path("results", paste0(d, "_sra_count"), "sralist.txt")
+  thispath = file.path("../results", paste0(d, "_sra_count"), "sralist.txt")
   tmp <- read.csv2(thispath, sep=":", col.names = c("org", "ncount"), stringsAsFactors = F, header=F)
   tmp$mock <- d
   srac <- rbind(srac, tmp)
 }
 ## add endo data
-thispath = file.path("results", paste0("endo", "_sra_count"), "sralist.txt")
+thispath = file.path("../results", paste0("endo", "_sra_count"), "sralist.txt")
 tmp <- read.csv2(thispath, sep=":", col.names = c("org", "ncount"), stringsAsFactors = F, header=F)
 tmp$mock <- "Endobiota"
 srac <- rbind(srac, tmp)
@@ -122,8 +119,8 @@ psra_hmp <- plot_dataset(srac_summary %>% filter(mock=="HMP"))
 psra_bal <- plot_dataset(srac_summary %>% filter(mock=="Balanced"))
 psra_ext <- plot_dataset(srac_summary %>% filter(mock=="Extremes"))
 combined_plots <- (psra_hmp/psra_bal/psra_ext + plot_layout(heights = c(.4,.4,.2))) | psra_ndo +  plot_layout(guides = 'auto')
-paste0(ngenerawith_sras, " of ", nunique_genera, " genra have availabe SRA data ")
-ggsave("docs/figures/S1-sras.png", combined_plots, device = "png", dpi = 300, width = 9, height = 8)
+paste0(ngenerawith_sras, " of ", nunique_genera, " genra have available SRA data ")
+ggsave("../docs/figures/S1-sras.png", combined_plots, device = "png", dpi = 300, width = 9, height = 8)
 ``` 
 
 ```{r pfig, fig.cap="Whole-genome sequencing SRA data availability for strains in the four datasets. Bars show the number of SRAs per genus as of 2019-10-24. Genera with no publicly available SRAs are removed; results are displayed on a log scale. 109 of 193 genera have availabe SRA data. Clinically-relavent genera tend to have many SRAs.", out.width="100%"}
@@ -136,7 +133,7 @@ knitr::include_graphics("figures/S1-sras.png")
 ```{r calc-dataset-overlap, eval=REPROCESS_RESULTS}
 species_names <- data.frame(genus=character(), species=character(), dataset=character(), stringsAsFactors = F)
 # note that we use the "genus" level list for the EndoBiota study because we had to clean up some of the bad annotations where text like "group_X" would be listed as the genus, while a valid genus would be listed at the family level.
-for (f in c(Sys.glob("./docs/datasets/*species*"), "./docs/microbiome_data/endo_genus.txt")){
+for (f in c(Sys.glob("../docs/datasets/*species*"), "../docs/microbiome_data/endo_genus.txt")){
   species_names <- rbind(
     species_names, 
     cbind(read.csv(f, sep=" ", stringsAsFactors = F, header=F, col.names = c("genus", "species")), dataset=f)
@@ -144,7 +141,7 @@ for (f in c(Sys.glob("./docs/datasets/*species*"), "./docs/microbiome_data/endo_
   print(f)
 }
 unique_genuses <- unique(srac[, "genus"])
-unique_genuses_with_sras <- unique(srac[srac$count > 0, "genus"])
+unique_genuses_with_sras <- unique(srac[srac$ncount > 0, "genus"])
 
 proks <- read.csv2("~/.focusDB/prokaryotes.txt", sep="\t", header = T, stringsAsFactors = F)
 proks$genus <- gsub("(.*?) .*", "\\1", proks$X.Organism.Name)
@@ -195,15 +192,15 @@ p_dataset_overlap <-  theseproks %>%   group_by(genus, exclusion) %>%
 #species_names %>% ggplot(aes(x=dataset, y=genus)) + geom_tile()
 unique_and_valid <- theseproks %>% select(genus, ref, sras) %>% distinct() %>%
   filter(sras) %>% filter(ref)
-write.table(sort(unique_and_valid$genus), col.names = F, row.names = F, file = "./docs/datasets/combined_genuses.txt", quote=F)
+write.table(sort(unique_and_valid$genus), col.names = F, row.names = F, file = "../docs/datasets/combined_genuses.txt", quote=F)
 
-ggsave("docs/figures/S6-datasets.png", 
+ggsave("../docs/figures/S6-datasets.png", 
        p_dataset_overlap, 
        device = "png", dpi = 300, width = 6, height = 5)
-ggsave("docs/figures/S6-datasets-log.png", 
+ggsave("../docs/figures/S6-datasets-log.png", 
        p_dataset_overlap + scale_x_upset(ytrans = "log1p") , 
        device = "png", dpi = 300, width = 6, height = 5)
-ggsave("docs/figures/S6-datasets-tab.png", 
+ggsave("../docs/figures/S6-datasets-tab.png", 
 p_dataset_overlap | gridExtra::tableGrob(summary_table_overlap, theme = gridExtra::ttheme_default(base_size=9 )),
        device = "png", dpi = 300, width = 10, height = 6)
 ```
@@ -216,7 +213,7 @@ knitr::include_graphics("figures/S6-datasets-tab.png")
 
 
 \newpage
-# Running focusDB on candidate taxa 
+# Running Focus16 on candidate taxa 
 ## Parameter choice
 Below is a copy of the script used to run the pipeline for the list of genera determined above. the following parameters were used:
 
@@ -229,7 +226,7 @@ Below is a copy of the script used to run the pipeline for the list of genera de
 - `--timeout 1500`: sets download limit for 25 minutes; we found downloads lasting long than that usually were hanging
 - `--process_partial `: if a download times out, proceed with the reads downloaded 
 - `--use_available`: use any reads downloaded during while previously processing an SRA
-- `--sge`: distribute assembly tasts as an SGE array job on the HPC
+- `--sge`: distribute assembly tasks as an SGE array job on the HPC
 - `--sge_env 16db`: name of the conda environment that the distributed jobs to be executed with
 - `--njobs 6` : number of tasks to be run concurrently for each SGE array 
 - `--threads 2`: resource allocation for main job
@@ -281,7 +278,7 @@ tar czf 2019-12-19-results.tar.gz 2019-12-19-results/
 
 
 ## List of References Considered
-After execution of thhe pipeline, all of the references considered were recorded as follows:
+After execution of the pipeline, all of the references considered were recorded as follows:
 ```
 while read genus ; do \
 for j in  .focusDB/references/$genus/*.fna; do \
@@ -291,17 +288,18 @@ done ;done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
 
 
 ```{r calc-refs-per, eval=REPROCESS_RESULTS}
-reference_df <- read.csv("./docs/reference_genomes.tab", sep="\t", col.names = c("genus", "ref"), header=FALSE)
+reference_df <- read.csv("../docs/reference_genomes.tab", sep="\t", col.names = c("genus", "ref"), header=FALSE)
 ggplot(reference_df %>% group_by(genus) %>% summarize(n=n()), aes(x=genus, y=n)) + geom_bar(stat="identity") + coord_flip()
 ggsave(
-  "docs/figures/S7-refs.png", 
+  "../docs/figures/S7-refs.png", 
 ggplot(
   reference_df %>% group_by(genus) %>% summarize(Genera="", n=n()), aes(x=Genera, y=n)) +
   ggbeeswarm::geom_quasirandom(size=3, alpha=.4, beeswarmArgs=list(side=1)) + mytheme + labs(y="Number of\n RefSeq References Available", x="Genera") + coord_flip()    ,
        device = "png", dpi = 300, width = 6, height = 2)
 # getting the median
-#tmp <- reference_df %>% group_by(genus) %>% summarize(Genera="", n=n())
-#median(tmp$n)
+tmp <- reference_df %>% group_by(genus) %>% summarize(Genera="", n=n())
+median(tmp$n)
+print(tmp[tmp$n >= 200, ])
 ```
 
 ```{r reference-datasets, echo=FALSE, fig.cap="A median of 9 references were available for each of the genera considered. The number of references per genera was capped at 200.  In practice, this only effected the Bordetella genus.  Data was plotted with ggbeeswarm using the quasirandom layout to show the distribution.", out.width = '80%'}
@@ -319,11 +317,13 @@ ls -d results/2019-12-19-results/*_genus/* > docs/sras.tab
 # Quality Control
 ## Diagnosing poor assemblies
 
-In the course of comparing the reassembled sequences to those for which reference genomes were available, we determined that the pipeline struggled in two cases: the *Treponema* genus, and one *Bacillus anthracis* SRA: SRR2155541.  We do not currently know the issue with the *Treponema* genus, but using blobtools we determined that SRR2155541 is contaminated with *Micrococcus luteus*:
+In the course of comparing the reassembled sequences to those for which reference genomes were available, we determined that the pipeline struggled in two cases: the *Treponema* genus, and one *Bacillus anthracis* SRA: SRR2155541.  We do not currently know the issue with the *Treponema* genus, but using blobtools we determined that SRR2155541 is contaminated with *Micrococcus luteus* (Figure \@ref(fig:blob-bacillus)).
 
-```{bash blobforSRR2155541, eval=FALSE}
+```{bash blobforSRR2155541, eval=FALSE, echo=TRUE}
 # we downloaded GCF_000008165.1_ASM816v1_genomic.fna as a reference
-docker run --memory 16G --rm  -v $HOME:/home/ nickp60/ezblobtools  -r /home/Downloads/genome_assemblies\(1\)/ncbi-genomes-2019-12-19/GCF_000008165.1_ASM816v1_genomic.fna  -A /home/GitHub/focusdb/results/2019-12-19-results/Bacillus_genus/SRR2155541/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta   -d ref_prok_rep_genomes -o /home/GitHub/focusdb/docs/blob_SRR2155541/ -t 2 -m 16
+docker run --memory 16G --rm  -v $PWD:/home/ nickp60/ezblobtools \
+  -r /home/results/2019-12-19-results/Bacillus_genus/SRR2155541/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta   \
+  -d ref_prok_rep_genomes -o /home/GitHub/focusdb/docs/blob_SRR2155541/ -t 2 -m 16
 ```
 
 ```{r blob-bacillus, echo=FALSE, fig.cap="Assessing the contents of *Bacillus anthracis* SRA SRR2155541 showed possible contamination with *Micrococcus luteus*, as can be seen from the coverage and GC content differences.", out.width = '60%'}
@@ -331,7 +331,7 @@ knitr::include_graphics("blob_SRR2155541/blob_all/all.blobDB.json.bestsum.specie
 ```
 
 ## Identifying poor taxonomic assignments
-In addition to those mentioned above with poor assemblies, we filtered out any SRAs with inconclusive domain-level agreement, where Kraken reports the top level Domain taxonomy with less than 70% aggreement. This primarily intended to remove datasets with poor host-DNA depletion.
+In addition to those mentioned above with poor assemblies, we filtered out any SRAs with inconclusive domain-level agreement, where Kraken reports the top level Domain taxonomy with less than 70% agreement . This primarily intended to remove datasets with poor host-DNA depletion.
 
 ```{r calc-tax-agreement, eval=REPROCESS_RESULTS}
 tax_summary <- read.csv(
@@ -343,22 +343,22 @@ tax_summary$domain_perc <- as.numeric(gsub("(.*?);(.*?);.*", "\\2", tax_summary$
 tax_summary$phylum_perc <- as.numeric(gsub("(.*?);(.*?);(.*?);.*", "\\3", tax_summary$perc))
 tax_summary$sra <- gsub("(.*?)_.*", "\\1", tax_summary$id)
 
-ggsave( file="docs/figures/aggreement.png", device = "png", dpi = 300, width = 5, height = 5,
-        ggplot(tax_summary, aes(x=domain_perc, fill=domain_perc>70)) + geom_histogram() + 
+ggsave( file="../docs/figures/aggreement.png", device = "png", dpi = 300, width = 5, height = 5,
+        ggplot(tax_summary, aes(x=domain_perc, fill=domain_perc>70)) + geom_histogram(bins=30) + 
           labs(title="", subtitle="Histogram of Domain-level taxonomic assignment percentages", y="Number of sequences", fill="Domain-level Assignment > 70%") + theme(legend.position = "bottom") 
 )
 questionable_annotation_sras <- unique(tax_summary[tax_summary$domain_perc < 70 | grepl("Homo sapiens", tax_summary$taxonomy), "sra"])
 questionable_annotation_sras <-c(questionable_annotation_sras, "SRR2155541")
-write.table(questionable_annotation_sras, file = "bad_sras.txt", row.names = FALSE, col.names = FALSE, quote=FALSE)
+write.table(questionable_annotation_sras, file = "../bad_sras.txt", row.names = FALSE, col.names = FALSE, quote=FALSE)
 
 print(length(unique(tax_summary[grepl("Homo sapiens", tax_summary$taxonomy), "sra"])))
 ```
 
-```{r tax-agreement-plot, echo=FALSE, fig.cap="Datasets where the average taxanomic assignment was less than 70 percent bacteria were removed, as these are likely contaminated with host DNA", out.width = '50%'}
+```{r tax-agreement-plot, echo=FALSE, fig.cap="Datasets where Kraken's taxanomic assignment of preliminary assembly contigs showed less  less than 70 percent agreement  were removed, as these are likely contaminated with host DNA", out.width = '50%'}
 knitr::include_graphics("figures/aggreement.png")
 ```
 
-Here, we parse the outputs from Kraken2's taxonomic assignment, and flag any with a low (<70) percent of domain-assigned sequences, as this could indicate that an SRA is contaminated.  Some (such as Treponema SRAs 	SRR3571775 and SRR3584844) have $\approx$ 60% human DNA, indicating incomplete removal of host DNA, and as such, we drop them. as such, we lose 9 SRAs.  However, it should be noted that BLASTing contigs from these assemblies appear to show bacterial DNA -- the Kraken2 database itself may have contamination where Treponema kmers are labelled as human.  Either way, these (and any other under the 70% domain-level assignment threshold) are dropped.
+Figure \@ref(fig:tax-agreement-plot) shows a histogram of the domain-level agreement. We parse the outputs from Kraken2's taxonomic assignment, and flag any with a low (<70) percent of domain-assigned sequences, as this could indicate that an SRA is contaminated.  Some (such as Treponema SRAs 	SRR3571775 and SRR3584844) have $\approx$ 60% human DNA, indicating incomplete removal of host DNA, and as such, we drop them. as such, we lose 9 SRAs.  However, it should be noted that BLASTing contigs from these assemblies appear to show bacterial DNA -- the Kraken2 database itself may have contamination where Treponema kmers are labelled as human.  Either way, these (and any other under the 70% domain-level assignment threshold) are dropped.
 
 
 # Results
@@ -371,7 +371,7 @@ The outcome of each SRA was determined after running the pipeline. For the purpo
   - Error downloading datasets or references
   - Unknown errors
 - `QC Fail`:
-  - Invaid library type (eg mate-paired reads)
+  - Invalid library type (eg mate-paired reads)
   - Reads < 65bp (eg early Genome Analyzer reads)
   - Reads > 300bp (eg PacBio or Nanopore reads)
   - Insuffient coverage < 15x
@@ -420,10 +420,10 @@ p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org")) %>%
 # for (grp in  c("Extremes",  "Balanced", "Endobiota")){
 #   thisgroup <- quo(grp)
 #   (mock_plots[[grp]] <- plot_mock(df=p_summary_data%>% filter(mock == (!!thisgroup))))
-#   ggsave(paste0("docs/figures/S2", grp, ".png"), mock_plots[[grp]], device = "png", dpi = 300, width = 12, height = 7)
+#   ggsave(paste0("../docs/figures/S2", grp, ".png"), mock_plots[[grp]], device = "png", dpi = 300, width = 12, height = 7)
 # }
 (mock_plots <- plot_genera(df=p_summary_data))
-ggsave(paste0("docs/figures/2-genera.png"), plot_genera(df=p_summary_data), device = "png", dpi = 300, width = 10,  height = 13)
+ggsave(paste0("../docs/figures/2-genera.png"), plot_genera(df=p_summary_data), device = "png", dpi = 300, width = 10,  height = 13)
 ```
 
 
@@ -679,23 +679,24 @@ p_unique_perc <-
     geom_bar(stat="identity") #+ facet_wrap(~grp) 
 )
 (p_unique_genus <- ggplot(
-  p_unique_perc %>% select(genus, perc_inc_genus) %>% distinct(),
+  p_unique_perc %>% group_by(genus, perc_inc_genus) %>% summarise(foc=sum(focusDB)),
   aes(x=reorder(genus, perc_inc_genus), y=perc_inc_genus)) +
     coord_flip() +
     scale_fill_manual(values = viridis::viridis(n=3)) +
     mytheme +
     labs(y="Percent increase in Unique Sequences", x="", alpha="", fill="Database") +
     theme(axis.text=element_text(size=13)) +
+    geom_text(aes(y=perc_inc_genus+4, label=foc)) +
     geom_bar(stat="identity") #+ facet_wrap(~grp) 
 )
 
 
 #(figure <- ggpubr::ggarrange(p_unique_heat, p_uniqueV, widths=c(1, 3)))
-ggsave("docs/figures/3-unique.png", p_unique, device = "png", dpi = 300, width = 12, height = 18) 
+ggsave("../docs/figures/3-unique.png", p_unique, device = "png", dpi = 300, width = 12, height = 18) 
 # length(unique(p_unique_perc$genus))
-ggsave("docs/figures/3-perc_unique.png", p_unique_species, device = "png", dpi = 300, width = 12, height = 10) 
-ggsave("docs/figures/3-perc_unique_genus.png", p_unique_genus, device = "png", dpi = 300, width = 12, height = 10) 
-ggsave("docs/figures/3-unique_alt2.png", p_unique_alt, device = "png", dpi = 300, width = 12, height = 10)
+ggsave("../docs/figures/3-perc_unique.png", p_unique_species, device = "png", dpi = 300, width = 12, height = 10) 
+ggsave("../docs/figures/3-perc_unique_genus.png", p_unique_genus, device = "png", dpi = 300, width = 12, height = 10) 
+ggsave("../docs/figures/3-unique_alt2.png", p_unique_alt, device = "png", dpi = 300, width = 12, height = 10)
 #ggsave("docs/figures/3-unique_alt.png", figure, device = "png", dpi = 300, width = 12, height = 10)
 
 ```
@@ -758,7 +759,7 @@ str(shannon)
 (p_diversity <- ggplot(shannon, aes(x=pos, color=grp, shape=grp, fill=region, y=entropy)) + 
     scale_shape_manual(values=c(21, 22)) + 
   geom_point(size=4, alpha=.5) + geom_smooth())
-ggsave("docs/figures/4-diversity.png", p_diversity, device = "png", dpi = 300, width = 11, height = 7)
+ggsave("../docs/figures/4-diversity.png", p_diversity, device = "png", dpi = 300, width = 11, height = 7)
 ```
 
 
@@ -782,7 +783,7 @@ First, we read in the silva headers for the strains. The header for the silva da
 #   system("curl -O sraFind.tab -L https://raw.githubusercontent.com/nickp60/sraFind/master/sraFind.tab")
 # }
 # 
-srafind <- read.csv("sraFind.tab", sep="\t", stringsAsFactors = F)
+srafind <- read.csv("../sraFind.tab", sep="\t", stringsAsFactors = F)
 #  make a boolean mask for all the silva seqs we might care about
 ngs_silva <- datasets[["silva"]][["metadata"]][!is.na(datasets[["silva"]][["metadata"]]$matcher), ]
 this_mask <- rep(FALSE, nrow(ngs_silva))
@@ -802,6 +803,7 @@ assembly_summary <- inner_join(
   srafind %>% select(Assembly.Accession, matcher, platform,  run_SRAs) %>% filter(!is.na(run_SRAs)), 
   by="matcher")
 
+
 (p_summary_draft <- assembly_summary  %>% filter(wgs) %>% group_by(strain,  Assembly.Accession) %>% 
      select(strain, Assembly.Accession, id, start, stop) %>% distinct() %>%  summarize(n=n()))
 (p_summary_cg    <-    assembly_summary  %>% filter(cg) %>% group_by(strain,  Assembly.Accession) %>% 
@@ -813,7 +815,7 @@ p_summary_n16s <- assembly_summary %>% select(raw, strain, Assembly.Accession,ca
     geom_density(adjust=4, alpha=.6, ) + 
     labs(x="Number of 16S  in assembly", y="Relative Distriubtion", fill="", title="Distribution of rDNA counts by assembly level") 
 )
-ggsave("docs/figures/S4-n16S.png", p_n16s, device = "png", dpi = 300, width = 6, height = 5)
+ggsave("../docs/figures/S4-n16S.png", p_n16s, device = "png", dpi = 300, width = 6, height = 5)
 
 table(p_summary_n16s[p_summary_n16s$category=="Complete Genome", "n"])
 table(p_summary_n16s[p_summary_n16s$category!="Complete Genome", "n"])
@@ -827,6 +829,330 @@ table(p_summary_n16s[p_summary_n16s$category!="Complete Genome", "n"])
 
 
 ```{r}
+BrowseSeqs2 <- function (myXStringSet, htmlFile = paste(tempdir(), "/myXStringSet.html", 
+    sep = ""), openURL = interactive(), colorPatterns = TRUE, 
+    highlight = NA, patterns = c("-", alphabet(myXStringSet, 
+        baseOnly = TRUE)), colors = substring(rainbow(length(patterns), 
+        v = 0.8, start = 0.9, end = 0.7), 1, 7), colWidth = Inf, loc_strings="",
+    ...) 
+{
+    if (!is(myXStringSet, "XStringSet")) 
+        stop("myXStringSet must be an XStringSet.")
+    if (length(myXStringSet) == 0) 
+        stop("No sequence information to display.")
+    type <- switch(class(patterns), DNAStringSet = 1L, RNAStringSet = 2L, 
+        AAStringSet = 3L, list = -1L, 0L)
+    if (type > 0L) {
+        patterns <- as.character(patterns)
+        if (type == 1L) {
+            patterns <- gsub("M", "[ACM]", patterns, fixed = TRUE)
+            patterns <- gsub("R", "[AGR]", patterns, fixed = TRUE)
+            patterns <- gsub("W", "[ATW]", patterns, fixed = TRUE)
+            patterns <- gsub("S", "[CGS]", patterns, fixed = TRUE)
+            patterns <- gsub("Y", "[CTY]", patterns, fixed = TRUE)
+            patterns <- gsub("K", "[GTK]", patterns, fixed = TRUE)
+            patterns <- gsub("V", "[ACGMRSV]", patterns, fixed = TRUE)
+            patterns <- gsub("H", "[ACTMWYH]", patterns, fixed = TRUE)
+            patterns <- gsub("D", "[AGTRWKD]", patterns, fixed = TRUE)
+            patterns <- gsub("B", "[CGTSYKB]", patterns, fixed = TRUE)
+            patterns <- gsub("N", "[ACGTMRWSYKVHDBN]", patterns, 
+                fixed = TRUE)
+        }
+        else if (type == 2L) {
+            patterns <- gsub("M", "[ACM]", patterns, fixed = TRUE)
+            patterns <- gsub("R", "[AGR]", patterns, fixed = TRUE)
+            patterns <- gsub("W", "[AUW]", patterns, fixed = TRUE)
+            patterns <- gsub("S", "[CGS]", patterns, fixed = TRUE)
+            patterns <- gsub("Y", "[CUY]", patterns, fixed = TRUE)
+            patterns <- gsub("K", "[GUK]", patterns, fixed = TRUE)
+            patterns <- gsub("V", "[ACGMRSV]", patterns, fixed = TRUE)
+            patterns <- gsub("H", "[ACUMWYH]", patterns, fixed = TRUE)
+            patterns <- gsub("D", "[AGURWKD]", patterns, fixed = TRUE)
+            patterns <- gsub("B", "[CGUSYKB]", patterns, fixed = TRUE)
+            patterns <- gsub("N", "[ACGUMRWSYKVHDBN]", patterns, 
+                fixed = TRUE)
+        }
+        else {
+            patterns <- gsub("B", "[NDB]", patterns, fixed = TRUE)
+            patterns <- gsub("Z", "[QEZ]", patterns, fixed = TRUE)
+            patterns <- gsub("J", "[ILJ]", patterns, fixed = TRUE)
+            patterns <- gsub("X", "[ARNDCQEGHILKMFPSTWYVUOBJZX]", 
+                patterns, fixed = TRUE)
+            patterns <- gsub("*", "\\*", patterns, fixed = TRUE)
+        }
+    }
+    else if (type == 0) {
+        if (!is.null(patterns) && !is.character(patterns)) 
+            stop("patterns must be a character vector.")
+        if (any(grepl("=|\"|<|>|[1-9]|[a-z]", patterns))) 
+            stop("patterns cannot contain numbers, lower case characters, or the characters (=, <, >, \").")
+    }
+    if (type < 0) {
+        if (length(myXStringSet) != length(patterns)) 
+            stop("patterns is not the same length as myXStringSet.")
+    }
+    else {
+        w <- which(patterns %in% c("?", "*", "+", "."))
+        if (length(w) > 0) 
+            patterns[w] <- paste("\\", patterns[w], sep = "")
+        if (length(colors) != length(patterns) || !is.character(colors)) 
+            stop("colors must be a character vector of the same length as patterns.")
+    }
+    if (is.character(htmlFile)) {
+        htmlfile <- file(htmlFile, "w")
+        on.exit(close(htmlfile))
+    }
+    else {
+        stop("'htmlFile' must be a character string or connection.")
+    }
+    if (!is.logical(openURL) || is.na(openURL)) 
+        stop("openURL must be TRUE or FALSE.")
+    if (!is.logical(colorPatterns) && !is.numeric(colorPatterns)) 
+        stop("colorPatterns must be a logical or numeric.")
+    if (is.numeric(colorPatterns)) {
+        if ((length(colorPatterns)%%2) == 1 || length(colorPatterns) == 
+            0) 
+            stop("colorPatterns must specify all start and endpoints.")
+        if (any((colorPatterns[seq(2, length(colorPatterns), 
+            2)] - colorPatterns[seq(1, length(colorPatterns), 
+            2)]) < 0)) 
+            stop("colorPatterns specifies a negative range.")
+        if (any(colorPatterns <= 0)) 
+            stop("colorPatterns must be a positive numeric.")
+        if (length(colorPatterns) > 2) 
+            if (any((colorPatterns[seq(3, length(colorPatterns), 
+                2)] - colorPatterns[seq(2, length(colorPatterns) - 
+                2, 2)]) <= 0)) 
+                stop("Ranges specified in colorPatterns must be non-overlapping.")
+        if (max(colorPatterns) > max(width(myXStringSet))) 
+            stop("Ranges specified in colorPatterns are out-of-bounds.")
+    }
+    if (is.numeric(colorPatterns) & !is.infinite(colWidth)) 
+        stop("colWidth must be Inf if colorPatterns is numeric.")
+    if (is.null(names(myXStringSet))) 
+        names(myXStringSet) <- 1:length(myXStringSet)
+    names(myXStringSet) <- gsub("\t", " ", names(myXStringSet), 
+        fixed = TRUE)
+    if (!is.na(highlight)) {
+        if (highlight < 0 || highlight > length(myXStringSet)) 
+            stop("highlight must be 0 or the index of a sequence in myXStringSet.")
+        if (highlight != floor(highlight)) 
+            stop("highlight be be a whole number.")
+    }
+    if (is(myXStringSet, "DNAStringSet") || is(myXStringSet, 
+        "RNAStringSet") || is(myXStringSet, "AAStringSet")) {
+        myXStringSet <- c(myXStringSet, ConsensusSequence(myXStringSet, 
+            ...))
+    }
+    else {
+        myXStringSet <- c(myXStringSet, as(consensusString(myXStringSet, 
+            ...), class(myXStringSet)))
+    }
+    l <- length(myXStringSet)
+    names(myXStringSet)[l] <- "Consensus"
+    html <- as.character(myXStringSet)
+    if (type < 0) {
+        s <- strsplit(html, "", fixed = TRUE)
+        n <- nchar(html)
+        v <- vector("list", length(html) - 1)
+        for (i in seq_len(length(html) - 1)) {
+            if (!is.matrix(patterns[[i]])) 
+                stop("All elements of the list patterns contain a single matrix.")
+            if (nrow(patterns[[i]]) != 3) 
+                stop("All elements of the list patterns must be a matrix with 3 rows.")
+            if (any(patterns[[i]] < 0) || any(patterns[[i]] > 
+                1)) 
+                stop("All elements of patterns[[", i, "]] are not between 0 and 1.")
+            v[[i]] <- character(n[i])
+            if (any(patterns[[i]] > 1) || any(patterns[[i]] < 
+                0)) 
+                stop("All values of patterns[[", i, "]] must be between 0 and 1.")
+            w <- which(s[[i]] %in% c(LETTERS, letters, "*"))
+            if (length(w) != ncol(patterns[[i]])) 
+                stop("The number of columns in patterns[[", i, 
+                  "]] is different than the number of letters in myXStringSet[", 
+                  i, "]")
+            if (length(w) > 0) 
+                v[[i]][w] <- apply(patterns[[i]], 2, function(x) {
+                  rgb(x[1], x[2], x[3])
+                })
+            if (is.numeric(colorPatterns)) {
+                start <- 0L
+                cPs <- c(colorPatterns, length(v[[i]]) + 1)
+                for (j in seq_len(length(cPs))) {
+                  if (j%%2) {
+                    end <- cPs[j]
+                    if (end > length(v[[i]])) 
+                      end <- length(v[[i]]) + 1L
+                    if (start < end - 1) 
+                      v[[i]][(start + 1L):(end - 1L)] <- ""
+                  }
+                  else {
+                    start <- cPs[j]
+                    if (start > length(v[[i]]) + 1) 
+                      break
+                  }
+                }
+            }
+        }
+    }
+    if (!is.na(highlight)) {
+        if (highlight == 0) {
+            highlight <- length(html)
+            index <- 1:(length(html) - 1L)
+        }
+        else {
+            index <- (1:(length(html) - 1L))[-highlight]
+        }
+        html <- sapply(html, strsplit, split = "", fixed = TRUE)
+        for (i in index) {
+            L <- min(length(html[[highlight]]), length(html[[i]]))
+            w <- which(html[[i]][1:L] == html[[highlight]][1:L])
+            if (length(w) > 0) 
+                html[[i]][w] <- "·"
+        }
+        html <- sapply(html, paste, collapse = "")
+    }
+    maxW <- max(width(myXStringSet))
+    if (maxW == 0) 
+        stop("No sequence information to display.")
+    if (colWidth > maxW) 
+        colWidth <- maxW
+    for (i in seq_len(l)) {
+        html[i] <- paste(html[i], paste(rep(" ", maxW - nchar(html[i])), 
+            collapse = ""), sep = "")
+    }
+    if (maxW < 20) {
+        if (maxW < 10) {
+            counter <- maxW
+        }
+        else {
+            counter <- 10
+        }
+    }
+    else {
+        counter <- 20
+    }
+    offset <- (counter - 1) - nchar(maxW)
+    if (offset < 0) 
+        offset <- 0
+    legend <- paste(paste(rep(" ", offset), collapse = ""), format(seq(counter, 
+        maxW, by = counter)), collapse = "")
+    counter <- ceiling(counter/2)
+    tickmarks <- paste(paste(rep("'", counter - 1), collapse = ""), 
+        rep("|", floor(maxW/counter)), collapse = "", sep = "")
+    tickmarks <- paste(tickmarks, paste(rep("'", maxW - counter * 
+        floor(maxW/counter)), collapse = ""), sep = "")
+    starts <- seq(1, maxW, colWidth)
+    stops <- starts + colWidth - 1L
+    stops[length(stops)] <- maxW
+    temp <- character((length(html) + 5L) * length(starts))
+    count <- 1L
+    for (i in 1:length(starts)) {
+        temp[count:(count + 1L)] <- substring(c(legend, tickmarks), 
+            starts[i], stops[i])
+        count <- count + 2L
+        temp[c(count:(count + length(html) - 2L), count + length(html))] <- substring(html, 
+            starts[i], stops[i])
+        count <- count + length(html) + 3L
+    }
+    html <- temp
+    if (length(starts) > 1) {
+        lengths <- numeric(length(starts) * l)
+        myLengths <- character(length(starts) * (l + 5L))
+        for (i in 1:length(starts)) {
+            s <- substring(myXStringSet, starts[i], stops[i])
+            lengths[((i - 1L) * l + 1L):(i * l)] <- nchar(s) - 
+                rowSums(letterFrequency(BStringSet(s), c("-", 
+                  " ", ".", "+")))
+            if (i > 1) 
+                lengths[((i - 1L) * l + 1L):(i * l)] <- lengths[((i - 
+                  1L) * l + 1L):(i * l)] + lengths[((i - 2L) * 
+                  l + 1L):((i - 1L) * l)]
+            myLengths[((i - 1L) * (l + 5L) + 3L):(i * (l + 5L) - 
+                4L)] <- lengths[((i - 1L) * l + 1L):(i * l - 
+                1L)]
+            myLengths[(i * (l + 5L) - 2L)] <- lengths[i * l]
+        }
+    }
+    else {
+        lengths <- width(myXStringSet) - rowSums(letterFrequency(myXStringSet, 
+            "-"))
+        myLengths <- c("", "", lengths[-seq(l, length(lengths), 
+            l)], "", lengths[seq(l, length(lengths), l)], "", 
+            "")
+    }
+    if (is.numeric(colorPatterns) || colorPatterns) {
+        if (type < 0) {
+            s <- strsplit(html, "", fixed = TRUE)
+            for (i in seq_along(v)) {
+                count <- 2L
+                for (j in seq_along(starts)) {
+                  w <- which(v[[i]][starts[j]:stops[j]] != "")
+                  if (length(w) > 0) 
+                    s[[i + count]][w] <- paste("<span style=\"color:#FFF;background:", 
+                      v[[i]][w + starts[j] - 1], "\">", s[[i + 
+                        count]][w], "</span>", sep = "")
+                  count <- count + length(myXStringSet) + 5L
+                }
+            }
+            html <- sapply(s, paste, collapse = "")
+        }
+        else {
+            patterns <- paste("(", patterns, ifelse(nchar(patterns) == 
+                1, "+)", ")"), sep = "")
+            classes <- paste("<span class=\"_", seq_along(patterns), 
+                "\">\\1</span>", sep = "")
+            if (is.numeric(colorPatterns)) {
+                htm <- substring(html, 0, colorPatterns[1] - 
+                  1)
+                for (i in seq(1, length(colorPatterns), 2)) {
+                  htmi <- substring(html, colorPatterns[i], colorPatterns[i + 
+                    1])
+                  for (j in seq_along(colors)) {
+                    htmi <- gsub(patterns[j], classes[j], htmi)
+                  }
+                  end <- ifelse(i == (length(colorPatterns) - 
+                    1), max(nchar(html)), colorPatterns[i + 2] - 
+                    1)
+                  htm <- paste(htm, htmi, substring(html, colorPatterns[i + 
+                    1] + 1, end), sep = "")
+                }
+                html <- htm
+            }
+            else {
+                for (j in seq_along(colors)) {
+                  html <- gsub(patterns[j], classes[j], html)
+                }
+            }
+        }
+        html <- paste(html, myLengths, "", sep = "    ")
+        html <- paste("", format(c("", "", names(myXStringSet)[1:(l - 
+            1)], "", "Consensus", "", ""), justify = "right"), 
+            html, sep = "    ")
+        styles <- character()
+        for (i in seq_along(colors)) {
+            styles <- paste(styles, "span._", i, " {background:", 
+                colors[i], "; color:#FFF;} ", sep = "")
+        }
+        styles <- paste("<style type=text/css> ", styles, "</style>", 
+            sep = "")
+        html <- c("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"></head>", 
+            styles, "<pre>", html, loc_strings,  "</pre></html>")
+    }
+    else {
+        html <- paste(html, myLengths, "", sep = "    ")
+        html <- paste("", format(c("", "", names(myXStringSet)[1:(l - 
+            1)], "", "Consensus", "", ""), justify = "right"), 
+            html, sep = "    ")
+        html <- c("<html>", "<pre>", html, loc_strings, "</pre></html>")
+    }
+    html <- gsub("·", "&#183;", html, fixed = TRUE)
+    writeLines(html, htmlfile)
+    if (openURL) 
+        browseURL(path.expand(htmlFile))
+    invisible(htmlFile)
+}
 build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, trimr=10){
   # get matching assembly from sraFind to get the complete genome/sequence accession
   this_silva <- unique(db[grepl(assembly, db$Assembly.Accession), "raw" ])
@@ -836,12 +1162,19 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, tri
   }
   # paste tofgether to make a query string with or's; this is because for assemblies, 
   # # different contigs will have different sequence names, but a single assembly accession
+  print("silv query")
   this_silva_query <- gsub("(.*)\\|$", "\\1", paste0(unique(gsub("(.*?)\\..*", "\\1", this_silva)), collapse = "", sep="|"))
+      print(this_silva_query)
+
+  this_silva_query <- gsub("(.*)\\|$", "\\1", paste0(unique(substring(this_silva, first = 1, last = 6)),collapse = "", sep="|"))
+    print(this_silva_query)
+
   # get matching SRAs for assembly, so we can use them to search the focusdb results
   this_focus <- unique(unlist(strsplit(db[grepl(assembly,  db$Assembly.Accession), "run_SRAs" ],",")))
   # build focusdb query string;  get rid of the *_\\d suffix we add to SRAs to keep themunique
+  print("focus query")
   this_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",this_focus), collapse = "", sep="|"))
-  
+    print(this_focus_query)
   # identify all sequences associated with this assembly accesssion
   silva_subset_seqs <- datasets[["silva"]][["set"]][grepl(this_silva_query,  names(datasets[["silva"]][["set"]]))]
   # idenify the sequences from focusDB
@@ -862,9 +1195,9 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, tri
 
   trimmed <- subseq(aln,trimf, -trimr)
   uniques <- trimmed[!duplicated(trimmed)]
-  consensus <- ConsensusSequence(trimmed[2],threshold = .999990, noConsensusChar="N", minInformation=1, includeTerminalGaps = F)
+  consensus <- ConsensusSequence(trimmed, threshold = .999990, noConsensusChar="N", minInformation=1, includeTerminalGaps = F)
   # trimmed[length(trimmed) + 1] <- consensus
-  # BrowseSeqs(trimmed, highlight = 1)
+  # BrowseSeqs(trimmed, highlight = 0)
   columns_to_view <- which(strsplit(as.character(consensus), "")[[1]]=="N") 
   if (length(columns_to_view) == 0){
     print("No alignment created, single unique seqeunce")
@@ -879,10 +1212,14 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, tri
     )
   } else {
     SNP_aln <- DNAStringSet(sapply(1:length(trimmed), function(i){trimmed[i][[1]][columns_to_view]}))
-    names(SNP_aln) <- names(trimmed)
+    names(SNP_aln) <- gsub("(.*?) .*\\;(.*)", "\\1 \\2",  names(trimmed))
     print("saving")
-    BrowseSeqs(SNP_aln, highlight = 2, htmlFile = 
-                 paste0("docs/figures/draft_alignments/", assembly, "_", sprintf("%04d", length(columns_to_view)), "_snps_", length(focus_subset_seqs), "_focusSeqs_", length(silva_subset_seqs), '_silvaSeqs.html'), openURL = F)
+    BrowseSeqs2(SNP_aln, highlight = 0, patterns = c("A", "T","G","C"),  threshold=0.5,
+               colors = c("darkred","blue","limegreen","orange"),
+               htmlFile = paste0("../docs/figures/draft_alignments/", sprintf("%04d", length(columns_to_view)), "_snps_", assembly, "_", length(focus_subset_seqs), "_focusSeqs_", length(silva_subset_seqs), '_silvaSeqs.html'), openURL = FALSE, 
+               loc_string=paste0("     Length: ", nchar(trimmed[1][[1]]), 
+                                 "; Columns:", paste0(columns_to_view, collapse=","))
+               )
     # 
     dists <- stringDist(uniques, method="hamming")
     min_snps <- list()
@@ -1008,7 +1345,7 @@ only_illumina_assembly_summary <- only_illumina_assembly_summary%>% filter(proce
  Now we have identified which SRAs relate to which assemblies, and which we have analyzed. The first order of business is to compare the accuracy of fast mode (using riboSeed's `--just_seed` parameter) to 16S's from full assemblies.  However, for a full analysis, we also need to compare to the *de novo* assembly (which we enabled using the `--run_de_novo_control` flag). Interactive outputs are created as well.
 
 
-```{r assess_assembly_snps, cache=TRUE, eval=REPROCESS_RESULTS}
+```{r assess_cg_snps, cache=TRUE, eval=REPROCESS_RESULTS}
 # dest_dir <- file.path("docs", "ref_msas")
 # dir.create( dest_dir)
 snp_results = data.frame(
@@ -1090,11 +1427,11 @@ n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow
     scale_y_continuous(limits = c(0, 100))
 )
 
-ggsave("docs/figures/S5-set-accuracy.png", p_snps, device = "png", dpi = 300, width = 7, height = 5)
-ggsave("docs/figures/4-fast-cg-accuracy.png", p_snps_hist, device = "png", dpi = 300, width = 8, height = 6)
-ggsave("docs/figures/4-fast-cg-accuracy-cumu.png", 
+ggsave("../docs/figures/S5-set-accuracy.png", p_snps, device = "png", dpi = 300, width = 7, height = 5)
+ggsave("../docs/figures/4-fast-cg-accuracy.png", p_snps_hist, device = "png", dpi = 300, width = 8, height = 6)
+ggsave("../docs/figures/4-fast-cg-accuracy-cumu.png", 
        (p_snps_hist | p_snps_hist2) + plot_annotation(tag_levels = "A", title = "Accuracy of re-assembled 16S rRNA"), device = "png", dpi = 300, width = 10, height = 6)
-ggsave("docs/figures/4-fast-cg-accuracy-subtitle.png", 
+ggsave("../docs/figures/4-fast-cg-accuracy-subtitle.png", 
        p_snps_hist + labs(
       subtitle=paste0(
       "In the genera considered, ",
@@ -1105,7 +1442,7 @@ ggsave("docs/figures/4-fast-cg-accuracy-subtitle.png",
       title="Accuracy of reassembled 16S rRNA" 
        )         , device = "png", dpi = 300, width = 8, height = 6)
 
-write.table(snp_results, file="./docs/snps_per_kbp.tab", sep="\t", row.names=F)
+write.table(snp_results, file="../docs/snps_per_kbp.tab", sep="\t", row.names=F)
 
 # install.packages("visNetwork")
 library(visNetwork)
@@ -1180,14 +1517,16 @@ forceNetwork(Links = edges, Nodes = nodes,
 # are subsetting from the same dataset in the function, this allows us to keep everything in order (as opposed to having 
 # a separate list of unique assemblies, then subsetting both in the function and in the results assignment)
 # structure for results --  a pretty dataframe and a list of of the alignments
-dir.create("docs/figures/draft_alignments", showWarnings = FALSE)
+dir.create("../docs/figures/draft_alignments", showWarnings = FALSE)
 reassembly_results <- data.frame(assembly=NA, unique_focusdb=NA, total=NA, focusdb=NA, silva=NA, category=NA, min_snps=NA,  stringsAsFactors = F)
 reassembly_results <-  reassembly_results[!is.na(reassembly_results), ]
 alignments <- list()
 min_snps <- list()
 counter = 0
+nassemblies <- length(unique( only_illumina_assembly_summary_draft$Assembly.Accession))
 nassemb <- nrow(only_illumina_assembly_summary_draft)
 for (i in 1:nassemb){
+  print(i)
   assembly <- only_illumina_assembly_summary_draft$Assembly.Accession[i]
   if (assembly %in% reassembly_results$assembly){
     next
@@ -1197,73 +1536,143 @@ for (i in 1:nassemb){
       db=only_illumina_assembly_summary_draft, 
       assembly=assembly, trimf=10, trimr=10
     )
-    alignments[[assembly]] <-  res[[1]]
-    min_snps[[assembly]] <- res[[6]]
-    reassembly_results <- rbind(
-      reassembly_results, 
-      data.frame(assembly=assembly,unique_focusdb=res[[2]], total=res[[3]], 
-                 category=only_illumina_assembly_summary$category[i], 
-                 focusdb=res[[4]], silva=res[[5]], stringsAsFactors = F)
-    )
+    # alignments[[assembly]] <-  res[[1]]
+    # min_snps[[assembly]] <- res[[6]]
+    # reassembly_results <- rbind(
+    #   reassembly_results, 
+    #   data.frame(assembly=assembly,unique_focusdb=res[[2]], total=res[[3]], 
+    #              category=only_illumina_assembly_summary$category[i], 
+    #              focusdb=res[[4]], silva=res[[5]], stringsAsFactors = F)
+    # )
     counter <- counter + 1
   }
 }
-table("status"=reassembly_results$category, "New Seqs Introduced"=reassembly_results$unique_focusdb !=0)
-ggplot(reassembly_results, aes(x=unique_focusdb, fill=category)) + geom_density(alpha=.5)
 
-snps <- sapply(min_snps, function(x){return(sum(unlist(x)))})
-snpdf <- data.frame(snps=snps, assembly=names(snps))
-reassembly_results_df <- merge(reassembly_results, snpdf, by="assembly")
-reassembly_results_df <- reassembly_results_df[!is.na(reassembly_results_df$total),]
+draft_alns <-data.frame(raw=list.files("../docs/figures/draft_alignments")) %>% 
+  mutate(snps=as.numeric(substr(raw, 1, 4)),
+         focseqs=as.numeric(gsub(".*_(\\d+)_focusSeqs.*", "\\1", raw)),   
+         silseqs=as.numeric(gsub(".*_(\\d+)_silvaSeqs.*", "\\1", raw)))     
+ggplot(draft_alns, aes(x=focseqs, y=snps)) + geom_point() + scale_y_log10()
+ggplot(draft_alns, aes(x=focseqs, y=snps, color=silseqs)) + geom_point() + scale_y_log10()
 
-total_cg_seqs  <-sum(
-  reassembly_results_df[reassembly_results_df$category == "Complete Genome", "silva"])
-total_focus_seqs  <-sum(
-  reassembly_results_df[reassembly_results_df$category == "Complete Genome", "focusdb"])
-ggplot(reassembly_results_df %>% filter(category == "Complete Genome"), aes(x=snps)) + geom_histogram()
+draft_alns_sum <- draft_alns  %>%  group_by(snps) %>%
+summarize(bin=unique(ceiling(snps)), 
+                                y=n()) 
+draft_alns_sum[nrow(draft_alns_sum) + 1 ,] <- c(snps=0, bin=0, y=nassemblies-nrow(draft_alns))
+draft_alns_sum <- draft_alns_sum %>% mutate(
+                                cumuy=cumsum(y)/sum(y) * 100)
 
-(snps_cg_kbp <- ggplot(
-  reassembly_results_df %>% filter(category == "Complete Genome") %>% 
-    #filter(snps < 500) %>% 
-    mutate(pkbp=(snps * 1000)/(focusdb * 1500)), 
-  aes(x=pkbp)) + geom_histogram() + labs(
-    x="SNPs/Kbp (per genome)", y="Number of Assemblies",
-    title="Comparing riboSeed-assembled 16S to Complete Genome's 16S",
-    #subtitle=paste("In the genera considered, sequences for complete genomes were present in SILVA.\nriboSeed recovered 182 of 253 sequences.\nIn 14 genomes,16S alleles were identical between riboSeed and complete genome")
-  )
+(p_snps_assemb <- ggplot(draft_alns_sum, aes(x=bin, y=y, fill=bin==0)) + 
+    mytheme +
+    #geom_bar(stat="identity", width = .8, positiion="dodge") +
+    scale_fill_manual(guide="none", values=wesanderson::wes_palettes$IsleofDogs1[4:5]) +
+    #geom_line(aes(y=cumuy), color="gray50", size=.8, linetype="solid") +
+    geom_bar(stat="identity", size=1) +
+    labs(
+      x="Errors/Kbp", y="Percent of Sequences",
+      subtitle="Error distribution "
+    ) +
+    scale_y_continuous(limits = c(0, 100))
 )
-(snps_cg_raw <- ggplot(
-  reassembly_results_df %>% filter(category == "Complete Genome") %>% 
-    filter(snps < 500) %>% mutate(per=(snps )/(focusdb)), 
-  aes(x=per)) + geom_histogram() + labs(
-    x="mean SNPs", y="Number of Assemblies",
-    title="Comparing riboSeed-assembled 16S to Complete Genome's 16S"
-  )
+(p_snps_assemb2 <- ggplot(draft_alns_sum, aes(x=bin, y=y, fill=bin==0)) + 
+    mytheme +
+    #geom_bar(stat="identity", width = .8, positiion="dodge") +
+    scale_fill_manual(guide="none", values=wesanderson::wes_palettes$IsleofDogs1[4:5]) +
+    #geom_line(aes(y=cumuy), color="gray50", size=.8, linetype="solid") +
+    geom_bar(stat="identity", aes(y=cumuy), size=1) +
+    geom_hline(yintercept = 99, color="gray50", linetype="dashed") + 
+    annotate(geom="text", x = 3, y=95, label="99%", color="gray50") + 
+    labs(
+      x="Errors/Kbp", y="Percent of Sequences",
+      subtitle="Cumulative distribution "
+    ) +
+    scale_y_continuous(limits = c(0, 100))
 )
 
+# table("status"=reassembly_results$category, "New Seqs Introduced"=reassembly_results$unique_focusdb !=0)
+# ggplot(reassembly_results, aes(x=unique_focusdb, fill=category)) + geom_density(alpha=.5)
+# 
+# snps <- sapply(min_snps, function(x){return(sum(unlist(x)))})
+# snpdf <- data.frame(snps=snps, assembly=names(snps))
+# reassembly_results_df <- merge(reassembly_results, snpdf, by="assembly")
+# reassembly_results_df <- reassembly_results_df[!is.na(reassembly_results_df$total),]
+# 
+# total_cg_seqs  <-sum(
+#   reassembly_results_df[reassembly_results_df$category == "Complete Genome", "silva"])
+# total_focus_seqs  <-sum(
+#   reassembly_results_df[reassembly_results_df$category == "Complete Genome", "focusdb"])
+# ggplot(reassembly_results_df %>% filter(category == "Complete Genome"), aes(x=snps)) + geom_histogram()
+# 
+# (snps_cg_kbp <- ggplot(
+#   reassembly_results_df %>% filter(category == "Complete Genome") %>% 
+#     #filter(snps < 500) %>% 
+#     mutate(pkbp=(snps * 1000)/(focusdb * 1500)), 
+#   aes(x=pkbp)) + geom_histogram() + labs(
+#     x="SNPs/Kbp (per genome)", y="Number of Assemblies",
+#     title="Comparing riboSeed-assembled 16S to Complete Genome's 16S",
+#     #subtitle=paste("In the genera considered, sequences for complete genomes were present in SILVA.\nriboSeed recovered 182 of 253 sequences.\nIn 14 genomes,16S alleles were identical between riboSeed and complete genome")
+#   )
+# )
+# (snps_cg_raw <- ggplot(
+#   reassembly_results_df %>% filter(category == "Complete Genome") %>% 
+#     filter(snps < 500) %>% mutate(per=(snps )/(focusdb)), 
+#   aes(x=per)) + geom_histogram() + labs(
+#     x="mean SNPs", y="Number of Assemblies",
+#     title="Comparing riboSeed-assembled 16S to Complete Genome's 16S"
+#   )
+# )
+# 
+# 
+# 
+# ggsave("../docs/figures/X-snps.png", snps_cg_kbp, device = "png", 
+#        dpi = 300, width = 7, height = 5)
+# 
+# reassembly_results[reassembly_results$assembly > 0, ]
+# # GCA_000767745.1 GCA_000832805.1
+# for (not_great in reassembly_results[reassembly_results$category=="Complete Genome" & reassembly_results$unique_focusdb != 0, "assembly"]){
+#   BrowseSeqs(subseq(alignments[[not_great]][!duplicated(alignments[[not_great]])], 10, -20), highlight=0)
+#   invisible(readline(prompt="Press [enter] to continue"))
+#   #distmat <- DECIPHER::DistanceMatrix(subseq(alignments$GCA_000832805.1, 10, -20)) #%>% as.data.frame() %>%
+#   #rownames_to_column("strainA") %>% gather(key="strainB", value="dist", -strainA)
+#   snp_mat <- stringDist(subseq(alignments[[not_great]], 10, -20), method="hamming")
+#   gplots::heatmap.2(as.matrix(snp_mat))
+#   #heatmap(as.matrix(snp_mat ))
+# }
+# View(merge(reassembly_results, srafind, by.x="assembly", by.y="Assembly.Accession"))
+
+```
+ phantomjs was used to convert html alignments into images.  These were selected to show the types of arrangements that occur comparing draft to the reassembled genomes.  Inkscape was used to combine images.
+ 
+```{bash, eval=FALSE}
+# all alleles recovered 
+phantomjs ~/configFile.js 0002_snps_GCA_000390965.1_4_focusSeqs_4_silvaSeqs.html 0002_snps_GCA_000390965.1_4_focusSeqs_4_silvaSeqs.pdf 
+phantomjs ~/configFile.js 0015_snps_GCA_000949365.1_8_focusSeqs_7_silvaSeqs.html 0015_snps_GCA_000949365.1_8_focusSeqs_7_silvaSeqs.pdf 
+
+# single representative misses a snp
+ phantomjs ~/configFile.js 0001_snps_GCA_000159255.1_4_focusSeqs_1_silvaSeqs.html 0001_snps_GCA_000159255.1_4_focusSeqs_1_silvaSeqs.pdf
+# or multiple SNPS
+phantomjs  ~/configFile.js 0007_snps_GCA_900162445.1_5_focusSeqs_1_silvaSeqs.html 0007_snps_GCA_900162445.1_5_focusSeqs_1_silvaSeqs.pdf
+
+# disagreement with single sequennce
+phantomjs  ~/configFile.js 0004_snps_GCA_001174885.1_4_focusSeqs_1_silvaSeqs.html 0004_snps_GCA_001174885.1_4_focusSeqs_1_silvaSeqs.pdf
+
+# amalgamation
+phantomjs  ~/configFile.js 0007_snps_GCA_000598325.1_6_focusSeqs_2_silvaSeqs.html 0007_snps_GCA_000598325.1_6_focusSeqs_2_silvaSeqs.pdf
+phantomjs  ~/configFile.js 0002_snps_GCA_001528085.1_6_focusSeqs_1_silvaSeqs.html 0002_snps_GCA_001528085.1_6_focusSeqs_1_silvaSeqs.pdf
+
+# deletion 
+f
+phantomjs ~/configFile.js 0002_snps_GCA_000387025.2_4_focusSeqs_7_silvaSeqs.html 0002_snps_GCA_000387025.2_4_focusSeqs_7_silvaSeqs.pdf
 
 
-ggsave("docs/figures/X-snps.png", snps_cg_kbp, device = "png", 
-       dpi = 300, width = 7, height = 5)
-
-reassembly_results[reassembly_results$assembly > 0, ]
-# GCA_000767745.1 GCA_000832805.1
-for (not_great in reassembly_results[reassembly_results$category=="Complete Genome" & reassembly_results$unique_focusdb != 0, "assembly"]){
-  BrowseSeqs(subseq(alignments[[not_great]][!duplicated(alignments[[not_great]])], 10, -20), highlight=0)
-  invisible(readline(prompt="Press [enter] to continue"))
-  #distmat <- DECIPHER::DistanceMatrix(subseq(alignments$GCA_000832805.1, 10, -20)) #%>% as.data.frame() %>%
-  #rownames_to_column("strainA") %>% gather(key="strainB", value="dist", -strainA)
-  snp_mat <- stringDist(subseq(alignments[[not_great]], 10, -20), method="hamming")
-  gplots::heatmap.2(as.matrix(snp_mat))
-  #heatmap(as.matrix(snp_mat ))
-}
-View(merge(reassembly_results, srafind, by.x="assembly", by.y="Assembly.Accession"))
+# focus16 fails to recoover allele
+phantomjs ~/configFile.js 0002_snps_GCA_000699905.1_1_focusSeqs_2_silvaSeqs.html 0002_snps_GCA_000699905.1_1_focusSeqs_2_silvaSeqs.pdf
+# low quality referece 
 
 ```
 
-
-
 ## Calculating total SRAs needing re-assembly
+
 
 ```{r calculate_needs_assembl}
 sraFind_data <- read.table("~/.focusDB/sraFind.tab", header=T, sep="\t", stringsAsFactors = F)
@@ -1276,12 +1685,12 @@ sum(uniqueness[uniqueness$DB == "focus", "Unique"]) + sum(uniqueness[uniqueness$
 ```
 
 
-
+Over the course of the development of Focus16 we estimated the run-time for a subset of SRAs; runtimes for the whole dataset were difficult to determine due to the time stamps not reflecting I/O or network limitations. In our hands.  This analysis calculates run time estimates based on an early run of the genera in the HMP dataset.
 
 ```{r assess-execution-time, eval=REPROCESS_RESULTS}
 ## Execution time
 library(lubridate)
-alog <- readLines("./docs/timing_results/HMP-combined_log.txt")
+alog <- readLines("../docs/timing_results/HMP-combined_log.txt")
 alog <- alog[1:length(alog)]
 lo <- data.frame(dt=gsub("(.*?),.* - .*? - (.*)","\\1", alog), stringsAsFactors = F)
 lo$message  <-  gsub("(.*?) - .*? - (.*)","\\2", alog)
@@ -1340,10 +1749,12 @@ p_timing <- ggplot(tlot, aes(x=step, y=s, color= bug)) +
     labs(title="Time per stage", x="Step", y="Minutes") +
     facet_wrap(~stage, scales="free")
 
-ggsave("docs/figures/S3-time.png", p_timing, device = "png", 
+ggsave("../docs/figures/S3-time.png", p_timing, device = "png", 
        dpi = 300, width = 11, height = 7)
 
 ```
+
+Extrapolating time of execution for the entire SRA was based off the 98329 SRAs available as of October 2019, the last update of sraFind. 
 
 ```{r ptime-ests, eval=FALSE}
 

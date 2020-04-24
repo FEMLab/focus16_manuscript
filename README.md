@@ -22,3 +22,5 @@ Contents of the repository:
 └── scripts
     └── sralist.py  # for generating counts per organism of SRAs availabl
 ```
+
+The working directory for all the scripts is `./docs/`, not the project directory. If using RStudio, you can configure this under your project settings.

@@ -18,7 +18,7 @@ The preprocessing of all the data is preformed in the next four sections, and th
 
 DADA2 is actively being improved; because of this, we used the guidelines outlined in the tutorial rather than those originally described for these analysis in the DADA2 supplementary material.  
 
-```{r setup, include=FALSE}
+```{r setup-dada2, include=FALSE}
 def.chunk.hook  <- knitr::knit_hooks$get("chunk")
 knitr::knit_hooks$set(chunk = function(x, options) {
   x <- def.chunk.hook(x, options)
@@ -31,7 +31,7 @@ library(dada2); packageVersion("dada2")
 library(ShortRead); packageVersion("ShortRead")
 library(Biostrings); packageVersion("Biostrings")
 SPEED = TRUE  # use  pregenerated files, dont plot if you can avoid it
-dirpath <- "./docs/microbiome_data/"
+dirpath <- "../docs/microbiome_data/"
 
 ```
 
@@ -48,9 +48,9 @@ while read x; do fasterq-dump --split-files $x ; done < ~/Downloads/SRR_Acc_List
 ```
 
 ```{r}
-filtpath <- "./docs/microbiome_data/clean/"
-mb_meta <- read.csv2("./docs/microbiome_data/metadata.tsv", stringsAsFactors = F,sep="\t",comment.char = '#')
-sra_meta <- read.csv("./docs/microbiome_data/SraRunTable-PRJEB26800.txt", stringsAsFactors = F,sep=",")
+filtpath <- "../docs/microbiome_data/clean/"
+mb_meta <- read.csv2("../docs/microbiome_data/metadata.tsv", stringsAsFactors = F,sep="\t",comment.char = '#')
+sra_meta <- read.csv("../docs/microbiome_data/SraRunTable-PRJEB26800.txt", stringsAsFactors = F,sep=",")
 meta <- full_join(
   mb_meta %>%select(sample_alias, sample_description),
   sra_meta %>% select(Run, Sample.Name), by=c("sample_alias"="Sample.Name")
@@ -140,7 +140,7 @@ rownames(endo_track) <- sample.names.endo
 head(endo_track)
 
 #save.image("./endo.RData")
-save(endo_seqtab.nochim, file = "./endo_seqtab.RData")
+save(endo_seqtab.nochim, file = "../endo_seqtab.RData")
 ```
 
 ### Preliminary taxa assignment for Endobiota study
@@ -226,7 +226,7 @@ ex_seqtab.nochim <- removeBimeraDenovo(
   multithread=TRUE, verbose=TRUE)
 sum(ex_seqtab.nochim)/sum(ex_seqtab)
 dim(ex_seqtab.nochim)
-save(ex_seqtab.nochim, file = "./ex_seqtab.RData")
+save(ex_seqtab.nochim, file = "../ex_seqtab.RData")
 
 ```
 
@@ -272,7 +272,7 @@ balanced_seqtab.nochim <- removeBimeraDenovo(
   multithread=TRUE, verbose=TRUE)
 sum(balanced_seqtab.nochim)/sum(balanced_seqtab)
 dim(balanced_seqtab.nochim )
-save(balanced_seqtab.nochim, file = "./balanced_seqtab.RData")
+save(balanced_seqtab.nochim, file = "../balanced_seqtab.RData")
 
 ```
 
@@ -317,7 +317,7 @@ hmp_seqtab.nochim <- removeBimeraDenovo(
   multithread=TRUE, verbose=TRUE)
 sum(hmp_seqtab.nochim)/sum(hmp_seqtab)
 dim(hmp_seqtab.nochim )
-save(hmp_seqtab.nochim, file = "./hmp_seqtab.RData")
+save(hmp_seqtab.nochim, file = "../hmp_seqtab.RData")
 
 ```
 
@@ -327,8 +327,8 @@ Having processed all the datasets without DADA2,  the tables were merged.
 
 ```{r}
 if (SPEED){
-  for (p  in c("hmp_seqtab.RData", "ex_seqtab.RData", 
-               "balanced_seqtab.RData", "endo_seqtab.RData")){
+  for (p  in c("../hmp_seqtab.RData", "../ex_seqtab.RData", 
+               "../balanced_seqtab.RData", "../endo_seqtab.RData")){
     load(p)
   }
 }
@@ -430,13 +430,13 @@ taxa_silva_plus_species <- assignSpecies(
   allowMultiple = T, verbose = T)
 # 713 out of 4098 were assigned to the species level.
 
-save.image("taxa_assigned.RData")
+save.image("../taxa_assigned.RData")
 ```
 
 
 
 ```{r}
-if (SPEED){load("taxa_assigned.RData")}
+if (SPEED){load("../taxa_assigned.RData")}
 together <- merge(
   by="seq", all=TRUE, 
   data.frame(silva=paste(

@@ -1,7 +1,0 @@
-"Species" "SRAs" "SRAs.assembled" "rDNA.per.genome" "Total.16S.rDNA.extracted"
-"1" "Bacteroides cellulosilyticus" 3 2 4 7
-"2" "Bacteroides fragilis" 15 15 6 85
-"3" "Bacteroides ovatus" 12 7 5 35
-"4" "Bacteroides thetaiotaomicron" 14 8 5 39
-"5" "Bacteroides vulgatus" 14 9 7 43
-"6" "Parabacteroides distasonis" 15 6 7 31

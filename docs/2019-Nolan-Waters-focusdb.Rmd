@@ -2,20 +2,29 @@
 title: 'Mining underutilized whole-genome sequencing projects to improve 16S rRNA databases'
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 toc: false
-papersize: a4 
+fontsize: 10pt
+papersize: a4
+geometry: margin=2cm
 header-includes:
-    - \usepackage{setspace}
-    - \doublespacing
-    - \usepackage{lineno}
-    - \linenumbers
+     - \usepackage{setspace}
+     - \doublespacing
+     - \usepackage{lineno}
+     - \linenumbers
+     - \usepackage{float}
+     - \title{\fontseries{m}\selectfont Mining underutilized whole-genome sequencing projects to improve 16S rRNA databases}
+     - \author{\protect\parbox{\textwidth}{\protect\centering\small Ben Nolan,$^{1,2}$ Florence Abram,$^{1}$ Fiona Brennan,$^{1,3}$ Ashleigh Holmes,$^{4}$  Vincent O’Flaherty$^{1}$,\newline Leighton Pritchard$^{2,5\ast}$ and Nicholas R Waters$^{1,3}$ \newline \newline \small{\textit {$^{1}$Functional Environmental Microbiology, School of Natural Sciences, National University of Ireland, Galway, Ireland}} $^{2}$Microbial Ecology Laboratory, Microbiology, School of Natural Sciences, National University of Ireland, Galway, Ireland \newline \small{\textit {$^{2,5}$Information and Computational Sciences, James Hutton Institute, Invergowrie, Dundee DD2 5DA, Scotland}} \newline \small{\textit {$^{3}$Soil and Environmental Microbiology, Environmental Research Centre, Teagasc, Johnstown Castle, Wexford, Ireland}}\newline \small{\textit {$^{4}$Cell and Molecular Sciences, James Hutton Institute, Invergowrie, Dundee DD2 5DA, Scotland}}\newline  \small{\textit {$^{5}$Strathclyde Institute of Pharmacy and Biomedical Sciences, University of Strathclyde, Glasgow, G1 1XQ, Scotland}}\newline \footnotesize{$^\ast$To whom correspondence should be addressed$:$ nickp60@gmail.com or leighton.pritchard@strath.ac.uk \newline \newline}}}
+     - \usepackage{caption}
+     - \captionsetup{font={stretch=1.0}}
+     - \captionsetup[table]{font={stretch=1.0}}
 output:
   bookdown::pdf_document2: 
      fig_caption: true
      keep_tex: true
+     #latex_engine: xelatex
 editor_options:
   chunk_output_type: console
 bibliography: focusdb_references.bib
-abstract: Current approaches to interpreting 16S rDNA amplicon data are hampered by several factors. Among these are database inaccuracy or incompleteness, sequencing inaccuracy, and biased DNA/RNA extraction. Existing 16S rDNA databases source the majority of sequences from deposited amplicon sequences, draft genomes, and complete genomes. Most of the draft genomes available are assembled from short reads. However, repeated ribosomal regions are notoriously difficult to assemble well from short reads, and as a consequence the short-read-assembled 16S rDNA region may be an amalgamation of different loci within the genome. This complicates high-resolution community analysis, as draft genome's 16S sequence may be a chimera of multiple loci; in such cases, it may not be an exact match to the appropriate reference sequence. We present Focus16, a pipeline for improving 16S rDNA databases by mining NCBI's Sequence Read Archive for underexploited whole-genome sequencing runs. Using riboSeed (a genome assembly tool for correcting rDNA misassembly), Focus16 provides a way to augmment 16S rDNA databases with high-quality re-assembled sequences. In this study, we show an average increase of 60% in the number of unique sequences for given species compared to the 16S rRNA database alone. We augmented the widely-used SILVA 16S database with the novel sequences disclosed by Focus16 and re-processed sequences from the different datasets with DADA2; using this augmented SILVA database increased the number of ASVs that could be assigned taxonomic annotations. Further, fine-scale classification improved by revealing ambiguities; for example, an ASV may have been assigned to be a particular genus, but the additional diversity in the augmented database revealed that the ASV may belong to two or more different genera.  We demonstrate that improvements can be made to taxonomic classification by incorporating these re-assembled 16S rRNA sequences, and we invite the community to expand our work to augment existing 16S rDNA databases such as SILVA, GreenGenes, and RDP.
+abstract: Current approaches to interpreting 16S rDNA amplicon data are hampered by several factors. Among these are database inaccuracy or incompleteness, sequencing inaccuracy, and biased DNA/RNA extraction. Existing 16S rDNA databases source the majority of sequences from deposited amplicon sequences, draft genomes, and complete genomes. Most of the draft genomes available are assembled from short reads. However, repeated ribosomal regions are notoriously difficult to assemble well from short reads, and as a consequence the short-read-assembled 16S rDNA region may be an amalgamation of different loci within the genome. This complicates high-resolution community analysis, as draft genome's 16S sequence may be a chimera of multiple loci; in such cases, it may not be an exact match to the appropriate reference sequence. We present Focus16, a pipeline for improving 16S rDNA databases by mining NCBI's Sequence Read Archive for underexploited whole-genome sequencing runs. Using riboSeed (a genome assembly tool for correcting rDNA misassembly), Focus16 provides a way to augmment 16S rDNA databases with high-quality re-assembled sequences. In this study, we show an average increase of 60% in the number of unique sequences for given species compared to the 16S rRNA database alone. We augmented the widely-used SILVA 16S database with the novel sequences disclosed by Focus16 and re-processed sequences from the different datasets with DADA2; using this augmented SILVA database increased the number of ASVs that could be assigned taxonomic annotations. Further, fine-scale classification improved by revealing ambiguities; for example, an ASV may have been assigned to be a particular genus, but the additional sequences in the augmented database revealed that the ASV may belong to two or more different genera.  We demonstrate that improvements can be made to taxonomic classification by incorporating these re-assembled 16S rRNA sequences, and we invite the community to expand our work to augment existing 16S rDNA databases such as SILVA, GreenGenes, and RDP.
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
@@ -25,14 +34,10 @@ library(tidyverse)
 library(diagram)
 
 library(kableExtra)
-# draft 4 but I thinkwe have a name
+# draft 4 but I think we have a name
 toolname <- "Focus16"
 ```
 
-
-
-
-})]
 
 # Introduction
 The use of genetic markers for microbial classification has seen explosive growth over the past decade   [@liu2012popular;@boers_understanding_2019]. The 16S rRNA gene is the standard utilised in the assessment of prokaryotic community composition by amplicon sequencing [@fukuda2016molecular]. 16S rRNA has been used for community analysis in diverse environments such as the gut microbiota of cattle and pigs  [@avila2018prediction], soil [@santamaria2018soil], marine environments   [@dang2000bacterial], and the gut [@jovel_characterization_2016]. The success of this method hinges on the presence of the 16S rRNA gene in all domains and its slow evolution; thus the rDNA regions can be targeted with primers but the amplicon sequences maintain enough diversity that organisms can be differentiated at the genus or species level [@woese_phylogenetic_1977;@woo2008then]. 
@@ -141,7 +146,7 @@ knitr::include_graphics("figures/S5-set-accuracy.png")
 ```
 
 ## Running `r toolname`
-`r toolname` was run in a conda environment (see supplementary repository file "`r toolname`_env.txt"). Due to computational limitations (namely storage available on the high-performance computing cluster as well as the RAM required for genome assembly), we limited the scope of the analysis to a maximum of 50 randomly selected SRAs for each of the 85 genera. These are listed in the supplementary file XX.  The number of candidate reference genomes to be considered for each genus was capped at 200; the median number of genomes per genus was 9 (see Figure S3). The only genus with more than 200 reference genomes available was *Bordetella*. A minimum Mash distance was set to 0.1 [@ondov_mash_2016a] between a preliminary assembly and a reference genome, as this was shown to be the maximum distance between the reference and sequenced isolate that riboSeed performs well with (see @waters2018riboseed Figure 5). Run scripts are available in supplementary data; SRAs can be found in supplementary file XX and the reference genomes considered can be found  in Supplementary file XX.
+`r toolname` was run in a conda environment (see supplementary repository file "`r toolname`_env.txt"). Due to computational limitations (namely storage available on the high-performance computing cluster as well as the RAM required for genome assembly), we limited the scope of the analysis to a maximum of 50 randomly selected SRAs for each of the 85 genera. These are listed in the supplementary file `sras.tab`  The number of candidate reference genomes to be considered for each genus was capped at 200; the median number of genomes per genus was 9 (see Figure S3). The only genus with more than 200 reference genomes available was *Bordetella*. A minimum Mash distance was set to 0.1 [@ondov_mash_2016a] between a preliminary assembly and a reference genome, as this was shown to be the maximum distance between the reference and sequenced isolate that riboSeed performs well with (see @waters2018riboseed Figure 5). Run scripts are available in supplementary data; the reference genomes considered can be found  in Supplementary file `reference_genomes.tab`.
 
 
 ## Benchmarking Re-assembled 16S rRNA against Complete Genome 16S rRNA sequences {#benchmarking}
@@ -150,7 +155,7 @@ sraFind was used to identify which SRA accessions corresponded to complete NCBI 
 
 ## Benchmarking Re-assembled 16S rRNA against Draft 16S rRNA sequences {#benchmarking-draft}
 
-Similar to the comparison to complete genomes above, we identified the SILVA sequences sourced from draft (see supplementary data "Provenance of strains"). Pairwise alignments were generated between the riboSeed 16S rRNA sequences and the SILVA sequences using the Biostrings package [@pages_biostrings_2020] in "overlap" mode (a global alignment with free ends) with a simple scoring matrix  (matches=1, mismatches=0); the highest-scoring alignment for each given reference 16S rRNA was used to identify misassemblies relative to the complete genome's 16S rRNA sequence. Alignments shorter than 1400bp were rejected.
+Similar to the comparison to complete genomes above, we identified the SILVA sequences sourced from draft (see supplementary data "Provenance of strains"). Pairwise alignments were generated between the riboSeed 16S rRNA sequences and the SILVA sequences using the Biostrings package [@pages_biostrings_2020] in "overlap" mode (a global alignment with free ends) with a simple scoring matrix  (matches=1, mismatches=0); the highest-scoring alignment for each given reference 16S rRNA was used to identify missassemblies relative to the complete genome's 16S rRNA sequence. Alignments shorter than 1400bp were rejected.
 
 
 ## Assessing Taxonomic Assignment
@@ -178,7 +183,7 @@ As repeated rDNA operons are difficult to resolve with short read sequences, dra
 
 
 
-In such cases, without the capacity to verify the regions with Sanger or long-read sequencing, determining which seqeunces are the missassemblies and which should be regarded as true is an impossible question to answer.
+In such cases, without the capacity to verify the regions with Sanger or long-read sequencing, determining which sequences are the missassemblies and which should be regarded as true is an impossible question to answer.
 
 
 ##  Augmenting SILVA with results from `r toolname`
@@ -246,13 +251,13 @@ Despite these limitations, we have shown that `r toolname` can contribute toward
 The authors declare that they have no competing interests.
 
 # Funding
-The work was funded through a joint studentship between The James Hutton Institute and the National University of Ireland, Galway, and through <funding statement for Ben's stipend>.
+This work was financially supported by Science Foundation Ireland (Awards 14/IA/2371 and 16/RC/3889) and through through a joint studentship between The James Hutton Institute and the National University of Ireland, Galway.
 
 # Acknowledgements
 Many thanks Christopher Quince for the helpful conversations on the topic.
 
 # Data Accessibility
-The code for Focus16 can be found at <https://github.com/FEMLab/focus16>; the code for all the analyses presented in this work can be found at <https://github.com/FEMLab/focus16_manuscript>. All data used is archived at Zenodo accession XXX.
+The code for Focus16 can be found at <https://github.com/FEMLab/focus16>; the code for all the analyses presented in this work can be found at <https://github.com/FEMLab/focus16_manuscript>. All data used is archived at Zenodo accession 10.5281/zenodo.3956433.
 
 # Author Contributions
 Author contributions according to the CRediT taxonomy [@allen_how_2019] are listed alphabetically as follows:

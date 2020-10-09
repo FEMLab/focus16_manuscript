@@ -1407,6 +1407,9 @@ n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow
       subtitle="Histogram of per-sequence accuracy "
     )
 )
+# snp_results <- read.table("docs/snps_per_kbp.tab", sep="\t", header=TRUE)
+# 
+# View this cumulative df to get the "95% of sequences having fewer than X errors" statment, which is 5 errors 
 (p_snps_hist2 <- ggplot(snp_results %>% filter(!is.na(pkb)) %>%filter(set=="fast")%>%
                          group_by(pkb) %>%
                          summarize(bin=unique(ceiling(pkb)), 

@@ -408,7 +408,7 @@ dada2:::makeSpeciesFasta_Silva(
 
 # Assigning taxonomy to the combined sequence table
 
-Next, we assign taxa to the merged ASV table. Matrices for the data with both the SILVA db and our SILVA+ db created with focusDB.  This is then used to determine whether the taxonomic assignment changes between the two databases.
+Next, we assign taxa to the merged ASV table. Matrices for the data with both the SILVA db and our SILVA+ db created with focus16.  This is then used to determine whether the taxonomic assignment changes between the two databases.
 
 ```{r, cache=TRUE, eval=FALSE}
 taxa_silva  <- assignTaxonomy(

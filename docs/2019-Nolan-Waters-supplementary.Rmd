@@ -123,7 +123,7 @@ paste0(ngenerawith_sras, " of ", nunique_genera, " genra have available SRA data
 ggsave("../docs/figures/S1-sras.png", combined_plots, device = "png", dpi = 300, width = 9, height = 8)
 ``` 
 
-```{r pfig, fig.cap="Whole-genome sequencing SRA data availability for strains in the four datasets. Bars show the number of SRAs per genus as of 2019-10-24. Genera with no publicly available SRAs are removed; results are displayed on a log scale. 109 of 193 genera have availabe SRA data. Clinically-relavent genera tend to have many SRAs.", out.width="100%"}
+```{r pfig, fig.cap="Whole-genome sequencing SRA data availability for strains in the four datasets. Bars show the number of SRAs per genus as of 2019-10-24. Genera with no publicly available SRAs are removed; results are displayed on a log scale. 109 of 193 genera have available SRA data. Clinically-relevant genera tend to have many SRAs.", out.width="100%"}
 knitr::include_graphics("figures/S1-sras.png")
 
 ```
@@ -206,7 +206,7 @@ p_dataset_overlap | gridExtra::tableGrob(summary_table_overlap, theme = gridExtr
 ```
 
 
-```{r datasets, echo=FALSE, fig.cap="368 genera across the four datasets were considered.  Of the 333 unique genera, 85 met our criteria of having public short-read data in the SRA and at least one RefSeq complete genome available. The x axis shows the overlapping sets of genera among the four dataset; the color shows how many of the genera met the inclusion criteria.  While only a fraction of the SRAs meet the requirements for reassembly, future data availability will allow us to revisit previously-excluded SRAs.", out.width = '80%'}
+```{r datasets, echo=FALSE, fig.cap="368 genera across the four datasets were considered.  Of the 333 unique genera, 85 met our criteria of having public short-read data in the SRA and at least one RefSeq complete genome available. The x axis shows the overlapping sets of genera among the four datasets; the color shows how many of the genera met the inclusion criteria.  While only a fraction of the SRAs meet the requirements for reassembly, future data availability will allow us to revisit previously-excluded SRAs.", out.width = '80%'}
 knitr::include_graphics("figures/S6-datasets-tab.png")
 ```
 
@@ -215,17 +215,17 @@ knitr::include_graphics("figures/S6-datasets-tab.png")
 \newpage
 # Running Focus16 on candidate taxa 
 ## Parameter choice
-Below is a copy of the script used to run the pipeline for the list of genera determined above. the following parameters were used:
+Below is a copy of the script used to run the pipeline for the list of genera determined above. The following parameters were used:
 
 - `--n_references 200`:  the maximum number of RefSeq genomes to consider for use as a reference
-- `--n_SRAs 50`: limits reassembly to 50 random SRA readsets per genus
-- `--run_de_novo_control`: ensures riboSeed run a control *de novo* assembly with SPAdes.  This is used for mcomparisons of the *de novo* assembly to the *de fere novo* assemblies.
+- `--n_SRAs 50`: limits reassembly to 50 random SRA read sets per genus
+- `--run_de_novo_control`: ensures riboSeed run a control *de novo* assembly with SPAdes.  This is used for comparisons of the *de novo* assembly to the *de fere novo* assemblies.
 - `--maxdist .1`: set the maximum Mash distance between a reference genome and a preliminary assembly
 - `-v 1`: sets verbosity
 - `--fastqtool fastq-dump`: prefer fastq-dump to fast(er)q-dump 
 - `--timeout 1500`: sets download limit for 25 minutes; we found downloads lasting long than that usually were hanging
 - `--process_partial `: if a download times out, proceed with the reads downloaded 
-- `--use_available`: use any reads downloaded during while previously processing an SRA
+- `--use_available`: use any reads downloaded  while previously processing an SRA
 - `--sge`: distribute assembly tasks as an SGE array job on the HPC
 - `--sge_env 16db`: name of the conda environment that the distributed jobs to be executed with
 - `--njobs 6` : number of tasks to be run concurrently for each SGE array 
@@ -259,16 +259,16 @@ do
         --fastqtool fastq-dump --process_partial --use_available --sge --sge_env 16db
     fi
     counter=$((counter + 1))
-done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
+done < docs/datasets/combined_genuses.txt
 ```
 
 Afterwards, the results were aggregated, and then were moved to this repo under the `results` dir.
 
 \newpage
 
-```{bash eval=FALSE}
+```{bash eval=FALSE, echo=TRUE}
 mkdir 2019-12-19-results
-while read genus; do echo $genus; cp ./${genus}_genus/${genus}_fast_ribo16s.fasta ./2019-12-19-results/;  cp ./${genus}_genus/${genus}_full_ribo16s.fasta ./2019-12-19-results/ ; cp ./${genus}_genus/focusDB.log ./2019-12-19-results/${genus}.log ; cp ./${genus}_genus/sequence_summary.tab  ./2019-12-19-results/${genus}_seq_summary.tab; done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
+while read genus; do echo $genus; cp ./${genus}_genus/${genus}_fast_ribo16s.fasta ./2019-12-19-results/;  cp ./${genus}_genus/${genus}_full_ribo16s.fasta ./2019-12-19-results/ ; cp ./${genus}_genus/focusDB.log ./2019-12-19-results/${genus}.log ; cp ./${genus}_genus/sequence_summary.tab  ./2019-12-19-results/${genus}_seq_summary.tab; done < docs/datasets/combined_genuses.txt
 cp --parents ./*_genus/*/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta ./2019-12-19-results/
 cat ./*_genus/SUMMARY > 2019-12-19-results/summary_all
 cat ./2019-12-19-results/*seq_summary.tab > 2019-12-19-results/sequence_summary_all.tab
@@ -282,8 +282,8 @@ After execution of the pipeline, all of the references considered were recorded 
 ```
 while read genus ; do \
 for j in  .focusDB/references/$genus/*.fna; do \
-echo -e "${genus}\t${j}" >> ~/GitHub/focusdb_manuscript/docs/reference_genomes.tab ; \
-done ;done < ~/GitHub/focusdb_manuscript/docs/datasets/combined_genuses.txt
+echo -e "${genus}\t${j}" >> docs/reference_genomes.tab ; \
+done ;done < docs/datasets/combined_genuses.txt
 ```
 
 
@@ -302,7 +302,7 @@ median(tmp$n)
 print(tmp[tmp$n >= 200, ])
 ```
 
-```{r reference-datasets, echo=FALSE, fig.cap="A median of 9 references were available for each of the genera considered. The number of references per genera was capped at 200.  In practice, this only effected the Bordetella genus.  Data was plotted with ggbeeswarm using the quasirandom layout to show the distribution.", out.width = '80%'}
+```{r reference-datasets, echo=FALSE, fig.cap="A median of 9 references were available for each of the genera considered. The number of references per genera was capped at 200.  In practice, this only effected the Bordetella genus.  Data were plotted with ggbeeswarm using the quasirandom layout to show the distribution.", out.width = '80%'}
 knitr::include_graphics("figures/S7-refs.png")
 ```
 
@@ -317,7 +317,7 @@ ls -d results/2019-12-19-results/*_genus/* > docs/sras.tab
 # Quality Control
 ## Diagnosing poor assemblies
 
-In the course of comparing the reassembled sequences to those for which reference genomes were available, we determined that the pipeline struggled in two cases: the *Treponema* genus, and one *Bacillus anthracis* SRA: SRR2155541.  We do not currently know the issue with the *Treponema* genus, but using blobtools we determined that SRR2155541 is contaminated with *Micrococcus luteus* (Figure \@ref(fig:blob-bacillus)).
+In the course of comparing the reassembled sequences to those for which reference genomes were available, we determined that the pipeline struggled in two cases: the *Treponema* genus, and one *Bacillus anthracis* SRA: SRR2155541.  We do not currently know the issue with the *Treponema* genus, but using blobtools we determined that SRR2155541 is likely contaminated with *Micrococcus luteus* (Figure \@ref(fig:blob-bacillus)).
 
 ```{bash blobforSRR2155541, eval=FALSE, echo=TRUE}
 # we downloaded GCF_000008165.1_ASM816v1_genomic.fna as a reference
@@ -354,17 +354,17 @@ write.table(questionable_annotation_sras, file = "../bad_sras.txt", row.names = 
 print(length(unique(tax_summary[grepl("Homo sapiens", tax_summary$taxonomy), "sra"])))
 ```
 
-```{r tax-agreement-plot, echo=FALSE, fig.cap="Datasets where Kraken's taxanomic assignment of preliminary assembly contigs showed less  less than 70 percent agreement  were removed, as these are likely contaminated with host DNA", out.width = '50%'}
+```{r tax-agreement-plot, echo=FALSE, fig.cap="Datasets where Kraken's taxanomic assignment of preliminary assembly contigs showed less  less than 70 percent agreement  were removed, as these are likely contaminated with host DNA", out.width = '80%'}
 knitr::include_graphics("figures/aggreement.png")
 ```
 
-Figure \@ref(fig:tax-agreement-plot) shows a histogram of the domain-level agreement. We parse the outputs from Kraken2's taxonomic assignment, and flag any with a low (<70) percent of domain-assigned sequences, as this could indicate that an SRA is contaminated.  Some (such as Treponema SRAs 	SRR3571775 and SRR3584844) have $\approx$ 60% human DNA, indicating incomplete removal of host DNA, and as such, we drop them. as such, we lose 9 SRAs.  However, it should be noted that BLASTing contigs from these assemblies appear to show bacterial DNA -- the Kraken2 database itself may have contamination where Treponema kmers are labelled as human.  Either way, these (and any other under the 70% domain-level assignment threshold) are dropped.
+Figure \@ref(fig:tax-agreement-plot) shows a histogram of the domain-level agreement. We parse the outputs from Kraken2's taxonomic assignment, and flag any with a low (<70) percent of domain-assigned sequences, as this could indicate that an SRA is contaminated.  Some (such as Treponema SRAs 	SRR3571775 and SRR3584844) have $\approx$ 60% human DNA, indicating incomplete removal of host DNA, and as such we drop them, losing 9 SRAs.  However, it should be noted that BLASTing contigs from these assemblies appear to show bacterial DNA -- the Kraken2 database itself may have contamination where Treponema kmers are labelled as human.  Either way, these (and any other under the 70% domain-level assignment threshold) are dropped.
 
 
 # Results
 ## Assessing per-SRA outcomes of the pipeline
 
-The outcome of each SRA was determined after running the pipeline. For the purposes of this figure, the following messages were combined:
+The outcome of each SRA was determined after running the pipeline. For the purpose of this figure, the following messages were combined:
 
 - `Error`:
   - Any errors involving riboSeed
@@ -374,7 +374,7 @@ The outcome of each SRA was determined after running the pipeline. For the purpo
   - Invalid library type (eg mate-paired reads)
   - Reads < 65bp (eg early Genome Analyzer reads)
   - Reads > 300bp (eg PacBio or Nanopore reads)
-  - Insuffient coverage < 15x
+  - Insufficient coverage < 15x
 
 ```{r plot_success, eval=REPROCESS_RESULTS}
 summary_data <- read.csv(file.path(results_dir, "summary_all"),
@@ -430,7 +430,7 @@ ggsave(paste0("../docs/figures/2-genera.png"), plot_genera(df=p_summary_data), d
 
 
 ## Extracting 16S rRNA from de novo assemblies
-For the comparison of error rates between the *de fere novo* assembly and *de novo* assembly, `make_silva_style_db_from_contigs.py` was used  to identify 16S regions using Barrnap and extract those regions from the  *de novo* contigs .
+For the comparison of error rates between the *de fere novo* assembly and *de novo* assembly, `make_silva_style_db_from_contigs.py` was used  to identify 16S rRNA regions using Barrnap and extract those regions from the  *de novo* contigs .
 
 ```{bash, eval=FALSE}
 rm ./results/2019-12-19-results/pre_denovo_focusDB_ribo16s.fasta
@@ -449,7 +449,7 @@ First, for simplicity, we combine all the sequences for all the runs. We have th
 
 <!-- Note that first we remove any with dodgey taxonomic annotations, hence thhe inverse grep for the SRAs which fell beneath the 70% assignment threshold. -->
 
-We removed any from the list a identified above in section "Identifying poor taxonomic assignments".
+We removed any from the list as identified above in section "Identifying poor taxonomic assignments".
 ```{bash, eval=FALSE}
 cat ./results/2019-12-19-results/*full_ribo16s.fasta  > ./results/2019-12-19-results/pre_full_focusDB_ribo16s.fasta
 cat ./results/2019-12-19-results/*fast_ribo16s.fasta  > ./results/2019-12-19-results/pre_fast_focusDB_ribo16s.fasta
@@ -481,7 +481,7 @@ for (f in c("full", "fast", "denovo")){
 if [ -f "~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz" ] ; then echo "already downloaded" ; else wget    https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_tax_silva.fasta.gz ; fi
 ```
 
-First, we read in the SILVA db, and parse the headers for later comparison. One thing we do it get the codes of what the prefixes from NCBI mean, and use that to determine with source of the sequences.  The list of prefixes can be found at <https://www.ncbi.nlm.nih.gov/Sequin/acc.html>.
+We read in the SILVA database, and parsed the headers using the prefix mapping  found at <https://www.ncbi.nlm.nih.gov/Sequin/acc.html>. Each header for the SILVA database consists of `>ACCESSION.start.end name`. This revealed the origin of the individual sequences in the database.
 
 ```{r parse_headers, eval=REPROCESS_RESULTS}
  
@@ -751,7 +751,7 @@ shannon <- read.csv(
   stringsAsFactors = F) %>% 
   gather(key="subset", value="entropy", -pos, -region) %>%
   mutate(grp = case_when(
-    subset == "entropy" ~ "SILVA + focusDB",
+    subset == "entropy" ~ "SILVA + focus16",
     subset == "entropy_subset" ~ "SILVA"
   ))
 str(shannon)
@@ -764,7 +764,7 @@ ggsave("../docs/figures/4-diversity.png", p_diversity, device = "png", dpi = 300
 
 
 ## Assessing the provenance of the SILVA strains
-16s sequences in databases such a SILVA, GreenGenes,or RDP can come from several sources, namely:
+16S sequences in databases such a SILVA, GreenGenes,or RDP can come from several sources, namely:
 - complete genomes (in RefSeq, Genbank, etc)
 - draft genomes (in the NCBI's Assembly database)
 - 16s amplicons from Sanger sequencing
@@ -775,7 +775,7 @@ As repeated rDNA operons are difficult to assembly, draft genomes can (and often
 riboSeed has been show to generate high-quality reconstructions of each rDNA when benchmarked against hybrid assemblies. Here, we compare the 16s sequences from riboSeed reassembly of draft genomes to the initial (potentially collapsed) 16s sequences.
 
 
-First, we read in the silva headers for the strains. The header for the silva database constists of `>ACCESSION.start.end name`. As of release 0.8, the WGS master record is a column present as "WGS" in sraFind.tab.  This allows us to relate the sequences in the SILVA headers to their original SRAs, so we can compare riboSeed's assemblies to those for which a complete genome is available, and assess the types of errors/collapses we see where only draft genomes are available. 
+As of release 0.8, the WGS master record is a column present as "WGS" in sraFind.tab.  This allows us to relate the sequences in the SILVA headers to their original SRAs, so we can compare riboSeed's assemblies to those for which a complete genome is available, and assess the types of errors/collapses we see where only draft genomes are available. 
 
 ```{r sraFind, eval=REPROCESS_RESULTS}
 # read in the draft linked accessions and the complete genome linked accessions
@@ -1181,7 +1181,7 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, tri
   focus_subset_seqs <- datasets[['fast']][["set"]][grepl(this_focus_query, datasets[['fast']][["metadata"]]$raw)]
   unique_focus_subset_seqs <- unique(focus_subset_seqs)
   if (length(unique_focus_subset_seqs) == 0) {
-    warning(paste("No matches for ",this_focus_query,"(", assembly, ")  in focusDB results"))
+    warning(paste("No matches for ",this_focus_query,"(", assembly, ")  in focus16 results"))
     return (list(NA, NA, NA, NA, NA, NA))
   }
   # merge, align the sequences
@@ -1385,7 +1385,7 @@ for (i in 1:nrow(only_illumina_assembly_summary)){
     scale_color_discrete(guide="none") +
     labs(title="Accuracy of 16S rRNA sequences by assembly method ", 
          #subtitle="gray bars represent the number of sequences recovered",
-         x= "focusDB  Mode",
+         x= "focus16  Mode",
          color="Assembly mode",
          #y="Errors per kbp \n(and relative ammount of sequences recovered)")
          y="Errors per kbp",
@@ -1415,12 +1415,13 @@ n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow
                          summarize(bin=unique(ceiling(pkb)), 
                                 y=n()) %>% mutate(
                                 cumuy=cumsum(y)/sum(y) * 100) ,#%>% transform(y=y/sum(y) * 100), 
-                        aes(x=bin, y=y, fill=bin==0)) + 
+                        aes(x=bin, y=y, color=bin==0)) + 
     mytheme +
     #geom_bar(stat="identity", width = .8, positiion="dodge") +
-    scale_fill_manual(guide="none", values=wesanderson::wes_palettes$IsleofDogs1[4:5]) +
-    #geom_line(aes(y=cumuy), color="gray50", size=.8, linetype="solid") +
-    geom_bar(stat="identity", aes(y=cumuy), size=1) +
+    scale_color_manual(guide="none", values=wesanderson::wes_palettes$IsleofDogs1[4:5]) +
+    geom_point(aes(y=cumuy),  size=2) +
+    geom_line(aes(y=cumuy), color="gray50", size=.8, linetype="solid") +
+    #geom_bar(stat="identity", aes(y=cumuy), size=1) +
     geom_hline(yintercept = 99, color="gray50", linetype="dashed") + 
     annotate(geom="text", x = 3, y=95, label="99%", color="gray50") + 
     labs(
@@ -1688,7 +1689,7 @@ sum(uniqueness[uniqueness$DB == "focus", "Unique"]) + sum(uniqueness[uniqueness$
 ```
 
 
-Over the course of the development of Focus16 we estimated the run-time for a subset of SRAs; runtimes for the whole dataset were difficult to determine due to the time stamps not reflecting I/O or network limitations. In our hands.  This analysis calculates run time estimates based on an early run of the genera in the HMP dataset.
+Over the course of the development of Focus16 we estimated the run-time for a subset of SRAs; runtimes for the whole dataset were difficult to determine due to the time stamps not reflecting I/O or network limitations.  This analysis calculates run time estimates based on an early run of the genera in the HMP dataset.
 
 ```{r assess-execution-time, eval=REPROCESS_RESULTS}
 ## Execution time

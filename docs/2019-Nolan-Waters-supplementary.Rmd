@@ -25,7 +25,7 @@ library(patchwork)
 library(DECIPHER)
 source("../docs/shared.R")
 results_dir <- "../results/2019-12-19-results/"
-figures_dir <- "../docs/figures/"
+figures_dir <- "../docs/new_figures/"
 REPROCESS_RESULTS = FALSE
 ```
 # Introduction
@@ -319,11 +319,15 @@ ls -d results/2019-12-19-results/*_genus/* > docs/sras.tab
 
 In the course of comparing the reassembled sequences to those for which reference genomes were available, we determined that the pipeline struggled in two cases: the *Treponema* genus, and one *Bacillus anthracis* SRA: SRR2155541.  We do not currently know the issue with the *Treponema* genus, but using blobtools we determined that SRR2155541 is likely contaminated with *Micrococcus luteus* (Figure \@ref(fig:blob-bacillus)).
 
+GCA_000755185.1
+
 ```{bash blobforSRR2155541, eval=FALSE, echo=TRUE}
 # we downloaded GCF_000008165.1_ASM816v1_genomic.fna as a reference
-docker run --memory 16G --rm  -v $PWD:/home/ nickp60/ezblobtools \
-  -r /home/results/2019-12-19-results/Bacillus_genus/SRR2155541/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta   \
+docker run --memory 16G --rm  -v $PWD:/home/ nickp60/ezblobtools  -r /home/GCF_000008165.1_ASM816v1_genomic.fna \
+  -A /home/results/2019-12-19-results/Bacillus_genus/SRR2155541/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta   \
   -d ref_prok_rep_genomes -o /home/GitHub/focusdb/docs/blob_SRR2155541/ -t 2 -m 16
+  
+docker run --memory 16G --rm  -v $PWD:/home/ nickp60/ezblobtools   -A /home/results/2019-12-19-results/Corynebacterium_genus/SRR2889779/results/riboSeed/seed/final_de_novo_assembly/contigs.fasta     -d ref_prok_rep_genomes -o /home/blob_SRR2889779/ -t 2 -m 16
 ```
 
 ```{r blob-bacillus, echo=FALSE, fig.cap="Assessing the contents of *Bacillus anthracis* SRA SRR2155541 showed possible contamination with *Micrococcus luteus*, as can be seen from the coverage and GC content differences.", out.width = '60%'}
@@ -413,8 +417,8 @@ p_summary_data <- right_join(srac,  p_summary_data_pre, by=c("org")) %>%
       startsWith(messag, "Insufficient coverage") ~ "QC Fail", 
       startsWith(messag, "Unknown crit") ~ "Error",
       startsWith(messag, "Error downloading") ~ "Error",
-      messag=="" ~ "16S Recovered", 
-      messag=="riboSeed unsuccessful" ~ "No 16S Recovered")) 
+      messag=="" ~ "16S rRNA Recovered", 
+      messag=="riboSeed unsuccessful" ~ "No 16S rRNA Recovered")) 
 
 # #  plot mock also in shared methods
 # for (grp in  c("Extremes",  "Balanced", "Endobiota")){
@@ -1240,25 +1244,36 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, tri
   }
 }
 
+
 build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
   # get matching assembly from sraFind to get the complete genome/sequence accession
   this_silva <- unique(db[grepl(assembly, db$Assembly.Accession), "raw" ])
   if (length(this_silva) == 0) {
     warning(paste("No matches ", assembly, ";  could be long reads?"))
-    return (list(NA, NA, NA, NA, NA, NA))
+    return (list(NA, NA, NA, NA, NA,NA, NA, NA))
   }
   # paste tofgether to make a query string with or's; this is because for assemblies, 
   # # different contigs will have different sequence names, but a single assembly accession
-  this_silva_query <- gsub("(.*)\\|$", "\\1", paste0(unique(gsub("(.*?)\\..*", "\\1", this_silva)), collapse = "", sep="|"))
+  #this_silva_query <- gsub("(.*)\\|$", "\\1", paste0(unique(gsub("(.*?)\\..*", "\\1", this_silva)), collapse = "", sep="|"))
+  #silva_subset_seqs <-  silva[grepl(this_silva_query,  names(silva))]
+#      old_silva_subset_seqs <-  silva[grepl("CP008729|CP008730|CP008728",  names(silva))]
+#      old_silva_subset_seqs <-  silva[grepl(this_silva_query,  names(silva))]
+# DECIPHER::AlignSeqs(
+#   append(append(DNAStringSet(silva_subset_seqs),
+#                DNAStringSet(old_silva_subset_seqs)),
+#                DNAStringSet(focus_subset_seqs),
+#          )) %>% BrowseSeqs()                  
+
   # get matching SRAs for assembly, so we can use them to search the focusdb results
   this_focus <- unique(unlist(strsplit(db[grepl(assembly,  db$Assembly.Accession), "run_SRAs" ],",")))
   # build focusdb query string;  get rid of the *_\\d suffix we add to SRAs to keep themunique
   this_focus_query <- gsub("(.*)\\|$", "\\1", paste0(gsub("_\\d+", "",this_focus), collapse = "", sep="|"))
   
   # identify all sequences associated with this assembly accesssion
-  silva_subset_seqs <- datasets[["silva"]][["set"]][grepl(this_silva_query,  names(datasets[["silva"]][["set"]]))]
+  # this now uses the assembly-accession-based name rather than the chromosome-based-name
+  silva_subset_seqs <- rrnas[grepl(assembly,  names(rrnas))]
   # idenify the sequences from focusDB fast, align them, keep track of best alignments
-  these_results = data.frame("set"=character(), "focusDB"=character(), "silva"=character(), "pkb"=numeric(), stringsAsFactors = F)
+  these_results = data.frame("set"=character(), "focusDB"=character(),       "ref_gcn"=numeric(), "ref_gcn_unique"=numeric(), "silva"=character(), "pkb"=numeric(), stringsAsFactors = F)
   for (thisset in c("fast", "full", "denovo")){
     focus_subset_seqs <-  datasets[[thisset]][["set"]][grepl(this_focus_query, names( datasets[[thisset]][["set"]]))]
     # ignore empty sets
@@ -1267,29 +1282,36 @@ build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
     for (i in 1:length(focus_subset_seqs)){
       # drop any short sequences that snuck in
       if (length(focus_subset_seqs[[i]]) < 1400) next
-      overall_best_score = 0
+      overall_error_rate = 1000
       
-      for (j in 1:length(this_silva)){
+      for (j in 1:length(silva_subset_seqs)){
         # drop any short SILVA sequences
         if (length(silva_subset_seqs[[j]]) < 1400) next
         # otherwise, align with ends free, super simple scoring matrix
         # we are concerned with errors per kbp, which ends up being calculated as 
         # overlap_length - score / overlap_length * 1000, to yield errors per kb
-        best_score = pairwiseAlignment(
+        aln = pairwiseAlignment(
           DNAStringSet(focus_subset_seqs[i]), 
           DNAStringSet(silva_subset_seqs[j]), 
-          scoreOnly=TRUE, 
           substitutionMatrix=nucleotideSubstitutionMatrix(match = 1, mismatch = 0, baseOnly = FALSE, type = "DNA"),
           gapOpening = 0, gapExtension = 0,
-          type="overlap")
-        minlen = min(length(focus_subset_seqs[[i]]), length(silva_subset_seqs[[j]]))
+         scoreOnly=FALSE, type="overlap")
+        # scoreOnly=FALSE, type="overlap") %>% writePairwiseAlignments("tmp.pair")
+        # DECIPHER::AlignSeqs(append(DNAStringSet(focus_subset_seqs[i]), DNAStringSet(silva_subset_seqs[j]))) %>% BrowseSeqs(highlight=0)
+        #minlen = min(length(focus_subset_seqs[[i]]), length(silva_subset_seqs[[j]]))
+
         # say 1500 is max length considered (min between the two lengths), score is 1490.  thats 10 SNPs, or 6.6 SNPs per kbp
-        if  (best_score >  overall_best_score){
+        # here we switch to comparing error rates, not raw score
+        alignment_length <- width(alignedSubject(aln))
+        errors_pkb <- ((alignment_length - aln@score ) * 1000) / alignment_length
+        if  (errors_pkb <  overall_error_rate){
           this_row <-  data.frame(
             "set"=thisset,
             "focusDB"=names(focus_subset_seqs[i]),
             "silva"=names(silva_subset_seqs[j]),
-            "pkb"=((minlen - best_score ) * 1000) / minlen, 
+            "pkb"=errors_pkb, 
+            "ref_gcn"=length(silva_subset_seqs),
+            "ref_gcn_unique"=length(unique(silva_subset_seqs)),
             stringsAsFactors = F)
         }
         
@@ -1310,6 +1332,8 @@ build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
       "focusDB"=NA,
       "silva"=NA,
       "pkb"=NA,  
+      "ref_gcn"=nrow(this_silva),
+      "ref_gcn_unique"=length(unique(silva_subset_seqs)),
       stringsAsFactors = F
       )
   }
@@ -1317,8 +1341,7 @@ build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
   these_results$assembly <- assembly
   return(these_results)
   
-}
-
+}       
 
 ```
 
@@ -1340,10 +1363,29 @@ only_illumina_assembly_summary_draft <- only_illumina_assembly_summary%>% filter
 only_illumina_assembly_summary <- only_illumina_assembly_summary%>% filter(processed_in_this_study) %>%
   filter(cg)
 
+writeLines(unique(only_illumina_assembly_summary$Assembly.Accession), con = "./complete_genome_assembly_accessions.txt")
 ```
 
  Now we have identified which SRAs relate to which assemblies, and which we have analyzed. The first order of business is to compare the accuracy of fast mode (using riboSeed's `--just_seed` parameter) to 16S's from full assemblies.  However, for a full analysis, we also need to compare to the *de novo* assembly (which we enabled using the `--run_de_novo_control` flag). Interactive outputs are created as well.
 
+Note (2022-03-12): this was insufficient in cases such as Burkholderia multivorans posessing multiple chromosomes. use Entrez Batch to download the 61 assemblies in `complete_genome_assembly_accessions.txt` to ./docs/genome_assemblies_genome_fasta/ ( it will have a dated subdirectory)
+
+```{bash eval=FALSE}
+cat  docs/complete_genome_assembly_accessions.txt | while read x ; do echo $x ; zcat < ./docs/genome_assemblies_genome_fasta/ncbi-genomes-2022-03-12/$x* | barrnap - --outseq ${x}rrna.fasta ; done
+cat ./*rrna.fasta > complete_genomes_rrnas.fasta
+```
+
+
+```{r}
+rrnas <- map(unique(only_illumina_assembly_summary$Assembly.Accession), .f=function(x){
+seqs <- Biostrings::readDNAStringSet(paste0("../", x, "rrna.fasta"))
+seqs <- seqs[grepl("16S_", names(seqs))]
+names(seqs) <- paste0(x, "..", names(seqs))
+seqs
+})
+rrnas <- do.call(c, rrnas)
+
+```
 
 ```{r assess_cg_snps, cache=TRUE, eval=REPROCESS_RESULTS}
 # dest_dir <- file.path("docs", "ref_msas")
@@ -1354,17 +1396,21 @@ snp_results = data.frame(
   "silva" = character(),
   "assembly" = character(),
   "pkb" = numeric(),
+  "ref_gcn"=numeric(),
+  "ref_gcn_unique"=numeric(),
   stringsAsFactors = F
 )
 nassemb <- length(unique(only_illumina_assembly_summary$Assembly.Accession))
 counter = 0
+t0 <- Sys.time()
 for (i in 1:nrow(only_illumina_assembly_summary)){
 #for (i in 1:50){
   assembly <- only_illumina_assembly_summary$Assembly.Accession[i]
   if (assembly %in% snp_results$assembly){
     next
   } else{
-    print(paste(counter + 1, "of", nassemb))
+    print(paste("took", Sys.time()-t0, "for last assembly; processing", counter + 1, "of", nassemb))
+    t0 <- Sys.time()
     snp_results <- rbind(
       snp_results,
       build_pairwise_network(
@@ -1374,9 +1420,30 @@ for (i in 1:nrow(only_illumina_assembly_summary)){
     counter <- counter + 1
   }
 }
+snp_results_old <- snp_results
+#how many total seqs are we anticipating?  Not exactly the sum of all the 16S's in the assemblies cuase some SRAs contributed to the same complete genome (such as SRR4124911 and SRR4124912)
 
+(target_16S_count <- snp_results %>% mutate(sra = gsub("^(.*?)_.*", "\\1", focusDB)) %>% select(sra, assembly, ref_gcn) %>% distinct() %>% pull(ref_gcn) %>% sum())
 # remove NAs
 (p_snps <- ggplot(snp_results %>% filter(!is.na(pkb)), aes(x=set )) + 
+    mytheme +
+    #geom_bar(aes(y=..count../10), fill="grey80")+ 
+    geom_label(stat='count', aes(y=(..count../10) +15, label=paste("n = ", ..count.., " of ", target_16S_count, "\ntrue sequences" )), size=3,label.size=0 , color="grey60")+ 
+    geom_boxplot(aes(y=pkb, color=set), color="grey30", fill=NA, outlier.shape = NA, outlier.colour = "grey") + 
+    geom_point(aes(y=pkb, color=assembly), alpha=.6,position=position_jitter(width = .2, height = .002, seed = 123)) +  
+   ggrepel::geom_text_repel(aes( color=assembly, y=pkb, label=ifelse(pkb > 6, assembly, "")), #color="black",
+                            alpha=.8,position=position_jitter(width = .2, height = .002, seed = 123), size=2, max.overlaps = 15) +  
+    scale_color_discrete(guide="none") +
+    labs(#title="Accuracy of 16S rRNA sequences by assembly method ", 
+         #subtitle="gray bars represent the number of sequences recovered",
+         x= "focus16  Mode",
+         color="Assembly",
+         #y="Errors per kbp \n(and relative ammount of sequences recovered)")
+         y="Errors per kbp"
+         #caption="denovo: recovered from a de novo assembly\nfast: recovered from riboSeed's subassemblies\nfull: recovered from riboSeed's de fere novo assembly")
+         )
+  )
+(p_snps2 <- ggplot(snp_results %>% filter(!is.na(pkb)), aes(x=set )) + 
     mytheme +
     #geom_bar(aes(y=..count../10), fill="grey80")+ 
     geom_label(stat='count', aes(y=(..count../10) +10, label=paste("n = ", ..count..)), size=3,label.size=0 , color="grey70")+ 

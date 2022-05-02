@@ -1,6 +1,6 @@
 # shared functions
 
-mytheme <- ggplot2::theme_minimal() + 
+mytheme <- ggplot2::theme_classic() + 
   ggplot2::theme(
     rect = element_rect(fill = "transparent"),
     #plot.background = element_rect(fill = "#FAFAFA", color=NA),
@@ -10,6 +10,8 @@ mytheme <- ggplot2::theme_minimal() +
     strip.text = element_text(face="bold"),
     axis.title  = element_text(size=10),
     panel.grid.minor.x = element_blank(),
+    panel.grid.major.x = element_line(color="grey80", size = .2),
+    panel.grid.major.y = element_line(color="grey80", size = .2),
     title = element_text(size=14),
     plot.caption=element_text(hjust = 0),
     legend.text =  element_text(size=12), 

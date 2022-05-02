@@ -9,6 +9,7 @@ header-includes:
   - \renewcommand{\tablename}{Table S}
 output:
   bookdown::pdf_document2: default
+  keep_tex: True
 editor_options:
   chunk_output_type: console
 ---
@@ -17,15 +18,12 @@ editor_options:
 knitr::opts_chunk$set(echo = FALSE, cache.lazy = FALSE)
 library(tidyverse); packageVersion("tidyverse")
 library(Biostrings); packageVersion("Biostrings")
-#if (!requireNamespace("BiocManager", quietly = TRUE))
-#    install.packages("BiocManager")
-#BiocManager::install("DECIPHER")
+
 library(ggupset)
 library(patchwork)
 library(DECIPHER)
 source("../docs/shared.R")
 results_dir <- "../results/2019-12-19-results/"
-figures_dir <- "../docs/new_figures/"
 REPROCESS_RESULTS = FALSE
 ```
 # Introduction
@@ -431,10 +429,31 @@ ggsave(paste0("../docs/figures/2-genera.png"), plot_genera(df=p_summary_data), d
 ```
 
 
+## Re-extracting 16S rRNAs fro SILVA
+In order to 
+
+```{bash eval=FALSE}
+seqkit split2 ~/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz  --out-file silva132_ --by-part 1000
+for i in $(ls /Users/nick/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz.split/SILVA_132_SSURef_tax_silva.part_*.gz); do echo $i ; zcat < $i | barrnap -t 8 --outseq ${i}.just16s.fasta --reject .8 ; done
+cat  /Users/nick/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz.split/SILVA_132_SSURef_tax_silva.part_*.gz.just16s.fasta > ~/Downloads/SILVA_trimmed.fasta 
+
+zcat < /Users/nick/Downloads/SILVA_132_SSURef_tax_silva.fasta.gz | grep ">" | wc -l 
+# 798129
+cat ~/Downloads/SILVA_trimmed.fasta | grep ">" | wc -l 
+# 2090668
+```
+
+
+```{r}
+silva_rrnas <- Biostrings::readRNAStringSet("~/Downloads/SILVA_trimmed.fasta")
+silva_rrnas <- silva_rrnas[grepl("16S_", names(silva_rrnas))]
+names(silva_rrnas) <- gsub("16S_rRNA::", "",  names(silva_rrnas), fixed = TRUE)
+
+```
 
 
 ## Extracting 16S rRNA from de novo assemblies
-For the comparison of error rates between the *de fere novo* assembly and *de novo* assembly, `make_silva_style_db_from_contigs.py` was used  to identify 16S rRNA regions using Barrnap and extract those regions from the  *de novo* contigs .
+For the comparison of error rates between the *de fere novo* assembly and *de novo* assembly, `make_silva_style_db_from_contigs.py` was used  to identify 16S rRNA regions using Barrnap and extract those regions from the  *de novo* contigs.  
 
 ```{bash, eval=FALSE}
 rm ./results/2019-12-19-results/pre_denovo_focusDB_ribo16s.fasta
@@ -450,6 +469,9 @@ done
 
 ## Assessing uniqueness
 First, for simplicity, we combine all the sequences for all the runs. We have the logs to relate the sequences to why they were selected, but as we are talking about improving the database as a whole, combining them all simplifies aspects of interpretation.
+
+
+
 
 <!-- Note that first we remove any with dodgey taxonomic annotations, hence thhe inverse grep for the SRAs which fell beneath the 70% assignment threshold. -->
 
@@ -828,7 +850,18 @@ table(p_summary_n16s[p_summary_n16s$category!="Complete Genome", "n"])
 
 ```
 
-
+### Stats
+```{r, eval=FALSE}
+length(silva)
+ length(unique(silva))
+ length(datasets[["fast"]][["set"]])
+ #  5647
+ length(unique(datasets[["fast"]][["set"]]))
+ # 2823
+length(setdiff(unique(datasets[["fast"]][["set"]]), unique(silva)))
+length(intersect(unique(datasets[["fast"]][["set"]]), unique(silva)))
+length(intersect(unique(datasets[["fast"]][["set"]]), unique(silva_rrnas)))
+```
 
 
 
@@ -1246,11 +1279,12 @@ build_aln_for_assembly <- function(db, assembly="GCA_000699725.1", trimf=10, tri
 
 
 build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
+  verbose=FALSE
   # get matching assembly from sraFind to get the complete genome/sequence accession
   this_silva <- unique(db[grepl(assembly, db$Assembly.Accession), "raw" ])
   if (length(this_silva) == 0) {
     warning(paste("No matches ", assembly, ";  could be long reads?"))
-    return (list(NA, NA, NA, NA, NA,NA, NA, NA))
+    return (list(NA, NA, NA, NA, NA,NA, NA, NA, NA, NA,  NA))
   }
   # paste tofgether to make a query string with or's; this is because for assemblies, 
   # # different contigs will have different sequence names, but a single assembly accession
@@ -1273,13 +1307,26 @@ build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
   # this now uses the assembly-accession-based name rather than the chromosome-based-name
   silva_subset_seqs <- rrnas[grepl(assembly,  names(rrnas))]
   # idenify the sequences from focusDB fast, align them, keep track of best alignments
-  these_results = data.frame("set"=character(), "focusDB"=character(),       "ref_gcn"=numeric(), "ref_gcn_unique"=numeric(), "silva"=character(), "pkb"=numeric(), stringsAsFactors = F)
+  this_row <- NULL
+  this_aln <- NULL
+  these_results = data.frame(
+    "set"=character(), "focusDB"=character(),       
+    "ref_gcn"=numeric(), "ref_gcn_unique"=numeric(), "silva"=character(),
+    "pkb"=numeric(),
+    "pkb_v13" = numeric(),
+    "pkb_v34" = numeric(),
+    stringsAsFactors = F)
   for (thisset in c("fast", "full", "denovo")){
-    focus_subset_seqs <-  datasets[[thisset]][["set"]][grepl(this_focus_query, names( datasets[[thisset]][["set"]]))]
+   print(paste0(" set: ", thisset))
+   focus_subset_seqs <-  datasets[[thisset]][["set"]][grepl(this_focus_query, names( datasets[[thisset]][["set"]]))]
     # ignore empty sets
     if (length(focus_subset_seqs) == 0) next
     
     for (i in 1:length(focus_subset_seqs)){
+      if(!is.null(this_row)){
+        this_row <- NULL
+        this_aln <- NULL
+      }
       # drop any short sequences that snuck in
       if (length(focus_subset_seqs[[i]]) < 1400) next
       overall_error_rate = 1000
@@ -1310,18 +1357,67 @@ build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
             "focusDB"=names(focus_subset_seqs[i]),
             "silva"=names(silva_subset_seqs[j]),
             "pkb"=errors_pkb, 
+            "pkb_v13" = NA,
+            "pkb_v34" = NA,
             "ref_gcn"=length(silva_subset_seqs),
             "ref_gcn_unique"=length(unique(silva_subset_seqs)),
             stringsAsFactors = F)
+          this_aln <- aln
+          if (verbose) writePairwiseAlignments(this_aln, file=file.path("cg_alignments", paste0(thisset, "_",  gsub("(.*?) .*", "\\1", names(focus_subset_seqs[i])))))
         }
-        
       }
       # we only add the top hit for each focusDB sequence
       # if no good hits exist, thisrow wont exist
       if (exists("this_row")){
-        these_results <- rbind(
-          these_results,
-          this_row)
+                  # run the region-specific alignments
+          # Turn degenerate primers into DNAsstringsets
+          #illumina/https://pdfs.semanticscholar.org/ecb7/a216272a400d86b7a3e3bee35f721ab127a1.pdf
+          # https://www.hmpdacc.org/hmp/doc/16S_Sequencing_SOP_4.2.2.pdf
+          regions=list(
+            pkb_v13=list("F"="AGMGTTYGATYMYGGCTCAG", 
+                         "R"="ATTACCGCGGCTGCTGG",
+                         "len"=507,
+                         "anneal_temp"=56), # old school AGAGTTTGATCCTGGCTCAG
+            pkb_v34=list("F"="CTACGGGNGGCWGCAG",
+                         "R" ="GACTACHVGGGTATCTAATCC", 
+                         "anneal_temp"=55,
+                         "len"=444)
+          )
+          for (reg_i in 1:length(regions)){
+            if (verbose) print(paste0("  - getting amplicon error rates for",this_row$focusDB, " within ", names(regions)[reg_i]))
+            #PCR 
+          # trim_focus <- DECIPHER::AmplifyDNA(DNAStringSet(focus_subset_seqs[i]), maxProductSize = 600,  annealingTemp = reg$anneal_temp, P = 4e-7, primers =c(reg$F, reg$R), includePrimers=TRUE)
+          # f_pct <- as.numeric(gsub("(.*)\\%.*", "\\1",  names(trim_focus) ))[1]
+          # trim_silva <- DECIPHER::AmplifyDNA(DNAStringSet(silva_subset_seqs[i]), maxProductSize = 600,  annealingTemp = reg$anneal_temp, P = 4e-7, primers =c(reg$F, reg$R), includePrimers=TRUE)
+          # s_pct <- as.numeric(gsub("(.*)\\%.*", "\\1",  names(trim_focus) ))[1]
+          # 
+          # This is a bit of a mess, but we use Biostring comparestrings to get a consensus 
+          # with ambiguity, and we replace all gaps/mismatches with N's so we can
+          # use DECIPHER's AmplifyDNA
+          # Then, we count all the Ns in the resulting amplicon
+          trimmed_aln <- DECIPHER::AmplifyDNA(
+            DNAStringSet(gsub("[^ATGC]", "N", compareStrings(this_aln))), 
+            maxProductSize = 600,  annealingTemp =  regions[[reg_i]]$anneal_temp,
+            P = 4e-7, primers =c(regions[[reg_i]]$F, regions[[reg_i]]$R), includePrimers=TRUE)
+          if (length(trimmed_aln) == 0){
+            warning("PCR failure")
+            amplicon_err_rate_ = NA
+          } else {
+          alignment_pct_ <- as.numeric(gsub("(.*)\\%.*", "\\1",  names(trimmed_aln)))[1]
+          n_errors_ <- nchar(gsub("[^N]", "", trimmed_aln[[1]]))
+          amplicon_len_ <- nchar(trimmed_aln[[1]])
+          amplicon_err_rate_= n_errors_ * 1000 /amplicon_len_ 
+          
+          if(alignment_pct_ < 90){
+            warning("poor quality PCR")
+            amplicon_err_rate_ = NA
+           }
+          }
+          this_row[, names(regions)[reg_i]] = amplicon_err_rate_
+          }
+            these_results <- rbind(
+              these_results,
+              this_row)
       }
     }
   }
@@ -1332,6 +1428,8 @@ build_pairwise_network <- function(db, assembly="GCA_000699725.1"){
       "focusDB"=NA,
       "silva"=NA,
       "pkb"=NA,  
+    "pkb_v13" = NA,
+    "pkb_v34" = NA,
       "ref_gcn"=nrow(this_silva),
       "ref_gcn_unique"=length(unique(silva_subset_seqs)),
       stringsAsFactors = F
@@ -1376,7 +1474,7 @@ cat ./*rrna.fasta > complete_genomes_rrnas.fasta
 ```
 
 
-```{r}
+```{r,  eval=REPROCESS_RESULTS}
 rrnas <- map(unique(only_illumina_assembly_summary$Assembly.Accession), .f=function(x){
 seqs <- Biostrings::readDNAStringSet(paste0("../", x, "rrna.fasta"))
 seqs <- seqs[grepl("16S_", names(seqs))]
@@ -1384,18 +1482,20 @@ names(seqs) <- paste0(x, "..", names(seqs))
 seqs
 })
 rrnas <- do.call(c, rrnas)
-
 ```
 
 ```{r assess_cg_snps, cache=TRUE, eval=REPROCESS_RESULTS}
 # dest_dir <- file.path("docs", "ref_msas")
 # dir.create( dest_dir)
-snp_results = data.frame(
+dir.create("cg_alignments")
+snp_results = data.frame( 
   "set" = character(),
   "focusDB" = character(),
   "silva" = character(),
   "assembly" = character(),
   "pkb" = numeric(),
+  "pkb_v13" = numeric(),
+  "pkb_v34" = numeric(),
   "ref_gcn"=numeric(),
   "ref_gcn_unique"=numeric(),
   stringsAsFactors = F
@@ -1420,7 +1520,7 @@ for (i in 1:nrow(only_illumina_assembly_summary)){
     counter <- counter + 1
   }
 }
-snp_results_old <- snp_results
+ 
 #how many total seqs are we anticipating?  Not exactly the sum of all the 16S's in the assemblies cuase some SRAs contributed to the same complete genome (such as SRR4124911 and SRR4124912)
 
 (target_16S_count <- snp_results %>% mutate(sra = gsub("^(.*?)_.*", "\\1", focusDB)) %>% select(sra, assembly, ref_gcn) %>% distinct() %>% pull(ref_gcn) %>% sum())
@@ -1429,11 +1529,44 @@ snp_results_old <- snp_results
     mytheme +
     #geom_bar(aes(y=..count../10), fill="grey80")+ 
     geom_label(stat='count', aes(y=(..count../10) +15, label=paste("n = ", ..count.., " of ", target_16S_count, "\ntrue sequences" )), size=3,label.size=0 , color="grey60")+ 
-    geom_boxplot(aes(y=pkb, color=set), color="grey30", fill=NA, outlier.shape = NA, outlier.colour = "grey") + 
-    geom_point(aes(y=pkb, color=assembly), alpha=.6,position=position_jitter(width = .2, height = .002, seed = 123)) +  
+    geom_label(data=snp_results %>% filter(pkb==0), stat='count', aes(y=(..count.. * 0) -1, label=paste(..count.., " with 0 errors")), size=3,label.size=0 , color="grey60")+ 
+    geom_boxplot(aes(y=pkb, color=set), color="grey10", fill=NA, outlier.shape = NA, outlier.colour = "grey") + 
+    geom_point(aes(y=pkb, color=assembly), alpha=.7,position=position_jitter(width = .2, height = .002, seed = 123)) +  
    ggrepel::geom_text_repel(aes( color=assembly, y=pkb, label=ifelse(pkb > 6, assembly, "")), #color="black",
                             alpha=.8,position=position_jitter(width = .2, height = .002, seed = 123), size=2, max.overlaps = 15) +  
     scale_color_discrete(guide="none") +
+    labs(#title="Accuracy of 16S rRNA sequences by assembly method ", 
+         #subtitle="gray bars represent the number of sequences recovered",
+         x= "focus16  Mode",
+         color="Assembly",
+         #y="Errors per kbp \n(and relative ammount of sequences recovered)")
+         y="Errors per kbp"
+         #caption="denovo: recovered from a de novo assembly\nfast: recovered from riboSeed's subassemblies\nfull: recovered from riboSeed's de fere novo assembly")
+         )
+  )
+regions_results <- snp_results %>%
+  filter(!is.na(pkb)) %>% 
+  pivot_longer(cols=c(pkb, pkb_v13, pkb_v34), names_to="region", values_to="pkb") %>%
+  mutate(clean_region =case_when(
+    region == "pkb_v13" ~ "V1-V3\n(507bp)",
+    region == "pkb" ~ "Full-Length\n(~1520bp)",
+    TRUE ~ "V3-V4\n(444)"),
+    label = ifelse(pkb > 10, assembly, "")) %>%
+  group_by(region, assembly) %>% 
+  arrange(desc(pkb)) %>%
+  mutate(label = ifelse(row_number() == 1, label, ""))
+
+(p_snps_sup <- ggplot(regions_results,  aes(x=set )) + 
+    mytheme +
+    geom_label(data=regions_results %>% filter(region == "pkb"), stat='count', aes(y=(..count../10) +15, label=paste("n = ", ..count.., "/", target_16S_count )), size=3,label.size=0 , color="grey60")+ 
+    # geom_label(stat='count', aes(y=(..count../10) +15, label=paste("n = ", ..count.., " of ", target_16S_count, "\ntrue sequences" )), size=3,label.size=0 , color="grey60")+ 
+    geom_label(data=regions_results %>% filter(pkb==0), stat='count', aes(y=(..count.. * 0) -1.5, label=paste(..count.., "")), size=3,label.size=0 , color="grey60")+ 
+    geom_boxplot(aes(y=pkb, color=set), color="grey10", fill=NA, outlier.shape = NA, outlier.colour = "grey") + 
+    geom_point(aes(y=pkb, color=assembly), alpha=.7,position=position_jitter(width = .2, height = .002, seed = 123)) +  
+   ggrepel::geom_text_repel(aes( color=assembly, y=pkb, label=label), #color="black",
+                            alpha=.8,position=position_jitter(width = .2, height = .002, seed = 123), size=2, max.overlaps = 15) +  
+    scale_color_discrete(guide="none") +
+    facet_wrap(~clean_region) + 
     labs(#title="Accuracy of 16S rRNA sequences by assembly method ", 
          #subtitle="gray bars represent the number of sequences recovered",
          x= "focus16  Mode",
@@ -1461,7 +1594,7 @@ snp_results_old <- snp_results
 snp_results$source <- gsub("(.*?)\\s.*", "\\1", snp_results$focusDB)
 snp_results$target <- gsub("(.*?)\\s.*", "\\1", snp_results$silva)
 seqs_aligned_against_cg <- snp_results %>% filter(set=="fast") %>% nrow()
-n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow()
+(n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow())
 (p_snps_hist <- ggplot(snp_results %>% filter(!is.na(pkb)) %>%filter(set=="fast")%>%
                          group_by(pkb) %>%
                          summarize(bin=unique(ceiling(pkb)), 
@@ -1471,10 +1604,31 @@ n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow
     scale_fill_manual(guide="none", values=wesanderson::wes_palettes$IsleofDogs1[4:5]) +
     labs(
       x="Errors/Kbp", y="Sequences",
-      subtitle="Histogram of per-sequence accuracy "
+      #subtitle="Histogram of per-sequence accuracy "
     )
 )
-# snp_results <- read.table("docs/snps_per_kbp.tab", sep="\t", header=TRUE)
+(p_snps_hist_regions <- ggplot(
+  regions_results %>% filter(!is.na(pkb)) %>%filter(set=="fast")%>%
+    group_by(clean_region, region) %>%
+    mutate(bin=cut_width(pkb, width = 1)) %>%
+    select(-pkb) %>%
+    group_by(clean_region, region, bin) %>% 
+    summarize(y=n()) %>% 
+    mutate(x=as.numeric(gsub(".*,(\\d*\\.\\d).", "\\1", bin)) - .5), aes(x=x, y=y, fill=clean_region)) + 
+    mytheme +
+    geom_bar(stat="identity", position=position_dodge2(width=.95, preserve = "single")) +
+    scale_fill_manual(values=wesanderson::wes_palettes$IsleofDogs1[1:3]) +
+    scale_x_continuous(breaks = seq(0, max(regions_results$pkb, na.rm =TRUE), 5)) + 
+    scale_y_continuous(expand=c(0,0)) + 
+
+    labs(
+      fill="",
+      x="Errors/Kbp", y="Sequences",
+      #subtitle="Histogram of per-sequence accuracy "
+    )
+)
+
+  # snp_results <- read.table("docs/snps_per_kbp.tab", sep="\t", header=TRUE)
 # 
 # View this cumulative df to get the "95% of sequences having fewer than X errors" statment, which is 5 errors 
 (p_snps_hist2 <- ggplot(snp_results %>% filter(!is.na(pkb)) %>%filter(set=="fast")%>%
@@ -1491,14 +1645,52 @@ n_exact_seqs <-  snp_results %>% filter(set=="fast") %>% filter(pkb==0) %>% nrow
     #geom_bar(stat="identity", aes(y=cumuy), size=1) +
     geom_hline(yintercept = 99, color="gray50", linetype="dashed") + 
     annotate(geom="text", x = 3, y=95, label="99%", color="gray50") + 
+    scale_y_continuous(breaks=seq(0, 100, length.out=5)) +
     labs(
       x="Errors/Kbp", y="Percent of Sequences",
-      subtitle="Cumulative distribution "
+      #subtitle="Cumulative distribution "
     ) +
-    scale_y_continuous(limits = c(0, 100))
+    scale_y_continuous(limits = c(0, 100),breaks=seq(0, 100, length.out=6)) 
+)
+(p_snps_hist2_regions <- ggplot(regions_results %>% filter(!is.na(pkb)) %>%filter(set=="fast")%>%
+                         group_by(clean_region, region, pkb) %>%
+                         summarize(bin=unique(ceiling(pkb)), 
+                                y=n()) %>% mutate(
+                                cumuy=cumsum(y)/sum(y) * 100) ,#%>% transform(y=y/sum(y) * 100), 
+                        aes(x=bin, y=y, color=bin==0)) + 
+    mytheme +
+    #geom_bar(stat="identity", width = .8, positiion="dodge") +
+    scale_color_manual(guide="none", values=wesanderson::wes_palettes$IsleofDogs1[4:5]) +
+    geom_point(aes(y=cumuy),  size=2) +
+    geom_line(aes(y=cumuy), color="gray50", size=.8, linetype="solid") +
+    #geom_bar(stat="identity", aes(y=cumuy), size=1) +
+    #geom_hline(yintercept = 99, color="gray50", linetype="dashed") + 
+    #annotate(geom="text", x = 3, y=95, label="99%", color="gray50") + 
+    facet_wrap(~clean_region, ncol=3) +
+    scale_y_continuous(breaks=seq(0, 100, length.out=5), expand = c(0, 0)) +
+    labs(
+      x="Errors/Kbp", y="Percent of Sequences",
+      #subtitle="Cumulative distribution "
+    ) +
+    scale_y_continuous(limits = c(25, 100),breaks=seq(0, 100, length.out=6)) 
 )
 
+
+des <- "AAABB
+AAABB
+AAABB
+AAABB
+CCCCC
+CCCCC
+CCCCC"
+new_fig2 <- p_snps_sup +  p_snps_hist2_regions + #p_snps_hist_regions+coord_cartesian(xlim=c(0, 10)) +
+  p_snps_hist_regions +  #scale_y_log10(expand=c(0, 0)) 
+  plot_annotation(tag_levels = "A")+  plot_layout(design = des, guides="collect") &
+  theme(legend.position = 'bottom',
+        legend.direction = 'horizontal') 
+ggsave("../docs/figures/new2-accuracy.png", new_fig2, device = "png", dpi = 300, width = 12, height = 8, scale=1)
 ggsave("../docs/figures/S5-set-accuracy.png", p_snps, device = "png", dpi = 300, width = 7, height = 5)
+ggsave("../docs/figures/S5b-set-accuracy-regions.png", p_snps_sup, device = "png", dpi = 300, width = 8, height = 6)
 ggsave("../docs/figures/4-fast-cg-accuracy.png", p_snps_hist, device = "png", dpi = 300, width = 8, height = 6)
 ggsave("../docs/figures/4-fast-cg-accuracy-cumu.png", 
        (p_snps_hist | p_snps_hist2) + plot_annotation(tag_levels = "A", title = "Accuracy of re-assembled 16S rRNA"), device = "png", dpi = 300, width = 10, height = 6)
@@ -1514,7 +1706,12 @@ ggsave("../docs/figures/4-fast-cg-accuracy-subtitle.png",
        )         , device = "png", dpi = 300, width = 8, height = 6)
 
 write.table(snp_results, file="../docs/snps_per_kbp.tab", sep="\t", row.names=F)
+```
 
+
+
+
+```{r, eval=FALSE}
 # install.packages("visNetwork")
 library(visNetwork)
 graph_res <- snp_results %>% filter(assembly %in% c(snp_results$assembly[1:1000]))
@@ -1629,7 +1826,7 @@ ggplot(draft_alns, aes(x=focseqs, y=snps, color=silseqs)) + geom_point() + scale
 draft_alns_sum <- draft_alns  %>%  group_by(snps) %>%
 summarize(bin=unique(ceiling(snps)), 
                                 y=n()) 
-draft_alns_sum[nrow(draft_alns_sum) + 1 ,] <- c(snps=0, bin=0, y=nassemblies-nrow(draft_alns))
+draft_alns_sum[nrow(draft_alns_sum) + 1 ,] <- tibble(snps=0, bin=0, y=nassemblies-nrow(draft_alns))
 draft_alns_sum <- draft_alns_sum %>% mutate(
                                 cumuy=cumsum(y)/sum(y) * 100)
 
@@ -1834,4 +2031,8 @@ Extrapolating time of execution for the entire SRA was based off the 98329 SRAs 
 time_means <- tlot %>% group_by(step) %>% summarise(mean_sec=mean(s))
 98329 * sum(time_means$mean_sec)
 as.numeric(98329 * sum(time_means$mean_sec), units="days") 
+```
+```{r}
+save(list = ls(), file = "bak.Rdata") 
+  
 ```
